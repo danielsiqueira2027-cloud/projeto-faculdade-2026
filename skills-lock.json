@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "senior-backend": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "c15972382ed35ec141f419c3caec031156721d85b26c29fd22cd4cf9991acd7b"
+    },
+    "senior-frontend": {
+      "source": "davila7/claude-code-templates",
+      "sourceType": "github",
+      "computedHash": "e0e83f80d3eb965b1e36acb8a336333a5db1152ddacdc07e19bd715187a6a455"
+    }
+  }
+}

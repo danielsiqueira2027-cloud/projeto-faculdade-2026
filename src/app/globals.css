@@ -44,6 +44,30 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Legacy Design Tokens */
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-dark: var(--brand-accent-dark);
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-text: var(--brand-text);
+  --color-brand-soft: var(--brand-soft);
+  --width-container: var(--container-width);
+
+  /* Blueprint Heritage Design System Tokens */
+  --color-bp-primary: var(--bp-primary);
+  --color-bp-primary-container: var(--bp-primary-container);
+  --color-bp-secondary: var(--bp-secondary);
+  --color-bp-secondary-container: var(--bp-secondary-container);
+  --color-bp-surface: var(--bp-surface);
+  --color-bp-surface-low: var(--bp-surface-low);
+  --color-bp-surface-lowest: var(--bp-surface-lowest);
+  --color-bp-on-primary: var(--bp-on-primary);
+  --color-bp-on-secondary-container: var(--bp-on-secondary-container);
+  --color-bp-on-surface: var(--bp-on-surface);
+  --color-bp-outline-variant: var(--bp-outline-variant);
+  
+  --font-manrope: var(--font-manrope);
+  --font-work-sans: var(--font-work-sans);
 }
 
 :root {
@@ -79,6 +103,27 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
+  /* Legacy Imports */
+  --brand-accent: #0f62ff;
+  --brand-accent-dark: #0049d1;
+  --brand-bg: #f9f9f9;
+  --brand-text: #222222;
+  --brand-soft: #efefef;
+  --container-width: 1200px;
+
+  /* Blueprint Heritage Tokens - AtelierConstruct */
+  --bp-primary: #00327d;
+  --bp-primary-container: #0047ab;
+  --bp-secondary: #845400;
+  --bp-secondary-container: #feb246;
+  --bp-surface: #fefccf;
+  --bp-surface-low: #f8f6c9;
+  --bp-surface-lowest: #ffffff;
+  --bp-on-primary: #ffffff;
+  --bp-on-secondary-container: #6f4600;
+  --bp-on-surface: #1d1d03;
+  --bp-outline-variant: #c3c6d5;
 }
 
 @layer base {
@@ -91,4 +136,22 @@
   html {
     @apply font-sans;
   }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
 }
