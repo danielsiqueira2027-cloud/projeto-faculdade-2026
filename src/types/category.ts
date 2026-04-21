@@ -29,5 +29,5 @@ export const CATEGORIES_MOCK: Category[] = [
   { id: '2', name: 'PINTOR', icon: '🎨', slug: 'pintor' },
   { id: '3', name: 'ELETRICISTA', icon: '⚡', slug: 'eletricista' },
   { id: '4', name: 'PEDREIRO', icon: '🧱', slug: 'pedreiro' },
-  { id: '5', name: 'CARPINTEIRO', icon: '🪚', slug: 'carpinteiro' },
+  { id: '5', name: 'CARPINTEIRO', icon: '🔨', slug: 'carpinteiro' },
 ];
