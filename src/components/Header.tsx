@@ -19,14 +19,14 @@ export function Header() {
   const clearSearch = () => setQuery('');
 
   return (
-    <header className="bg-brand-accent py-3.5 shadow-md sticky top-0 z-50">
+    <header className="bg-[#fce9b0] py-3.5 shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 max-w-[1200px] flex flex-wrap items-center justify-between gap-4">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 no-underline group">
-          <div className="bg-white p-1.5 rounded-lg transition-transform group-hover:scale-105">
-            <Briefcase className="w-8 h-8 text-brand-accent" />
+          <div className="bg-brand-accent p-1.5 rounded-lg transition-transform group-hover:scale-105">
+            <Briefcase className="w-8 h-8 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white tracking-tight">
+          <span className="text-2xl font-bold text-gray-800 tracking-tight">
             ClickServiço
           </span>
         </Link>
@@ -64,18 +64,18 @@ export function Header() {
         <div className="flex items-center gap-5">
           <Link 
             href="#" 
-            className="bg-[#ffeecb] text-[#222] px-4 py-2.5 rounded-xl font-semibold no-underline transition-all hover:bg-[#eed8a1] shadow-sm"
+            className="bg-brand-accent text-white px-4 py-2.5 rounded-xl font-semibold no-underline transition-all hover:bg-brand-accent-dark shadow-sm"
           >
             Seja um profissional
           </Link>
           <nav className="flex gap-4">
-            <Link href="/categorias" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+            <Link href="/categorias" className="no-underline text-gray-700 font-semibold transition-colors hover:underline hover:text-gray-900">
               Categorias
             </Link>
-            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+            <Link href="#" className="no-underline text-gray-700 font-semibold transition-colors hover:underline hover:text-gray-900">
               Meus pedidos
             </Link>
-            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+            <Link href="#" className="no-underline text-gray-700 font-semibold transition-colors hover:underline hover:text-gray-900">
               Caputi
             </Link>
           </nav>
