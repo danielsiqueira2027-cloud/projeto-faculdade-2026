@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Star, MapPin } from 'lucide-react';
+
 import { Professional } from '@/types/professional';
 
 interface SearchResultCardProps {
@@ -23,9 +23,15 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
     >
       {/* Avatar */}
       <div className="src-card__avatar" aria-hidden="true">
-        <span className="src-card__avatar-initial">
-          {professional.name.charAt(0)}
-        </span>
+        {/* Placeholder para imagem, pode usar professional.avatarUrl no futuro */}
+        {professional.avatarUrl ? (
+          <img 
+            src={professional.avatarUrl} 
+            alt={`Foto de ${professional.name}`} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        ) : null}
       </div>
 
       {/* Info */}
@@ -33,16 +39,10 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
         <h3 className="src-card__name">{professional.name}</h3>
         <p className="src-card__role">{professional.role}</p>
 
-        {/* Rating */}
-        <div className="src-card__rating">
-          <Star className="src-card__star-icon" aria-hidden="true" />
-          <span className="src-card__rating-value">{professional.rating.toFixed(1)}</span>
-        </div>
-
-        {/* Location */}
-        <div className="src-card__location">
-          <MapPin className="src-card__pin-icon" aria-hidden="true" />
-          <span>{professional.location}</span>
+        {/* Rating and Location */}
+        <div className="src-card__footer">
+          <span className="src-card__rating">★ {professional.rating.toFixed(1)}</span>
+          <span className="src-card__location-text">{professional.location}</span>
         </div>
       </div>
     </article>
