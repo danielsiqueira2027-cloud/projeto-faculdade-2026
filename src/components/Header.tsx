@@ -72,7 +72,7 @@ export function Header() {
             <Link href="/categorias" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
               Categorias
             </Link>
-            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+            <Link href="/meus-pedidos" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
               Meus pedidos
             </Link>
             <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
