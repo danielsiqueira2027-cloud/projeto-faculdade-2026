@@ -63,7 +63,7 @@ export function Header() {
         {/* Actions */}
         <div className="flex items-center gap-5">
           <Link 
-            href="#" 
+            href="/cadastro" 
             className="bg-[#ffeecb] text-[#222] px-4 py-2.5 rounded-xl font-semibold no-underline transition-all hover:bg-[#eed8a1] shadow-sm"
           >
             Seja um profissional
@@ -72,11 +72,11 @@ export function Header() {
             <Link href="/categorias" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
               Categorias
             </Link>
-            <Link href="/meus-pedidos" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+            <Link href="/cliente/pedidos" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
               Meus pedidos
             </Link>
-            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
-              Caputi
+            <Link href="/cliente/dashboard" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+              Dashboard
             </Link>
           </nav>
         </div>
