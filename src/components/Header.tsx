@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, X, Briefcase } from 'lucide-react';
+import { Search, X, Briefcase, LogIn, UserPlus } from 'lucide-react';
 
 export function Header() {
   const [query, setQuery] = useState('');
@@ -61,24 +61,34 @@ export function Header() {
         </form>
 
         {/* Actions */}
-        <div className="flex items-center gap-5">
-          <Link 
-            href="#" 
-            className="bg-[#ffeecb] text-[#222] px-4 py-2.5 rounded-xl font-semibold no-underline transition-all hover:bg-[#eed8a1] shadow-sm"
-          >
-            Seja um profissional
-          </Link>
-          <nav className="flex gap-4">
-            <Link href="/categorias" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+        <div className="flex items-center gap-3">
+          {/* Nav links */}
+          <nav className="hidden lg:flex items-center gap-4 mr-2">
+            <Link href="/categorias" className="no-underline text-white font-semibold transition-colors hover:text-[#ffeecb]">
               Categorias
             </Link>
-            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
+            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:text-[#ffeecb]">
               Meus pedidos
             </Link>
-            <Link href="#" className="no-underline text-white font-semibold transition-colors hover:underline hover:text-[#ffeecb]">
-              Caputi
-            </Link>
           </nav>
+
+          {/* Login button */}
+          <Link
+            href="/login"
+            className="flex items-center gap-2 rounded-xl border-2 border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-white no-underline backdrop-blur-sm transition-all hover:border-white/60 hover:bg-white/20 hover:shadow-md"
+          >
+            <LogIn className="h-4 w-4" />
+            Entrar
+          </Link>
+
+          {/* Register button */}
+          <Link
+            href="#"
+            className="flex items-center gap-2 rounded-xl bg-[#FDE9C9] px-4 py-2 text-sm font-bold text-[#0A1D37] no-underline shadow-sm transition-all hover:bg-[#F5D4A0] hover:shadow-md hover:-translate-y-0.5"
+          >
+            <UserPlus className="h-4 w-4" />
+            Cadastrar
+          </Link>
         </div>
       </div>
     </header>
