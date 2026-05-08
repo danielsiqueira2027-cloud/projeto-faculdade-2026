@@ -131,11 +131,16 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: #ebebeb;
+    color: #000;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
   }
   html {
-    @apply font-sans;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
   }
+
 }
 
 @keyframes shimmer {
@@ -154,4 +159,151 @@
 
 .animate-spin-slow {
   animation: spin-slow 8s linear infinite;
+}
+
+/* ==========================
+   QUEM SOMOS — Grid de equipe
+========================== */
+.grid-equipe {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+}
+
+.member-card {
+  text-align: center;
+  padding: 0 20px;
+  border-right: 1px solid #000;
+}
+
+.member-card:last-child {
+  border-right: none;
+}
+
+@media (max-width: 1100px) {
+  .grid-equipe {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+  .member-card {
+    border-right: none;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+  }
+  .member-card:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .grid-equipe {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .member-card {
+    border-right: none;
+    border-bottom: 1px solid #000;
+    padding: 0 0 40px 0;
+  }
+  .member-card:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+/* ==========================
+   MISSÃO — Grid de valores
+========================== */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 22px;
+}
+
+.value-card {
+  background: #fff;
+  padding: 25px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.value-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+@media (max-width: 1100px) {
+  .values-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .values-grid { grid-template-columns: 1fr; }
+}
+
+/* ==========================
+   SEJA PROFISSIONAL
+========================== */
+.benefits-pro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.benefit-pro-card {
+  background: #f9f9f9;
+  padding: 28px 24px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid #ebebeb;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.benefit-pro-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.11);
+}
+
+/* Passo a passo */
+.steps-pro-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  position: relative;
+}
+
+.step-pro-card {
+  background: #fff;
+  padding: 28px 20px;
+  text-align: center;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  position: relative;
+}
+
+.step-connector {
+  display: none; /* mobile: oculto */
+}
+
+/* Requisitos + CTA */
+.req-cta-wrapper {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+/* Responsivo */
+@media (max-width: 1100px) {
+  .benefits-pro-grid { grid-template-columns: repeat(2, 1fr); }
+  .steps-pro-grid    { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .benefits-pro-grid { grid-template-columns: 1fr; }
+  .steps-pro-grid    { grid-template-columns: 1fr; }
+  .req-cta-wrapper   { flex-direction: column; }
 }
