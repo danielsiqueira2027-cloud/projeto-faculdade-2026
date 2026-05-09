@@ -22,6 +22,9 @@ const workSans = Work_Sans({
 export const metadata: Metadata = {
   title: "ClickServiço - Encontre Profissionais Qualificados",
   description: "Plataforma para conectar clientes e profissionais de serviços.",
+  icons: {
+    icon: '/imgs/misc/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -34,7 +37,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${manrope.variable} ${workSans.variable} h-full antialiased font-sans`}
     >
-      <body className="min-h-full flex flex-col bg-brand-bg text-brand-text">
+      <body className="min-h-full flex flex-col">
         <Header />
         <main className="grow">
           {children}

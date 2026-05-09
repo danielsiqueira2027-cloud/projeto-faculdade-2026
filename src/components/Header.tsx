@@ -74,11 +74,17 @@ export function Header() {
           </button>
         </form>
 
-        {/* Ações */}
+        {/* Ações e Menu do Usuário */}
         <div className="flex items-center gap-4">
-          <Link href="#">
+          <nav className="flex gap-4 mr-2">
+            <Link href="/categorias" className="no-underline font-medium hover:underline" style={{ color: '#0b2545' }}>
+              Categorias
+            </Link>
+          </nav>
+
+          <Link href="/cadastro">
             <button
-              className="cursor-pointer transition-colors"
+              className="cursor-pointer transition-colors font-semibold"
               style={{ backgroundColor: '#0b2545', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#103569')}
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#0b2545')}
@@ -87,11 +93,7 @@ export function Header() {
             </button>
           </Link>
 
-          <Link href="#" className="no-underline font-medium" style={{ color: '#000' }}>
-            Meus pedidos
-          </Link>
-
-          {/* Área do usuário */}
+          {/* Área do usuário com Dropdown */}
           <div className="relative" ref={menuRef}>
             <a
               id="btnEntrar"
@@ -108,11 +110,11 @@ export function Header() {
                 className="absolute"
                 style={{
                   top: '150%', right: 0,
-                  background: 'white', minWidth: 160,
+                  background: 'white', minWidth: 180,
                   padding: '15px 20px', borderRadius: 8,
                   boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
                   border: '1px solid #e0e0e0',
-                  zIndex: 9999, textAlign: 'center',
+                  zIndex: 9999, textAlign: 'left',
                 }}
               >
                 {/* Seta do dropdown */}
@@ -127,13 +129,24 @@ export function Header() {
                     borderTop: '1px solid #e0e0e0',
                   }}
                 />
-                <div className="mb-3 text-sm" style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: 10 }}>
+                <div className="mb-3 text-sm text-center" style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: 10 }}>
                   Olá, <strong>Visitante</strong>
                 </div>
-                <Link href="/login" className="flex items-center gap-2 py-1 text-sm no-underline" style={{ color: '#555' }} onClick={() => setMenuOpen(false)}>
-                  <User size={14} /> Fazer login
+
+                <Link href="/cliente/dashboard" className="flex items-center gap-2 py-2 text-sm no-underline" style={{ color: '#555' }} onClick={() => setMenuOpen(false)}>
+                  <User size={14} /> Dashboard
                 </Link>
+
+                <Link href="/cliente/pedidos" className="flex items-center gap-2 py-2 text-sm no-underline" style={{ color: '#555' }} onClick={() => setMenuOpen(false)}>
+                  Meus pedidos
+                </Link>
+
+                <Link href="/login" className="flex items-center gap-2 py-2 text-sm no-underline font-bold" style={{ color: '#0b2545' }} onClick={() => setMenuOpen(false)}>
+                  Fazer login
+                </Link>
+
                 <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '8px 0' }} />
+
                 <button
                   id="logoutBtn"
                   className="w-full cursor-pointer transition-colors"
