@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, X, LogOut, User } from 'lucide-react';
+import { Search, X, LogOut, User, Briefcase, LogIn, UserPlus } from 'lucide-react';
 
 export function Header() {
   const [query, setQuery] = useState('');
@@ -76,12 +76,18 @@ export function Header() {
 
         {/* Ações e Menu do Usuário */}
         <div className="flex items-center gap-4">
-          <nav className="flex gap-4 mr-2">
+
+          {/* Nav links (Pedro + develop) */}
+          <nav className="hidden lg:flex items-center gap-4 mr-2">
             <Link href="/categorias" className="no-underline font-medium hover:underline" style={{ color: '#0b2545' }}>
               Categorias
             </Link>
+            <Link href="/cliente/pedidos" className="no-underline font-medium hover:underline" style={{ color: '#0b2545' }}>
+              Meus pedidos
+            </Link>
           </nav>
 
+          {/* Botão "Seja profissional" (develop) */}
           <Link href="/cadastro">
             <button
               className="cursor-pointer transition-colors font-semibold"
@@ -89,19 +95,30 @@ export function Header() {
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#103569')}
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#0b2545')}
             >
+              <Briefcase size={14} className="inline mr-1" />
               Seja um profissional
             </button>
           </Link>
 
-          {/* Área do usuário com Dropdown */}
+          {/* Botão Cadastrar (Pedro) */}
+          <Link
+            href="#"
+            className="flex items-center gap-2 rounded-xl bg-[#FDE9C9] px-4 py-2 text-sm font-bold text-[#0A1D37] no-underline shadow-sm transition-all hover:bg-[#F5D4A0] hover:shadow-md hover:-translate-y-0.5"
+          >
+            <UserPlus className="h-4 w-4" />
+            Cadastrar
+          </Link>
+
+          {/* Área do usuário com Dropdown (develop) */}
           <div className="relative" ref={menuRef}>
             <a
               id="btnEntrar"
               href="#"
               onClick={(e) => { e.preventDefault(); setMenuOpen((o) => !o); }}
-              className="font-semibold no-underline transition-all"
+              className="flex items-center gap-2 font-semibold no-underline transition-all"
               style={{ color: '#0b2545', border: '1px solid #0b2545', padding: '6px 14px', borderRadius: 6 }}
             >
+              <LogIn size={14} />
               Entrar
             </a>
 
