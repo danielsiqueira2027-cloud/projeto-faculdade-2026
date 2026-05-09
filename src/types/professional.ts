@@ -3,6 +3,14 @@
  * Baseado na estrutura legada vista em busca.html e busca.js.
  */
 
+export interface Service {
+  id: string;
+  title: string;
+  price: number;
+  category: string;
+  duration?: string;
+}
+
 export interface Professional {
   id: string;
   name: string;
@@ -11,6 +19,8 @@ export interface Professional {
   distance: number;
   location: string;
   avatarUrl: string;
+  bio?: string;
+  services?: Service[];
 }
 
 /**
