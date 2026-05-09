@@ -74,7 +74,7 @@ export function Header() {
           </button>
         </form>
 
-{/* Ações e Menu do Usuário */}
+        {/* Ações e Menu do Usuário */}
         <div className="flex items-center gap-4">
           <nav className="flex gap-4 mr-2">
             <Link href="/categorias" className="no-underline font-medium hover:underline" style={{ color: '#0b2545' }}>
@@ -117,6 +117,7 @@ export function Header() {
                   zIndex: 9999, textAlign: 'left',
                 }}
               >
+                {/* Seta do dropdown */}
                 <span
                   className="absolute"
                   style={{
@@ -131,11 +132,11 @@ export function Header() {
                 <div className="mb-3 text-sm text-center" style={{ color: '#333', borderBottom: '1px solid #eee', paddingBottom: 10 }}>
                   Olá, <strong>Visitante</strong>
                 </div>
-                
+
                 <Link href="/cliente/dashboard" className="flex items-center gap-2 py-2 text-sm no-underline" style={{ color: '#555' }} onClick={() => setMenuOpen(false)}>
                   <User size={14} /> Dashboard
                 </Link>
-                
+
                 <Link href="/cliente/pedidos" className="flex items-center gap-2 py-2 text-sm no-underline" style={{ color: '#555' }} onClick={() => setMenuOpen(false)}>
                   Meus pedidos
                 </Link>
@@ -145,7 +146,7 @@ export function Header() {
                 </Link>
 
                 <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '8px 0' }} />
-                
+
                 <button
                   id="logoutBtn"
                   className="w-full cursor-pointer transition-colors"
@@ -162,6 +163,3 @@ export function Header() {
     </header>
   );
 }
-</header>
-  );
-} // <--- Falta esta para fechar a function Header
