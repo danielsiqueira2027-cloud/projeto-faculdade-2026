@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Professional } from '@/types/professional';
@@ -15,21 +15,21 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
   return (
     <article
       className="src-card"
-      onClick={() => router.push(`/profissional/${professional.id}`)}
+      onClick={() => router.push(`/perfil-profissional`)}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && router.push(`/profissional/${professional.id}`)}
+      onKeyDown={e => e.key === 'Enter' && router.push(`/perfil-profissional`)}
       aria-label={`Ver perfil de ${professional.name}`}
     >
       {/* Avatar */}
-      <div className="src-card__avatar" aria-hidden="true">
-        {/* Placeholder para imagem, pode usar professional.avatarUrl no futuro */}
+      <div className="src-card__avatar relative overflow-hidden" aria-hidden="true">
+        {/* Usando next/image para otimização automática */}
         {professional.avatarUrl ? (
-          <img 
+          <Image 
             src={professional.avatarUrl} 
             alt={`Foto de ${professional.name}`} 
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            fill
+            className="object-cover"
           />
         ) : null}
       </div>

@@ -59,7 +59,7 @@ export default function ClienteLayout({
           </Link>
 
           <div className="pt-4 mt-4 border-t border-white/10">
-            <Link href="/busca" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-white/80">
+            <Link href="/buscas" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors text-white/80">
               <Search size={20} />
               <span>Buscar Profissionais</span>
             </Link>

@@ -116,7 +116,7 @@ export function ProntoSection() {
                 Escolher categoria
               </button>
             </Link>
-            <Link href="/busca">
+            <Link href="/buscas">
               <button
                 className="cursor-pointer transition-all"
                 style={{

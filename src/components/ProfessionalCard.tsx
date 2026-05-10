@@ -14,8 +14,7 @@ export function ProfessionalCard({ professional }: ProfessionalCardProps) {
   const router = useRouter();
 
   const handleNavigate = () => {
-    // Redireciona para o perfil (futuro)
-    router.push(`/profissional/${professional.id}`);
+    router.push(`/perfil-profissional`);
   };
 
   return (

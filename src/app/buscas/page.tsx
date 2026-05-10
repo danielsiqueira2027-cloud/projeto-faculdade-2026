@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, Suspense } from 'react';
+import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PROFESSIONALS_MOCK } from '@/types/professional';
 import { SearchResultCard } from '@/components/SearchResultCard';
@@ -13,6 +13,11 @@ function SearchResults() {
 
   const [search, setSearch] = useState(initialQuery);
   const [sortBy,  setSortBy]  = useState<'distance' | 'rating' | 'name'>('distance');
+
+  // Update search state when URL changes
+  useEffect(() => {
+    setSearch(initialQuery);
+  }, [initialQuery]);
 
   const results = useMemo(() => {
     let list = [...PROFESSIONALS_MOCK];

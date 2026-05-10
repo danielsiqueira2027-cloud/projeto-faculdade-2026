@@ -25,7 +25,7 @@ function StarRating({ nota }: { nota: number }) {
 function ProfissionalCard({ pro }: { pro: Professional }) {
   return (
     <Link
-      href={`/perfil/${pro.id}`}
+      href="/perfil-profissional"
       style={{ textDecoration: 'none' }}
       aria-label={`Ver perfil de ${pro.name}, ${pro.role}`}
     >
@@ -171,7 +171,7 @@ export function ProfissionaisDestaque() {
             </h2>
           </div>
           <Link
-            href="/busca"
+            href="/buscas"
             style={{
               color: '#103569',
               fontWeight: 600,

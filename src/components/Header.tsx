@@ -25,7 +25,7 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      router.push(`/busca?q=${encodeURIComponent(query.trim())}`);
+      router.push(`/buscas?q=${encodeURIComponent(query.trim())}`);
     }
   };
 

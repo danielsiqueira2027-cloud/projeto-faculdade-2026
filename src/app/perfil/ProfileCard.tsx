@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Professional } from '@/types';
 import { Star, MapPin, Briefcase, Award, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,9 +49,11 @@ export function ProfileCard({ professional }: ProfileCardProps) {
           </div>
 
           <div className="flex gap-4">
-            <Button size="lg" className="bg-bp-primary hover:bg-bp-primary/90 text-white rounded-2xl px-8 h-14 shadow-lg font-bold">
-              Solicitar Orçamento
-            </Button>
+            <Link href="/orcamento">
+              <Button size="lg" className="bg-bp-primary hover:bg-bp-primary/90 text-white rounded-2xl px-8 h-14 shadow-lg font-bold">
+                Solicitar Orçamento
+              </Button>
+            </Link>
             <Button size="lg" variant="outline" className="border-2 border-bp-primary text-bp-primary rounded-2xl px-8 h-14 font-bold hover:bg-bp-primary/5">
               Enviar Mensagem
             </Button>

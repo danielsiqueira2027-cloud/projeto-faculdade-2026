@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Manrope, Work_Sans } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import TempNavFooter from "@/components/TempNavFooter";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -38,10 +39,11 @@ export default function RootLayout({
       className={`${inter.variable} ${manrope.variable} ${workSans.variable} h-full antialiased font-sans`}
     >
       <body className="min-h-full flex flex-col">
-        <Header />
+        <Navbar />
         <main className="grow">
           {children}
         </main>
+        <TempNavFooter />
         <Footer />
       </body>
     </html>

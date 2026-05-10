@@ -13,13 +13,13 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
   const handleNavigate = () => {
     // Redireciona para a busca usando a slug da categoria
-    router.push(`/busca?categoria=${encodeURIComponent(category.slug)}`);
+    router.push(`/buscas?categoria=${encodeURIComponent(category.slug)}`);
   };
 
   return (
     <article 
       onClick={handleNavigate}
-      className="bg-white rounded-[18px] p-[30px_20px] flex flex-col items-center text-center shadow-[0_2px_5px_rgba(0,0,0,0.07)] transition-all duration-200 ease-in-out cursor-pointer hover:-translate-y-[5px] hover:shadow-[0_6px_12px_rgba(0,0,0,0.12)] hover:border-b-4 hover:border-brand-accent group"
+      className="bg-white rounded-[18px] p-[30px_20px] flex flex-col items-center text-center shadow-[0_2px_5px_rgba(0,0,0,0.07)] transition-all duration-200 ease-in-out cursor-pointer hover:translate-y-[-5px] hover:shadow-[0_6px_12px_rgba(0,0,0,0.12)] hover:border-b-4 hover:border-brand-accent group"
     >
       <div className="text-[3.5rem] mb-[15px] transition-transform group-hover:scale-110">
         {category.icon}

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const todasSubcategorias: Record<string, string[]> = {
   'Assistência Técnica': [
@@ -62,14 +63,14 @@ const todasSubcategorias: Record<string, string[]> = {
 };
 
 const categorias = [
-  { nome: 'Encanador', img: '/imgs/categorias/assistencia.png' },
-  { nome: 'Pintor', img: '/imgs/categorias/aulas.png' },
-  { nome: 'Eletricista',               img: '/imgs/categorias/autos.png' },
-  { nome: 'Pedreiro ', img: '/imgs/categorias/design.png' },
-  { nome: 'Carpinteiro',             img: '/imgs/categorias/eventos.png' },
-  { nome: 'Vidraceiro',       img: '/imgs/categorias/moda.png' },
-  { nome: 'Gesseiro',     img: '/imgs/categorias/casa.png' },
-  { nome: 'Serralheiro',               img: '/imgs/categorias/saude.png' },
+  { nome: 'Casa e Reformas', img: '/imgs/categorias/casa.png' },
+  { nome: 'Assistência Técnica', img: '/imgs/categorias/assistencia.png' },
+  { nome: 'Autos', img: '/imgs/categorias/autos.png' },
+  { nome: 'Design e Tecnologia', img: '/imgs/categorias/design.png' },
+  { nome: 'Eventos', img: '/imgs/categorias/eventos.png' },
+  { nome: 'Moda e Beleza', img: '/imgs/categorias/moda.png' },
+  { nome: 'Aulas e Consultoria', img: '/imgs/categorias/aulas.png' },
+  { nome: 'Saúde', img: '/imgs/categorias/saude.png' },
 ];
 
 export function CategoriasGrid() {
@@ -184,27 +185,32 @@ export function CategoriasGrid() {
               }}
             >
               {todasSubcategorias[ativa]?.map((sub) => (
-                <div
+                <Link
                   key={sub}
-                  className="cursor-pointer rounded-md transition-all text-sm"
-                  style={{
-                    color: '#444', padding: '8px 12px',
-                    background: '#f9f9f9', border: '1px solid transparent',
-                    fontSize: '0.95rem',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.color = '#103569';
-                    e.currentTarget.style.background = '#eef4ff';
-                    e.currentTarget.style.borderColor = '#103569';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.color = '#444';
-                    e.currentTarget.style.background = '#f9f9f9';
-                    e.currentTarget.style.borderColor = 'transparent';
-                  }}
+                  href={`/buscas?q=${encodeURIComponent(sub)}`}
+                  className="no-underline"
                 >
-                  {sub}
-                </div>
+                  <div
+                    className="cursor-pointer rounded-md transition-all text-sm"
+                    style={{
+                      color: '#444', padding: '8px 12px',
+                      background: '#f9f9f9', border: '1px solid transparent',
+                      fontSize: '0.95rem',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.color = '#103569';
+                      e.currentTarget.style.background = '#eef4ff';
+                      e.currentTarget.style.borderColor = '#103569';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.color = '#444';
+                      e.currentTarget.style.background = '#f9f9f9';
+                      e.currentTarget.style.borderColor = 'transparent';
+                    }}
+                  >
+                    {sub}
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
