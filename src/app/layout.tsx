@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Manrope, Work_Sans } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import TempNavFooter from "@/components/TempNavFooter";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -22,6 +23,9 @@ const workSans = Work_Sans({
 export const metadata: Metadata = {
   title: "ClickServiço - Encontre Profissionais Qualificados",
   description: "Plataforma para conectar clientes e profissionais de serviços.",
+  icons: {
+    icon: '/imgs/misc/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -34,11 +38,12 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${manrope.variable} ${workSans.variable} h-full antialiased font-sans`}
     >
-      <body className="min-h-full flex flex-col bg-brand-bg text-brand-text">
-        <Header />
+      <body className="min-h-full flex flex-col">
+        <Navbar />
         <main className="grow">
           {children}
         </main>
+        <TempNavFooter />
         <Footer />
       </body>
     </html>
