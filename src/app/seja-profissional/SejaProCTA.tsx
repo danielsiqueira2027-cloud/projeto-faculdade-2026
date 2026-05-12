@@ -47,11 +47,7 @@ export function SejaProCTA({ variant }: CTAProps) {
         setStatus('success');
         console.log('[SejaProCTA] Cadastro iniciado com sucesso. Redirecionando…');
 
-        /**
-         * TODO: quando a rota /cadastro/profissional existir, ativar:
-         *   router.push('/cadastro/profissional');
-         */
-        router.push('/');
+        router.push('/seja-profissional/ativar');
       } else {
         setStatus('error');
       }

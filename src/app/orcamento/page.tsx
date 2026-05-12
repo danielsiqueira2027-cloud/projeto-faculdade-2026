@@ -1,159 +1,211 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import { 
+  ChevronDown, 
+  MapPin, 
+  Calendar, 
+  Upload, 
+  CheckCircle2, 
+  Clock, 
+  ArrowRight,
+  ShieldCheck
+} from 'lucide-react';
 
 export default function OrcamentoPage() {
+  const [budgetRange, setBudgetRange] = useState('500-2k');
+
   return (
-    <div className="min-h-screen bg-bp-surface py-16 px-4 md:px-8 font-sans text-bp-on-surface">
-      <div className="max-w-4xl mx-auto">
-        {/* Header Section with Intentional Asymmetry */}
-        <header className="mb-12 relative">
-          <div className="inline-block bg-bp-secondary-container text-bp-on-secondary-container px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4 font-manrope">
-            Solicitação de Serviço
-          </div>
-          <h1 className="text-5xl md:text-6xl font-manrope font-extrabold tracking-tighter leading-tight mb-4">
-            Solicitar <span className="text-bp-primary">Orçamento</span>
-          </h1>
-          <p className="text-lg md:text-xl font-work-sans text-bp-on-surface/70 max-w-2xl leading-relaxed">
-            Preencha os detalhes abaixo para receber propostas personalizadas dos melhores profissionais da sua região.
-          </p>
-          
-          {/* Subtle Decorative Element */}
-          <div className="absolute -top-10 -right-10 w-32 h-32 bg-bp-primary/5 rounded-full blur-3xl -z-10" />
-        </header>
-
-        {/* Main Form Container - Using Tonal Layering (No Borders) */}
-        <div className="bg-bp-surface-lowest rounded-2xl p-8 md:p-12 shadow-[0_48px_48px_-12px_rgba(0,50,125,0.06)]">
-          <form className="space-y-10">
-            {/* Section: Informações Básicas */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-6 bg-bp-primary rounded-full" />
-                <h2 className="text-xl font-manrope font-bold uppercase tracking-tight">O que você precisa?</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-bp-on-surface/60 font-work-sans ml-1">
-                    Tipo de Serviço
-                  </label>
-                  <select className="w-full bg-bp-surface-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-bp-primary outline-none transition-all appearance-none cursor-pointer">
-                    <option>Pintura Residencial</option>
-                    <option>Elétrica</option>
-                    <option>Hidráulica</option>
-                    <option>Reforma Geral</option>
-                    <option>Design de Interiores</option>
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-widest text-bp-on-surface/60 font-work-sans ml-1">
-                    Urgência
-                  </label>
-                  <select className="w-full bg-bp-surface-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-bp-primary outline-none transition-all appearance-none cursor-pointer">
-                    <option>O mais rápido possível</option>
-                    <option>Para as próximas semanas</option>
-                    <option>Apenas pesquisando preços</option>
-                  </select>
-                </div>
-              </div>
-            </section>
-
-            {/* Section: Detalhes do Projeto */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-6 bg-bp-primary rounded-full" />
-                <h2 className="text-xl font-manrope font-bold uppercase tracking-tight">Descrição do Projeto</h2>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-bp-on-surface/60 font-work-sans ml-1">
-                  Conte-nos mais detalhes
-                </label>
-                <textarea 
-                  rows={4}
-                  placeholder="Ex: Preciso pintar 3 quartos e uma sala, totalizando aproximadamente 80m² de parede..."
-                  className="w-full bg-bp-surface-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-bp-primary outline-none transition-all resize-none placeholder:text-bp-on-surface/30"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-widest text-bp-on-surface/60 font-work-sans ml-1">
-                  Localização (CEP)
-                </label>
-                <input 
-                  type="text" 
-                  placeholder="00000-000"
-                  className="w-full md:w-1/3 bg-bp-surface-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-bp-primary outline-none transition-all placeholder:text-bp-on-surface/30"
-                />
-              </div>
-            </section>
-
-            {/* Section: Upload de Fotos */}
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-1.5 h-6 bg-bp-primary rounded-full" />
-                <h2 className="text-xl font-manrope font-bold uppercase tracking-tight">Fotos e Referências</h2>
-              </div>
-              
-              <div className="border-2 border-dashed border-bp-outline-variant/30 rounded-2xl p-10 flex flex-col items-center justify-center bg-bp-surface-low/30 hover:bg-bp-surface-low/50 transition-colors cursor-pointer group">
-                <div className="w-12 h-12 bg-bp-primary/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-bp-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                </div>
-                <p className="text-sm font-work-sans font-medium">Arraste fotos ou clique para fazer upload</p>
-                <p className="text-xs text-bp-on-surface/50 mt-1">PNG, JPG ou PDF até 10MB</p>
-              </div>
-            </section>
-
-            {/* CTA Section */}
-            <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <p className="text-sm text-bp-on-surface/60 max-w-sm">
-                Ao enviar este pedido, você concorda com nossos <span className="underline cursor-pointer">Termos de Uso</span> e autoriza o contato de profissionais.
-              </p>
-              <button className="w-full md:w-auto bg-linear-to-br from-bp-primary to-bp-primary-container text-white px-10 py-4 rounded-xl font-manrope font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-bp-primary/20">
-                Enviar Solicitação
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="min-h-screen bg-[#fefccf]/20 pt-12 pb-24 px-6 font-sans">
+      <div className="max-w-6xl mx-auto">
         
-        {/* Trust Indicators */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-bp-secondary-container flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-bp-on-secondary-container" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-manrope font-bold text-sm">Profissionais Verificados</h3>
-              <p className="text-xs text-bp-on-surface/60 mt-1 font-work-sans">Todos os parceiros passam por rigorosa análise documental.</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
           
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-bp-secondary-container flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-bp-on-secondary-container" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </div>
+          {/* --- COLUNA ESQUERDA: HEADER & INFO --- */}
+          <div className="lg:col-span-5 space-y-12">
             <div>
-              <h3 className="font-manrope font-bold text-sm">Garantia de Preço</h3>
-              <p className="text-xs text-bp-on-surface/60 mt-1 font-work-sans">Receba múltiplas propostas e escolha a que melhor cabe no bolso.</p>
+              <span className="inline-block bg-[#103569]/5 text-[#103569] px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-[#103569]/10 mb-6">
+                FASE 01: PLANEJAMENTO DE PRECISÃO
+              </span>
+              <h1 className="text-6xl md:text-7xl font-black text-[#103569] leading-[0.9] tracking-tighter mb-8">
+                Peça um<br/>
+                <span className="text-[#f7941d]">Orçamento</span><br/>
+                de Precisão.
+              </h1>
+              <p className="text-lg text-[#103569]/60 leading-relaxed font-medium max-w-md">
+                Toda obra de sucesso começa com um plano calculado. Forneça sua visão e nossos profissionais construirão o cronograma detalhado para seu projeto.
+              </p>
+            </div>
+
+            {/* Imagem Blueprint Style */}
+            <div className="relative rounded-[40px] overflow-hidden shadow-2xl border-4 border-white aspect-video bg-[#103569]">
+              <img 
+                src="https://images.unsplash.com/photo-1503387762-592dee58c460?q=80&w=1000&auto=format&fit=crop" 
+                alt="Blueprint Design"
+                className="w-full h-full object-cover opacity-40 mix-blend-overlay"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-32 h-32 rounded-full border-2 border-white/20 animate-pulse flex items-center justify-center">
+                  <div className="w-24 h-24 rounded-full border-2 border-white/40" />
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-white shadow-sm">
+                <Clock className="text-[#103569] mb-4" size={24} />
+                <h3 className="text-sm font-black text-[#103569] uppercase tracking-tight mb-2">Resposta em 48h</h3>
+                <p className="text-[11px] text-[#103569]/50 font-bold leading-tight">Análise estrutural rápida da sua solicitação inicial.</p>
+              </div>
+              <div className="bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-white shadow-sm">
+                <CheckCircle2 className="text-[#103569] mb-4" size={24} />
+                <h3 className="text-sm font-black text-[#103569] uppercase tracking-tight mb-2">Preço Fixo</h3>
+                <p className="text-[11px] text-[#103569]/50 font-bold leading-tight">Transparência garantida sem variações ocultas.</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-start gap-4">
-            <div className="w-8 h-8 rounded-full bg-bp-secondary-container flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-bp-on-secondary-container" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="font-manrope font-bold text-sm">Suporte 24/7</h3>
-              <p className="text-xs text-bp-on-surface/60 mt-1 font-work-sans">Nossa equipe está pronta para ajudar em qualquer etapa do serviço.</p>
+          {/* --- COLUNA DIREITA: O FORMULÁRIO --- */}
+          <div className="lg:col-span-7">
+            <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl shadow-blue-900/5 border border-gray-100">
+              <form className="space-y-12">
+                
+                {/* Section 1: Especificação do Projeto */}
+                <div className="space-y-8">
+                  <div className="flex gap-4 items-start">
+                    <div className="w-1.5 h-10 bg-[#f7941d] rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-black text-[#103569] tracking-tight">Especificação do Projeto</h2>
+                      <p className="text-xs text-[#103569]/40 font-bold uppercase tracking-widest mt-1">Defina a intenção estrutural da sua obra.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-[#103569] uppercase tracking-widest ml-1">Descrição do Projeto</label>
+                      <textarea 
+                        className="w-full bg-[#fefccf]/30 border-none rounded-2xl p-5 focus:ring-2 focus:ring-[#103569]/10 outline-none transition-all min-h-[140px] placeholder:text-[#103569]/20 font-medium text-[#103569]"
+                        placeholder="Descreva sua visão, estilos arquitetônicos específicos ou requisitos estruturais..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-[#103569] uppercase tracking-widest ml-1">Localização</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#103569]/30" size={18} />
+                          <input 
+                            type="text" 
+                            placeholder="Cidade ou CEP"
+                            className="w-full bg-[#fefccf]/30 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-[#103569]/10 outline-none transition-all font-medium text-[#103569] placeholder:text-[#103569]/20"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-[#103569] uppercase tracking-widest ml-1">Tipo de Projeto</label>
+                        <div className="relative">
+                          <select className="w-full bg-[#fefccf]/30 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[#103569]/10 outline-none transition-all font-medium text-[#103569] appearance-none cursor-pointer">
+                            <option>Residencial</option>
+                            <option>Comercial</option>
+                            <option>Industrial</option>
+                            <option>Reforma</option>
+                          </select>
+                          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#103569]/30 pointer-events-none" size={18} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Investimento e Prazo */}
+                <div className="space-y-8">
+                  <div className="flex gap-4 items-start">
+                    <div className="w-1.5 h-10 bg-[#f7941d] rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-black text-[#103569] tracking-tight">Investimento & Prazo</h2>
+                      <p className="text-xs text-[#103569]/40 font-bold uppercase tracking-widest mt-1">Parâmetros para alocação de recursos.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-[#103569] uppercase tracking-widest ml-1">Faixa de Orçamento Estimada</label>
+                      <div className="flex bg-gray-50 p-1.5 rounded-2xl border border-gray-100 mb-3">
+                        {['Sub 500', '500-2k', '2k+', 'Custom'].map((range) => (
+                          <button
+                            key={range}
+                            type="button"
+                            onClick={() => setBudgetRange(range)}
+                            className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all ${
+                              budgetRange === range 
+                              ? 'bg-[#103569] text-white shadow-lg' 
+                              : 'text-[#103569]/40 hover:text-[#103569]'
+                            }`}
+                          >
+                            {range === 'Sub 500' ? 'Até 500' : range === '500-2k' ? '500 - 2k' : range === '2k+' ? '2k+' : 'Outro'}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      {budgetRange === 'Custom' && (
+                        <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#103569]/40 font-black text-sm">R$</span>
+                          <input 
+                            type="number" 
+                            placeholder="0,00"
+                            className="w-full bg-[#fefccf]/30 border-2 border-[#103569]/5 rounded-2xl pl-10 pr-4 py-3 focus:ring-2 focus:ring-[#103569]/10 outline-none transition-all font-black text-[#103569] placeholder:text-[#103569]/20"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-[#103569] uppercase tracking-widest ml-1">Conclusão Desejada</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-[#103569]/30" size={18} />
+                        <input 
+                          type="date" 
+                          className="w-full bg-[#fefccf]/30 border-none rounded-2xl pl-12 pr-4 py-4 focus:ring-2 focus:ring-[#103569]/10 outline-none transition-all font-medium text-[#103569]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Documentação */}
+                <div className="space-y-8">
+                  <div className="flex gap-4 items-start">
+                    <div className="w-1.5 h-10 bg-[#f7941d] rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-black text-[#103569] tracking-tight">Documentação</h2>
+                      <p className="text-xs text-[#103569]/40 font-bold uppercase tracking-widest mt-1">Upload de fotos, plantas ou referências.</p>
+                    </div>
+                  </div>
+
+                  <div className="border-2 border-dashed border-[#103569]/10 rounded-[30px] p-12 flex flex-col items-center justify-center bg-[#fefccf]/10 hover:bg-[#fefccf]/20 transition-all cursor-pointer group">
+                    <div className="w-16 h-16 bg-[#103569]/5 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                      <Upload className="text-[#103569]" size={28} />
+                    </div>
+                    <p className="text-sm font-black text-[#103569] mb-1">Arraste os arquivos aqui ou clique para buscar</p>
+                    <p className="text-[10px] font-bold text-[#103569]/40 uppercase tracking-widest">PDF, JPG, DWG ou PNG (Max 50MB)</p>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="pt-6">
+                  <button className="w-full bg-[#103569] hover:bg-[#103569]/90 text-white py-6 rounded-3xl font-black text-xl transition-all shadow-2xl shadow-blue-900/20 flex items-center justify-center gap-3 group">
+                    Solicitar Orçamento de Precisão
+                    <ArrowRight size={24} className="group-hover:translate-x-2 transition-transform" />
+                  </button>
+                  <p className="text-center text-[10px] text-[#103569]/40 font-bold uppercase tracking-widest mt-6">
+                    Ao enviar, você concorda com nossos termos de compromisso de projeto.
+                  </p>
+                </div>
+
+              </form>
             </div>
           </div>
+
         </div>
       </div>
     </div>
