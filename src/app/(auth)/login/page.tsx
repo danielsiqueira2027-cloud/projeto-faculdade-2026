@@ -1,132 +1,193 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Briefcase, Lock, Mail, Loader2 } from 'lucide-react';
+import React, { useState, useActionState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
+import { loginAction } from '@/app/actions/auth';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    // Mock login logic
-    setTimeout(() => {
-      const isProfessional = email.includes('prof');
-      
-      const mockUser = {
-        id: '123',
-        name: isProfessional ? 'Construtora Silva' : 'Daniel Siqueira',
-        email: email || 'usuario@teste.com',
-        role: isProfessional ? 'professional' : 'cliente'
-      };
-
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('userRole', isProfessional ? 'professional' : 'cliente');
-      localStorage.setItem('isLoggedIn', 'true');
-      
-      setLoading(false);
-      
-      if (isProfessional) {
-        router.push('/dashboard/profissional');
-      } else {
-        router.push('/dashboard/cliente');
-      }
-    }, 1500);
-  };
+  const [showPassword, setShowPassword] = useState(false);
+  const [state, action, pending] = useActionState(loginAction, null);
 
   return (
-    <div className="min-h-screen bg-bp-surface-low flex flex-col items-center justify-center p-4">
-      <div className="mb-8 flex flex-col items-center gap-2">
-        <div className="bg-[#103569] p-3 rounded-2xl shadow-xl">
-          <Briefcase className="w-10 h-10 text-white" />
+    <div className="login-page-wrapper">
+      <div className="login-container">
+
+        {/* Lado Esquerdo */}
+        <div className="login-left">
+          <h2>Bem-vindo(a) ao</h2>
+          <div className="login-logo-wrap">
+            <Image
+              src="/imgs/misc/logo.png"
+              alt="ClickServiço"
+              width={200}
+              height={200}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h1>ClickServiço</h1>
         </div>
-        <h1 className="text-3xl font-black text-[#103569] tracking-tighter">ClickServiço</h1>
+
+        {/* Lado Direito */}
+        <div className="login-right">
+          <form id="loginForm" className="login-form" action={action}>
+            <h2>Acesse a sua conta</h2>
+
+            {/* Erro geral */}
+            {state?.error && (
+              <div className="login-error">{state.error}</div>
+            )}
+
+            {/* E-mail */}
+            <div className="input-group">
+              <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                <polyline points="22,6 12,12 2,6" />
+              </svg>
+              <input
+                id="loginEmail"
+                name="email"
+                type="email"
+                placeholder="E-mail"
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            {/* Senha */}
+            <div className="input-group">
+              <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <input
+                id="loginPassword"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Senha"
+                required
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="toggle-senha"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            <button id="loginBtn" type="submit" className="btn" disabled={pending}>
+              {pending ? 'ENTRANDO...' : 'ENTRAR'}
+            </button>
+
+            <Link href="#" className="forgot">Esqueci minha senha</Link>
+
+            <p className="register-text">
+              Ainda não tem cadastro?{' '}
+              <Link href="/cadastro" className="register-link">Crie uma conta</Link>
+            </p>
+          </form>
+        </div>
       </div>
 
-      <Card className="w-full max-w-md border-bp-outline-variant shadow-2xl rounded-3xl overflow-hidden">
-        <CardHeader className="bg-[#103569] text-white text-center pb-8 pt-10">
-          <CardTitle className="text-2xl font-bold">Bem-vindo de volta!</CardTitle>
-          <CardDescription className="text-white/70">Acesse sua conta para gerenciar seus serviços.</CardDescription>
-        </CardHeader>
-        <CardContent className="p-8 space-y-6 -mt-4 bg-white rounded-t-3xl">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-[#103569] uppercase tracking-widest">E-mail</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#103569]/30" size={18} />
-                <Input 
-                  placeholder="seu@email.com" 
-                  className="pl-10 h-12 rounded-xl border-bp-outline-variant focus:ring-[#f7941d]" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-[#103569] uppercase tracking-widest">Senha</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#103569]/30" size={18} />
-                <Input 
-                  type="password" 
-                  placeholder="••••••••" 
-                  className="pl-10 h-12 rounded-xl border-bp-outline-variant focus:ring-[#f7941d]" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer text-[#103569]/60">
-                <input type="checkbox" className="rounded border-bp-outline-variant text-[#f7941d]" />
-                Lembrar-me
-              </label>
-              <Link href="#" className="text-[#103569] font-bold hover:underline">Esqueceu a senha?</Link>
-            </div>
-
-            <Button 
-              type="submit"
-              disabled={loading}
-              className="w-full h-12 bg-[#f7941d] hover:bg-[#f7941d]/90 text-white rounded-xl shadow-lg transition-transform active:scale-95 font-bold flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="animate-spin" size={20} /> : "Entrar no Painel"}
-            </Button>
-          </form>
-
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-bp-outline-variant"></div></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-[#103569]/40 font-bold">Ou entre com</span></div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="rounded-xl h-12 border-bp-outline-variant hover:bg-bp-surface-low">Google</Button>
-            <Button variant="outline" className="rounded-xl h-12 border-bp-outline-variant hover:bg-bp-surface-low">Facebook</Button>
-          </div>
-
-          <p className="text-center text-sm text-[#103569]/60">
-            Não tem uma conta? <Link href="/cadastro" className="text-[#f7941d] font-bold hover:underline">Cadastre-se grátis</Link>
-          </p>
-          <p className="text-center text-[10px] text-[#103569]/40 mt-2 italic">
-            Dica: Use um e-mail com "prof" para entrar como profissional.
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Link href="/" className="mt-8 text-[#103569]/40 hover:text-[#103569] transition-colors font-bold uppercase tracking-widest text-xs flex items-center gap-2">
-        &larr; Voltar para a Vitrine
-      </Link>
+      <style>{`
+        .login-page-wrapper {
+          min-height: 100vh;
+          background: #efefef;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          font-family: 'Poppins', 'Inter', sans-serif;
+        }
+        .login-container {
+          display: flex;
+          width: 900px;
+          max-width: 95%;
+          min-height: 480px;
+          background: #fff;
+          border-radius: 15px;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
+        .login-left {
+          background: #ffeecb;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          color: #1f3c88;
+          padding: 30px;
+        }
+        .login-left h2 { font-weight: 700; margin-bottom: 15px; font-size: 1.2rem; }
+        .login-logo-wrap { width: 160px; height: 160px; position: relative; margin-bottom: 15px; }
+        .login-left h1 { font-weight: 700; font-size: 1.8rem; letter-spacing: 0.5px; }
+        .login-right {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px;
+        }
+        .login-form { width: 100%; max-width: 320px; }
+        .login-form h2 { text-align: center; font-weight: 700; font-size: 1.3rem; margin-bottom: 25px; color: #222; }
+        .login-error {
+          background: #fff0f0;
+          border: 1px solid #ffcccc;
+          color: #cc0000;
+          font-size: 0.88rem;
+          font-weight: 600;
+          padding: 10px 14px;
+          border-radius: 10px;
+          margin-bottom: 16px;
+          text-align: center;
+        }
+        .input-group {
+          display: flex;
+          align-items: center;
+          background: #f2f2f2;
+          border-radius: 10px;
+          padding: 10px 14px;
+          margin-bottom: 15px;
+          position: relative;
+        }
+        .input-icon { width: 20px; height: 20px; margin-right: 10px; flex-shrink: 0; opacity: 0.45; color: #333; }
+        .input-group input {
+          border: none; background: transparent; width: 100%;
+          font-size: 0.95rem; outline: none; color: #222; font-family: inherit;
+        }
+        .toggle-senha {
+          background: transparent; border: none; cursor: pointer; color: #999;
+          padding: 0; margin-left: 8px; display: flex; align-items: center; transition: color 0.2s;
+        }
+        .toggle-senha:hover { color: #1f3c88; }
+        .btn {
+          width: 100%; background: #fddfa2; border: none; color: #222; font-weight: 700;
+          padding: 12px; border-radius: 25px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+          transition: background 0.2s; font-family: inherit; font-size: 0.95rem; letter-spacing: 0.04em;
+        }
+        .btn:hover:not(:disabled) { background: #f5d090; }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .forgot {
+          display: block; text-align: center; font-size: 0.85rem; color: #555;
+          text-decoration: none; padding: 10px; margin-bottom: 18px; margin-top: 6px;
+        }
+        .forgot:hover { color: #1f3c88; }
+        .register-text { text-align: center; font-size: 0.9rem; color: #444; margin-top: 10px; }
+        .register-link { color: #1f3c88; text-decoration: none; font-weight: 600; transition: 0.2s; }
+        .register-link:hover { text-decoration: underline; }
+        @media (max-width: 750px) {
+          .login-container { flex-direction: column; height: auto; }
+          .login-left { padding: 25px; }
+          .login-logo-wrap { width: 80px; height: 80px; }
+        }
+      `}</style>
     </div>
   );
 }
-
