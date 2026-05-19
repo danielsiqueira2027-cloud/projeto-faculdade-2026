@@ -39,12 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${manrope.variable} ${workSans.variable} h-full antialiased font-sans`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <main className="grow">
-          {children}
-        </main>
-        <TempNavFooter />
-        <Footer />
+        {children}
       </body>
     </html>
   );

@@ -88,7 +88,7 @@ export function Header() {
           </nav>
 
           {/* Botão "Seja profissional" (develop) */}
-          <Link href="/cadastro">
+          <Link href="/seja-profissional">
             <button
               className="cursor-pointer transition-colors font-semibold"
               style={{ backgroundColor: '#0b2545', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px' }}
