@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, LayoutDashboard, User, Briefcase } from 'lucide-react';
+import { LogOut, LayoutDashboard, User, Briefcase, Star } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionUser } from '@/lib/auth';
 
@@ -113,6 +113,17 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                           <User size={18} />
                         </div>
                         Meu Perfil
+                      </Link>
+
+                      <Link
+                        href="/dashboard/profissional/planos"
+                        className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-yellow-50 flex items-center justify-center text-[#eab308]">
+                          <Star size={18} />
+                        </div>
+                        Meu Plano
                       </Link>
 
                       <div className="mx-5 h-px bg-[#103569]/5 my-2" />

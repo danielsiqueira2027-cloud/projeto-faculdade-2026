@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Briefcase, Bell, User as UserIcon, LogOut,
-  LayoutDashboard, FileText, Settings, Search, ClipboardList
+  LayoutDashboard, FileText, Settings, Search, ClipboardList, Check, X
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { logoutAction } from '@/app/actions/auth';
@@ -25,11 +25,14 @@ const navLinks = [
 export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const notifRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -81,10 +84,54 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
             />
           </div>
 
-          <button className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
-            <Bell size={20} className="text-white/80" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#103569]" />
-          </button>
+          <div className="relative" ref={notifRef}>
+            <button 
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+            >
+              <Bell size={20} className="text-white/80" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#103569]" />
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-lg shadow-2xl border border-gray-100 z-50 flex flex-col text-[#103569]">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-bold text-[15px] text-gray-800">Notificações</h3>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setNotifOpen(false)} className="text-blue-500 hover:bg-blue-50 w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer border-none bg-transparent">
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[380px] overflow-y-auto">
+                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Novo pedido de orçamento recebido: Instalação elétrica moderna e projeto de iluminação em LED.</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Há 2 horas</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Mensagem de cliente: "Gostaria de orçamento para automação residencial. Atuo há mais de 8 anos transformando casas com segurança e tecnologia."</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Há 1 dia</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50/80 text-center rounded-b-lg">
+                  <Link 
+                    href="/dashboard/profissional/notificacoes" 
+                    onClick={() => setNotifOpen(false)}
+                    className="text-[15px] text-blue-500 hover:underline"
+                  >
+                    Mostrar todos
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="h-8 w-px bg-white/10 mx-2" />
 
@@ -117,6 +164,7 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
                   <Settings size={16} />
                   Configurações
                 </Link>
+
 
                 <div className="h-px bg-[#103569]/5 my-1" />
 

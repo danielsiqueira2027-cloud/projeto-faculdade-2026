@@ -1,6 +1,6 @@
 -- ClickServiço — Migration Inicial
--- Correção: ROW_FORMAT=DYNAMIC em todas as tabelas para suportar
--- chaves longas em MySQL 5.7+ com charset utf8mb4
+-- Correção: ENGINE=InnoDB + ROW_FORMAT=DYNAMIC em todas as tabelas para suportar
+-- chaves longas em MySQL 5.7+ com charset utf8mb4 (WampServer usa MyISAM por padrão)
 
 -- CreateTable
 CREATE TABLE `users` (
@@ -15,7 +15,7 @@ CREATE TABLE `users` (
 
     UNIQUE INDEX `users_email_key`(`email`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `clients` (
@@ -25,7 +25,7 @@ CREATE TABLE `clients` (
 
     UNIQUE INDEX `clients_user_id_key`(`user_id`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `professionals` (
@@ -53,7 +53,7 @@ CREATE TABLE `professionals` (
     UNIQUE INDEX `professionals_user_id_key`(`user_id`),
     UNIQUE INDEX `professionals_cpf_key`(`cpf`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `categories` (
@@ -65,7 +65,7 @@ CREATE TABLE `categories` (
 
     UNIQUE INDEX `categories_slug_key`(`slug`),
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `professional_categories` (
@@ -73,7 +73,7 @@ CREATE TABLE `professional_categories` (
     `category_id` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`professional_id`, `category_id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `services` (
@@ -89,7 +89,7 @@ CREATE TABLE `services` (
     `updated_at` DATETIME(3) NOT NULL,
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `orders` (
@@ -112,7 +112,7 @@ CREATE TABLE `orders` (
     `updated_at` DATETIME(3) NOT NULL,
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `portfolio_items` (
@@ -125,7 +125,7 @@ CREATE TABLE `portfolio_items` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `testimonials` (
@@ -139,7 +139,7 @@ CREATE TABLE `testimonials` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `appointments` (
@@ -155,7 +155,7 @@ CREATE TABLE `appointments` (
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- CreateTable
 CREATE TABLE `certifications` (
@@ -167,7 +167,7 @@ CREATE TABLE `certifications` (
     `issuer` VARCHAR(150) NULL,
 
     PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 -- AddForeignKey
 ALTER TABLE `clients` ADD CONSTRAINT `clients_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
