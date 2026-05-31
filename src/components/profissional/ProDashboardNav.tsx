@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Briefcase, Bell, User as UserIcon, LogOut,
-  LayoutDashboard, FileText, Settings, Search, ClipboardList
+  LayoutDashboard, FileText, Settings, Search, ClipboardList, ArrowLeft
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { logoutAction } from '@/app/actions/auth';
 
 interface ProDashboardNavProps {
   userName: string;
+  hasClient?: boolean;
 }
 
 const navLinks = [
@@ -22,7 +23,7 @@ const navLinks = [
   { name: 'Perfil',        href: '/dashboard/profissional/perfil',        icon: Settings },
 ];
 
-export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
+export default function ProDashboardNav({ userName, hasClient }: ProDashboardNavProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -117,6 +118,20 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
                   <Settings size={16} />
                   Configurações
                 </Link>
+
+                {hasClient && (
+                  <>
+                    <div className="h-px bg-[#103569]/5 my-1" />
+                    <Link
+                      href="/dashboard/cliente"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <ArrowLeft size={16} />
+                      Área Cliente
+                    </Link>
+                  </>
+                )}
 
                 <div className="h-px bg-[#103569]/5 my-1" />
 
