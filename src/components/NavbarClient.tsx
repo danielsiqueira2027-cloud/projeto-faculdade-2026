@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, LayoutDashboard, User, Briefcase } from 'lucide-react';
+import { LogOut, LayoutDashboard, User, Briefcase, ClipboardList, FileText, UserCircle } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionUser } from '@/lib/auth';
 
@@ -30,15 +30,24 @@ export default function NavbarClient({ user }: NavbarClientProps) {
   // Fecha o menu ao trocar de rota
   React.useEffect(() => { setMenuOpen(false); }, [pathname]);
 
-  // ─── Lógica do botão "Seja um profissional" / "Acesso Pro" ───────────────────
+  // ─── Lógica do botão "Seja um profissional" / "Área Profissional" / "Área Cliente" ───────────────────
   // - Não logado OU logado sem perfil profissional → "Seja um profissional"
-  // - Logado com perfil profissional → "Acesso Pro"
-  const proButtonLabel = user?.hasProfessional ? 'Acesso Pro' : 'Seja um profissional';
-  const proButtonHref  = user?.hasProfessional
-    ? '/dashboard/profissional'
-    : user
-      ? '/seja-profissional/ativar'
-      : '/seja-profissional';
+  // - Logado com perfil profissional e no dashboard profisional → "Área Cliente"
+  // - Logado com perfil profissional e em outras telas → "Área Profissional"
+  const isProDashboard = pathname.startsWith('/dashboard/profissional');
+
+  let proButtonLabel = 'Seja um profissional';
+  let proButtonHref = user ? '/seja-profissional/ativar' : '/seja-profissional';
+
+  if (user?.hasProfessional) {
+    if (isProDashboard) {
+      proButtonLabel = 'Área Cliente';
+      proButtonHref = '/dashboard/cliente';
+    } else {
+      proButtonLabel = 'Área Profissional';
+      proButtonHref = '/dashboard/profissional';
+    }
+  }
 
   // Link do Dashboard no dropdown (prefere profissional se tiver ambos)
   return (
@@ -87,8 +96,48 @@ export default function NavbarClient({ user }: NavbarClientProps) {
 
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-56 bg-white rounded-3xl shadow-2xl border border-[#103569]/5 py-3 z-100 animate-in fade-in zoom-in slide-in-from-top-2 duration-200">
+                  {/* ── Seção Cliente (exibido para todo usuário logado) ── */}
+                  <div className="px-5 py-2 mb-2">
+                    <p className="text-[10px] font-black text-[#103569]/30 uppercase tracking-[0.2em]">Minha Conta</p>
+                  </div>
+
+                  <Link
+                    href="/dashboard/cliente/pedidos"
+                    className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-[#103569]">
+                      <ClipboardList size={18} />
+                    </div>
+                    Meus Pedidos
+                  </Link>
+
+                  <Link
+                    href="/orcamento"
+                    className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
+                      <FileText size={18} />
+                    </div>
+                    Orçamentos
+                  </Link>
+
+                  <Link
+                    href="/dashboard/cliente/perfil"
+                    className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center text-[#f7941d]">
+                      <UserCircle size={18} />
+                    </div>
+                    Perfil
+                  </Link>
+
+                  {/* ── Seção Profissional (somente se tiver perfil pro) ── */}
                   {user.hasProfessional && (
                     <>
+                      <div className="mx-5 h-px bg-[#103569]/5 my-2" />
                       <div className="px-5 py-2 mb-2">
                         <p className="text-[10px] font-black text-[#103569]/30 uppercase tracking-[0.2em]">Painel de Controle</p>
                       </div>
@@ -114,10 +163,11 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                         </div>
                         Meu Perfil
                       </Link>
-
-                      <div className="mx-5 h-px bg-[#103569]/5 my-2" />
                     </>
                   )}
+
+                  {/* ── Footer do dropdown ── */}
+                  <div className="mx-5 h-px bg-[#103569]/5 my-2" />
 
                   <form action={logoutAction}>
                     <button
