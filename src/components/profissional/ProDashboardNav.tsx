@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Briefcase, Bell, User as UserIcon, LogOut,
-  LayoutDashboard, FileText, Settings, Search, ClipboardList
+  LayoutDashboard, FileText, Settings, Search, ClipboardList, Check, X, Star, ArrowLeft
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { logoutAction } from '@/app/actions/auth';
 
 interface ProDashboardNavProps {
   userName: string;
+  hasClient?: boolean;
 }
 
 const navLinks = [
@@ -22,14 +23,17 @@ const navLinks = [
   { name: 'Perfil',        href: '/dashboard/profissional/perfil',        icon: Settings },
 ];
 
-export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
+export default function ProDashboardNav({ userName, hasClient }: ProDashboardNavProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [notifOpen, setNotifOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
+  const notifRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -43,8 +47,8 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
     .toUpperCase();
 
   return (
-    <header className="sticky top-[60px] z-40 bg-[#103569] text-white shadow-lg overflow-visible">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between overflow-visible">
+    <header className="sticky top-0 z-50 bg-[#103569] text-white shadow-lg overflow-visible">
+      <div className="container mx-auto px-6 py-3 flex items-center justify-between overflow-visible">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <div className="bg-white p-1.5 rounded-lg shadow-inner">
@@ -81,24 +85,76 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
             />
           </div>
 
-          <button className="relative p-2 rounded-xl hover:bg-white/5 transition-colors">
-            <Bell size={20} className="text-white/80" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-[#103569]" />
-          </button>
+          <div className="relative" ref={notifRef}>
+            <button 
+              onClick={() => setNotifOpen(!notifOpen)}
+              className="relative p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+            >
+              <Bell size={20} className="text-white/80" />
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#103569]" />
+            </button>
+
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-lg shadow-2xl border border-gray-100 z-50 flex flex-col text-[#103569]">
+                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                  <h3 className="font-bold text-[15px] text-gray-800">Notificações</h3>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => setNotifOpen(false)} className="text-blue-500 hover:bg-blue-50 w-8 h-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer border-none bg-transparent">
+                      <X size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-[380px] overflow-y-auto">
+                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Novo pedido de orçamento recebido: Instalação elétrica moderna e projeto de iluminação em LED.</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Há 2 horas</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
+                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Mensagem de cliente: Gostaria de orçamento para automação residencial. Atuo há mais de 8 anos transformando casas com segurança e tecnologia.</p>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Há 1 dia</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50/80 text-center rounded-b-lg">
+                  <Link 
+                    href="/dashboard/profissional/notificacoes" 
+                    onClick={() => setNotifOpen(false)}
+                    className="text-[15px] text-blue-500 hover:underline"
+                  >
+                    Mostrar todos
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="h-8 w-px bg-white/10 mx-2" />
 
-          <div className="relative" ref={menuRef}>
+          <div className="relative flex items-center gap-5" ref={menuRef}>
+            <Link
+              href="/dashboard/profissional/planos"
+              className="bg-gradient-to-r from-[#f7941d] to-[#ffb35c] text-white hover:from-[#f08a11] hover:to-[#ffa946] text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 uppercase tracking-[0.1em] hidden md:flex items-center gap-2 whitespace-nowrap no-underline ring-1 ring-white/20"
+            >
+              <Briefcase size={14} className="opacity-90" />
+              <span>Acesso Pro</span>
+            </Link>
+
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-3 hover:bg-white/5 p-1 rounded-xl transition-all cursor-pointer border-none bg-transparent"
+              className="flex items-center gap-3 hover:bg-white/5 p-1.5 rounded-2xl transition-all cursor-pointer border-none bg-transparent group"
             >
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-black text-white">{userName}</p>
-                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-widest">Profissional</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 flex items-center justify-center font-black shadow-lg text-white">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 group-hover:border-white/40 flex items-center justify-center font-black shadow-lg text-white transition-colors">
                 {initials}
+              </div>
+              <div className="text-left hidden sm:block">
+                <p className="text-[13px] font-black text-white whitespace-nowrap">{userName}</p>
+                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-[0.1em] whitespace-nowrap">Profissional</p>
               </div>
             </button>
 
@@ -117,6 +173,29 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
                   <Settings size={16} />
                   Configurações
                 </Link>
+
+                <Link
+                  href="/dashboard/profissional/planos"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Star size={16} />
+                  Meu Plano
+                </Link>
+
+                {hasClient && (
+                  <>
+                    <div className="h-px bg-[#103569]/5 my-1" />
+                    <Link
+                      href="/dashboard/cliente"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <ArrowLeft size={16} />
+                      Área Cliente
+                    </Link>
+                  </>
+                )}
 
                 <div className="h-px bg-[#103569]/5 my-1" />
 

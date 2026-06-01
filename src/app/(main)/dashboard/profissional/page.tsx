@@ -24,12 +24,21 @@ export default async function ProfessionalDashboardPage() {
           <h2 className="text-3xl font-black text-[#103569] tracking-tighter">Olá, {userName}!</h2>
           <p className="text-slate-500 font-bold">Aqui está o resumo do seu desempenho hoje.</p>
         </div>
-        <Button asChild className="bg-[#f7941d] hover:bg-[#f7941d]/90 text-white rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#f7941d]/20 flex items-center gap-2 group transition-all active:scale-95">
-          <Link href="/dashboard/profissional/novo-servico">
-            <Plus className="group-hover:rotate-90 transition-transform" />
-            Divulgar Novo Serviço
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          {user?.hasClient && (
+            <Button asChild variant="outline" className="border-[#103569]/20 text-[#103569] hover:bg-[#103569]/5 rounded-2xl h-14 px-6 font-black flex items-center gap-2 transition-all active:scale-95">
+              <Link href="/dashboard/cliente">
+                Área Cliente
+              </Link>
+            </Button>
+          )}
+          <Button asChild className="bg-[#f7941d] hover:bg-[#f7941d]/90 text-white rounded-2xl h-14 px-8 font-black shadow-xl shadow-[#f7941d]/20 flex items-center gap-2 group transition-all active:scale-95">
+            <Link href="/dashboard/profissional/novo-servico">
+              <Plus className="group-hover:rotate-90 transition-transform" />
+              Divulgar Novo Serviço
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <DashboardStats />

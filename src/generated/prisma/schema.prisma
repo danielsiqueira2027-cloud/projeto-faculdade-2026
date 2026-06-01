@@ -15,7 +15,7 @@ datasource db {
 // ─── USERS (conta de login) ───────────────────────────────────────────────────
 // Um mesmo usuário pode ter perfil de cliente E/OU profissional.
 model User {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @db.VarChar(36)
   name      String   @db.VarChar(150)
   email     String   @unique @db.VarChar(191)
   password  String   @db.VarChar(255) // hash bcrypt
@@ -40,8 +40,8 @@ model User {
 // Criado quando o usuário se cadastra como cliente.
 // Simples — sem dados extras além do vínculo com users.
 model Client {
-  id        String   @id @default(uuid())
-  userId    String   @unique @map("user_id")
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @unique @map("user_id") @db.VarChar(36)
   createdAt DateTime @default(now()) @map("created_at")
 
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -54,8 +54,8 @@ model Client {
 // Requer dados adicionais de confirmação (CPF, endereço).
 // isVerified começa false e pode ser aprovado futuramente.
 model Professional {
-  id        String  @id @default(uuid())
-  userId    String  @unique @map("user_id")
+  id        String  @id @default(uuid()) @db.VarChar(36)
+  userId    String  @unique @map("user_id") @db.VarChar(36)
   specialty String? @db.VarChar(150) // ex: 'Eletricista Residencial'
   bio       String? @db.Text
   phone     String? @db.VarChar(20) // telefone de contato profissional
@@ -99,7 +99,7 @@ model Professional {
 // ─── CATEGORIES ───────────────────────────────────────────────────────────────
 // Imagens serão usadas futuramente via campo imageUrl ou CMS externo.
 model Category {
-  id          String   @id @default(uuid())
+  id          String   @id @default(uuid()) @db.VarChar(36)
   name        String   @db.VarChar(100) // 'ENCANADOR'
   slug        String   @unique @db.VarChar(100) // 'encanador'
   description String?  @db.Text
@@ -116,8 +116,8 @@ model Category {
 // ─── PROFESSIONAL_CATEGORIES (N:N) ───────────────────────────────────────────
 // Um profissional pode ter múltiplas especialidades/categorias.
 model ProfessionalCategory {
-  professionalId String @map("professional_id")
-  categoryId     String @map("category_id")
+  professionalId String @map("professional_id") @db.VarChar(36)
+  categoryId     String @map("category_id") @db.VarChar(36)
 
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
@@ -129,9 +129,9 @@ model ProfessionalCategory {
 // ─── SERVICES ────────────────────────────────────────────────────────────────
 // Catálogo de serviços que um profissional oferece.
 model Service {
-  id             String        @id @default(uuid())
-  professionalId String        @map("professional_id")
-  categoryId     String?       @map("category_id")
+  id             String        @id @default(uuid()) @db.VarChar(36)
+  professionalId String        @map("professional_id") @db.VarChar(36)
+  categoryId     String?       @map("category_id") @db.VarChar(36)
   title          String        @db.VarChar(150) // 'Pintura Residencial'
   priceText      String?       @map("price_text") @db.VarChar(100) // 'A partir de R$ 25/m²'
   priceValue     Decimal?      @map("price_value") @db.Decimal(10, 2) // valor numérico
@@ -163,11 +163,11 @@ enum ServiceStatus {
 //   Serviço concluído → CONCLUIDO
 //   Qualquer lado cancela → CANCELADO
 model Order {
-  id             String      @id @default(uuid())
-  clientId       String      @map("client_id")
-  professionalId String      @map("professional_id")
-  serviceId      String?     @map("service_id") // serviço do catálogo (opcional)
-  categoryId     String?     @map("category_id") // categoria do serviço
+  id             String      @id @default(uuid()) @db.VarChar(36)
+  clientId       String      @map("client_id") @db.VarChar(36)
+  professionalId String      @map("professional_id") @db.VarChar(36)
+  serviceId      String?     @map("service_id") @db.VarChar(36) // serviço do catálogo (opcional)
+  categoryId     String?     @map("category_id") @db.VarChar(36) // categoria do serviço
   status         OrderStatus @default(PENDENTE)
 
   // Dados preenchidos pelo cliente na solicitação
@@ -205,9 +205,9 @@ enum OrderStatus {
 
 // ─── PORTFOLIO_ITEMS ──────────────────────────────────────────────────────────
 model PortfolioItem {
-  id             String   @id @default(uuid())
-  professionalId String   @map("professional_id")
-  categoryId     String?  @map("category_id")
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  professionalId String   @map("professional_id") @db.VarChar(36)
+  categoryId     String?  @map("category_id") @db.VarChar(36)
   title          String   @db.VarChar(150)
   imageUrl       String?  @map("image_url") @db.Text
   year           Int?
@@ -221,9 +221,9 @@ model PortfolioItem {
 
 // ─── TESTIMONIALS ─────────────────────────────────────────────────────────────
 model Testimonial {
-  id             String   @id @default(uuid())
-  professionalId String   @map("professional_id")
-  authorId       String?  @map("author_id") // null se depoimento externo/importado
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  professionalId String   @map("professional_id") @db.VarChar(36)
+  authorId       String?  @map("author_id") @db.VarChar(36) // null se depoimento externo/importado
   authorName     String?  @map("author_name") @db.VarChar(150) // fallback
   authorRole     String?  @map("author_role") @db.VarChar(100) // ex: 'Cliente'
   content        String   @db.Text
@@ -239,10 +239,10 @@ model Testimonial {
 // ─── APPOINTMENTS ─────────────────────────────────────────────────────────────
 // Agendamentos/visitas técnicas gerados a partir de um pedido confirmado.
 model Appointment {
-  id             String            @id @default(uuid())
-  orderId        String?           @map("order_id") // nullable: pode existir sem order
-  professionalId String            @map("professional_id")
-  clientId       String            @map("client_id") // referência direta para queries rápidas
+  id             String            @id @default(uuid()) @db.VarChar(36)
+  orderId        String?           @map("order_id") @db.VarChar(36) // nullable: pode existir sem order
+  professionalId String            @map("professional_id") @db.VarChar(36)
+  clientId       String            @map("client_id") @db.VarChar(36) // referência direta para queries rápidas
   scheduledAt    DateTime          @map("scheduled_at")
   address        String?           @db.Text
   serviceName    String?           @map("service_name") @db.VarChar(150)
@@ -265,8 +265,8 @@ enum AppointmentStatus {
 
 // ─── CERTIFICATIONS ───────────────────────────────────────────────────────────
 model Certification {
-  id             String    @id @default(uuid())
-  professionalId String    @map("professional_id")
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  professionalId String    @map("professional_id") @db.VarChar(36)
   name           String    @db.VarChar(200) // 'Técnico em Eletrotécnica'
   issuedAt       DateTime? @map("issued_at")
   expiresAt      DateTime? @map("expires_at")
