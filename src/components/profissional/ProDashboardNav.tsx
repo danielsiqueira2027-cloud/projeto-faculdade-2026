@@ -114,7 +114,7 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
                   </div>
                   
                   <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Mensagem de cliente: "Gostaria de orçamento para automação residencial. Atuo há mais de 8 anos transformando casas com segurança e tecnologia."</p>
+                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Mensagem de cliente: Gostaria de orçamento para automação residencial. Atuo há mais de 8 anos transformando casas com segurança e tecnologia.</p>
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Há 1 dia</span>
                     </div>
