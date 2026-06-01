@@ -40,7 +40,11 @@ export default function NavbarClient({ user }: NavbarClientProps) {
       ? '/seja-profissional/ativar'
       : '/seja-profissional';
 
-  // Link do Dashboard no dropdown (prefere profissional se tiver ambos)
+  // Não renderizar a topbar laranja no painel do profissional
+  if (pathname.startsWith('/dashboard/profissional')) {
+    return null;
+  }
+
   return (
     <nav className="sticky top-0 z-50 bg-[#fddfa2] shadow-md px-6 py-3 flex items-center justify-between transition-all duration-300">
       {/* Logo */}
@@ -56,17 +60,19 @@ export default function NavbarClient({ user }: NavbarClientProps) {
         </Link>
 
         {/* Botão pro — contexto-sensível */}
-        <Link
-          href={proButtonHref}
-          className={`text-[10px] font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest hidden md:flex items-center gap-1.5 no-underline ${
-            user?.hasProfessional
-              ? 'bg-[#f7941d] text-white hover:bg-[#f7941d]/90'
-              : 'bg-[#0b2545] text-white hover:bg-[#103569]'
-          }`}
-        >
-          <Briefcase size={13} />
-          {proButtonLabel}
-        </Link>
+        {!pathname.startsWith('/dashboard/profissional') && (
+          <Link
+            href={proButtonHref}
+            className={`text-[10px] font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest hidden md:flex items-center gap-1.5 no-underline ${
+              user?.hasProfessional
+                ? 'bg-[#f7941d] text-white hover:bg-[#f7941d]/90'
+                : 'bg-[#0b2545] text-white hover:bg-[#103569]'
+            }`}
+          >
+            <Briefcase size={13} />
+            {proButtonLabel}
+          </Link>
+        )}
 
         {user ? (
           /* ── Usuário autenticado ── */

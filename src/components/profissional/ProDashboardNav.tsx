@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Briefcase, Bell, User as UserIcon, LogOut,
-  LayoutDashboard, FileText, Settings, Search, ClipboardList, Check, X
+  LayoutDashboard, FileText, Settings, Search, ClipboardList, Check, X, Star
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { logoutAction } from '@/app/actions/auth';
@@ -46,8 +46,8 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
     .toUpperCase();
 
   return (
-    <header className="sticky top-[60px] z-40 bg-[#103569] text-white shadow-lg overflow-visible">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between overflow-visible">
+    <header className="sticky top-0 z-50 bg-[#103569] text-white shadow-lg overflow-visible">
+      <div className="container mx-auto px-6 py-3 flex items-center justify-between overflow-visible">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
             <div className="bg-white p-1.5 rounded-lg shadow-inner">
@@ -135,17 +135,25 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
 
           <div className="h-8 w-px bg-white/10 mx-2" />
 
-          <div className="relative" ref={menuRef}>
+          <div className="relative flex items-center gap-5" ref={menuRef}>
+            <Link
+              href="/dashboard/profissional/planos"
+              className="bg-gradient-to-r from-[#f7941d] to-[#ffb35c] text-white hover:from-[#f08a11] hover:to-[#ffa946] text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 uppercase tracking-[0.1em] hidden md:flex items-center gap-2 whitespace-nowrap no-underline ring-1 ring-white/20"
+            >
+              <Briefcase size={14} className="opacity-90" />
+              <span>Acesso Pro</span>
+            </Link>
+
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-3 hover:bg-white/5 p-1 rounded-xl transition-all cursor-pointer border-none bg-transparent"
+              className="flex items-center gap-3 hover:bg-white/5 p-1.5 rounded-2xl transition-all cursor-pointer border-none bg-transparent group"
             >
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-black text-white">{userName}</p>
-                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-widest">Profissional</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-linear-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 flex items-center justify-center font-black shadow-lg text-white">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 group-hover:border-white/40 flex items-center justify-center font-black shadow-lg text-white transition-colors">
                 {initials}
+              </div>
+              <div className="text-left hidden sm:block">
+                <p className="text-[13px] font-black text-white whitespace-nowrap">{userName}</p>
+                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-[0.1em] whitespace-nowrap">Profissional</p>
               </div>
             </button>
 
@@ -163,6 +171,15 @@ export default function ProDashboardNav({ userName }: ProDashboardNavProps) {
                 >
                   <Settings size={16} />
                   Configurações
+                </Link>
+
+                <Link
+                  href="/dashboard/profissional/planos"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Star size={16} />
+                  Meu Plano
                 </Link>
 
 
