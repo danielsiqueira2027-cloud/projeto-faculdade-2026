@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { LogOut, LayoutDashboard, User, Briefcase } from 'lucide-react';
+import { LogOut, LayoutDashboard, User, Briefcase, Star } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionUser } from '@/lib/auth';
 
@@ -40,7 +40,11 @@ export default function NavbarClient({ user }: NavbarClientProps) {
       ? '/seja-profissional/ativar'
       : '/seja-profissional';
 
-  // Link do Dashboard no dropdown (prefere profissional se tiver ambos)
+  // Não renderizar a topbar laranja no painel do profissional
+  if (pathname.startsWith('/dashboard/profissional')) {
+    return null;
+  }
+
   return (
     <nav className="sticky top-0 z-50 bg-[#fddfa2] shadow-md px-6 py-3 flex items-center justify-between transition-all duration-300">
       {/* Logo */}
@@ -56,17 +60,19 @@ export default function NavbarClient({ user }: NavbarClientProps) {
         </Link>
 
         {/* Botão pro — contexto-sensível */}
-        <Link
-          href={proButtonHref}
-          className={`text-[10px] font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest hidden md:flex items-center gap-1.5 no-underline ${
-            user?.hasProfessional
-              ? 'bg-[#f7941d] text-white hover:bg-[#f7941d]/90'
-              : 'bg-[#0b2545] text-white hover:bg-[#103569]'
-          }`}
-        >
-          <Briefcase size={13} />
-          {proButtonLabel}
-        </Link>
+        {!pathname.startsWith('/dashboard/profissional') && (
+          <Link
+            href={proButtonHref}
+            className={`text-[10px] font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest hidden md:flex items-center gap-1.5 no-underline ${
+              user?.hasProfessional
+                ? 'bg-[#f7941d] text-white hover:bg-[#f7941d]/90'
+                : 'bg-[#0b2545] text-white hover:bg-[#103569]'
+            }`}
+          >
+            <Briefcase size={13} />
+            {proButtonLabel}
+          </Link>
+        )}
 
         {user ? (
           /* ── Usuário autenticado ── */
@@ -113,6 +119,17 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                           <User size={18} />
                         </div>
                         Meu Perfil
+                      </Link>
+
+                      <Link
+                        href="/dashboard/profissional/planos"
+                        className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <div className="w-8 h-8 rounded-xl bg-yellow-50 flex items-center justify-center text-[#eab308]">
+                          <Star size={18} />
+                        </div>
+                        Meu Plano
                       </Link>
 
                       <div className="mx-5 h-px bg-[#103569]/5 my-2" />
