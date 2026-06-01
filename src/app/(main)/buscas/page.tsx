@@ -2,8 +2,8 @@
 
 import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { PROFESSIONALS_MOCK } from '@/types/professional';
 import { SearchResultCard } from '@/components/SearchResultCard';
+import { searchProfessionals } from '@/app/actions/professionals';
 
 // ─── Inner component (needs useSearchParams inside Suspense) ───────────────────
 function SearchResults() {
@@ -12,33 +12,39 @@ function SearchResults() {
   const initialCategory = searchParams.get('categoria') || '';
 
   const [search, setSearch] = useState(initialQuery);
-  const [sortBy,  setSortBy]  = useState<'distance' | 'rating' | 'name'>('distance');
+  const [dbResults, setDbResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'name'>('distance');
 
   // Update search state when URL changes
   useEffect(() => {
     setSearch(initialQuery);
   }, [initialQuery]);
 
+  // Fetch real data from the database
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      setLoading(true);
+      const data = await searchProfessionals(search, initialCategory);
+      if (active) {
+        setDbResults(data);
+        setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [search, initialCategory]);
+
   const results = useMemo(() => {
-    let list = [...PROFESSIONALS_MOCK];
+    let list = [...dbResults];
 
-    // Filter by URL category param
-    if (initialCategory) {
-      list = list.filter(p =>
-        p.role.toLowerCase().includes(initialCategory.toLowerCase())
-      );
-    }
-
-    // Filter by search box
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.role.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
+    // Sort in memory
     list.sort((a, b) => {
       if (sortBy === 'distance') return a.distance - b.distance;
       if (sortBy === 'rating')   return b.rating   - a.rating;
@@ -47,7 +53,7 @@ function SearchResults() {
     });
 
     return list;
-  }, [search, initialCategory, sortBy]);
+  }, [dbResults, sortBy]);
 
   const displayTitle = initialCategory || initialQuery || 'Todos os Serviços';
 
@@ -58,7 +64,7 @@ function SearchResults() {
         {/* ── Sidebar ── */}
         <aside className="busca-sidebar">
           <h1 className="busca-category-title">{displayTitle.toUpperCase()}</h1>
-          <p className="busca-count">{results.length} resultados</p>
+          <p className="busca-count">{loading ? 'Carregando' : results.length} resultados</p>
 
           {/* Refine search */}
           <div className="busca-refine-wrap">
@@ -92,7 +98,11 @@ function SearchResults() {
           </div>
 
           {/* Grid */}
-          {results.length > 0 ? (
+          {loading ? (
+            <div className="busca-loading py-12 text-center text-slate-500 font-bold">
+              Carregando profissionais qualificados...
+            </div>
+          ) : results.length > 0 ? (
             <div className="busca-grid">
               {results.map(prof => (
                 <SearchResultCard key={prof.id} professional={prof} />

@@ -31,6 +31,8 @@ model User {
   // Avaliações escritas pelo usuário (enquanto cliente)
   testimonials Testimonial[]
 
+  chatMessages ChatMessage[]
+
   @@map("users")
 }
 
@@ -189,6 +191,7 @@ model Order {
   service      Service?      @relation(fields: [serviceId], references: [id])
   category     Category?     @relation(fields: [categoryId], references: [id])
   appointments Appointment[]
+  chatRoom     ChatRoom?
 
   @@map("orders")
 }
@@ -272,4 +275,29 @@ model Certification {
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@map("certifications")
+}
+
+model ChatRoom {
+  id        String   @id @default(uuid())
+  orderId   String   @unique @map("order_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order    Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  senderId  String   @map("sender_id")
+  type      String   @db.VarChar(10) // "texto" | "imagem"
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
 }

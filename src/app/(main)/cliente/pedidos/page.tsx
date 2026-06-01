@@ -14,25 +14,26 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
-  ArrowRight,
   MapPin,
   CircleDollarSign,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getProfessionalOrders, updateOrderStatusAction } from '@/app/actions/orders';
-import type { OrderStatus } from '@/generated/prisma';
-import { useRouter } from 'next/navigation';
+import { getClientOrders } from '@/app/actions/orders';
 import { getOrCreateChatRoom } from '@/app/actions/chat';
+import { getCurrentUserAction } from '@/app/actions/auth';
+import { useRouter } from 'next/navigation';
 
 type OrderStatusType = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 
 interface OrderItem {
   id: string;
-  clientName: string;
-  clientEmail: string;
-  clientPhone: string;
+  professionalId: string;
+  professionalName: string;
+  professionalEmail: string;
+  professionalPhone: string;
   serviceType: string;
   description: string;
   locationCep: string;
@@ -45,14 +46,16 @@ interface OrderItem {
   avatar: string;
 }
 
-export default function ProfessionalOrdersPage() {
+export default function ClientOrdersPage() {
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
+  const [isLogged, setIsLogged] = useState(false);
+  const [hasClientRole, setHasClientRole] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<OrderStatusType>('PENDENTE');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const router = useRouter();
   const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleStartChat = async (orderId: string) => {
     try {
@@ -66,22 +69,46 @@ export default function ProfessionalOrdersPage() {
     }
   };
 
+  // Load user session
+  useEffect(() => {
+    async function checkSession() {
+      setUserLoading(true);
+      const user = await getCurrentUserAction();
+      if (!user) {
+        setIsLogged(false);
+        setHasClientRole(false);
+        router.push('/login?callbackUrl=/cliente/pedidos');
+        setUserLoading(false);
+        return;
+      }
+
+      setIsLogged(true);
+      if (!user.hasClient) {
+        setHasClientRole(false);
+        setUserLoading(false);
+        return;
+      }
+
+      setHasClientRole(true);
+      setUserLoading(false);
+    }
+    checkSession();
+  }, [router]);
+
   // Load orders from database
   const loadOrders = async () => {
+    if (!isLogged || !hasClientRole) return;
     setLoading(true);
-    const dbOrders = await getProfessionalOrders();
+    const dbOrders = await getClientOrders();
     setOrders(dbOrders as any[]);
     setLoading(false);
   };
 
   useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+    if (isLogged && hasClientRole) {
+      loadOrders();
+    }
+  }, [isLogged, hasClientRole]);
 
   // Helper for displaying status in Portuguese
   const getStatusLabel = (status: OrderStatusType) => {
@@ -96,7 +123,7 @@ export default function ProfessionalOrdersPage() {
   // Filtragem
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.professionalName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.serviceType.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -108,50 +135,54 @@ export default function ProfessionalOrdersPage() {
     return orders.filter(o => o.status === status).length;
   };
 
-  // Atualização do status no banco de dados
-  const handleUpdateStatus = async (id: string, newStatus: OrderStatusType, price?: string) => {
-    let numericPrice: number | undefined = undefined;
-    if (price) {
-      // Converte preço formatado para número (ex: R$ 850,00 ou 850.00 -> 850)
-      const clean = price.replace(/[^\d,]/g, '').replace(',', '.');
-      numericPrice = Number(clean);
-      if (isNaN(numericPrice)) {
-        showToast('Por favor, insira um preço válido.', 'error');
-        return;
-      }
-    }
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-[#fefccf]/20 flex flex-col items-center justify-center font-sans">
+        <Loader2 className="animate-spin text-[#103569] mb-4" size={40} />
+        <p className="text-[#103569] font-bold">Verificando credenciais...</p>
+      </div>
+    );
+  }
 
-    setLoading(true);
-    const res = await updateOrderStatusAction(id, newStatus as OrderStatus, numericPrice);
-    if (res.error) {
-      showToast(res.error, 'error');
-    } else {
-      showToast(`Pedido atualizado para "${getStatusLabel(newStatus)}" com sucesso!`, 'success');
-      await loadOrders(); // Recarrega dados reais do banco
-    }
-    setLoading(false);
-  };
+  if (!isLogged || !hasClientRole) {
+    return (
+      <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6">
+        <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-red-100 animate-in fade-in zoom-in duration-300">
+          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto text-red-500">
+            <AlertTriangle size={32} />
+          </div>
+          <h2 className="text-3xl font-black text-[#103569] leading-tight">Acesso Restrito</h2>
+          <p className="text-slate-600 font-semibold leading-relaxed">
+            Você precisa estar logado com uma conta de <strong>Cliente</strong> para visualizar seus pedidos.
+          </p>
+          <button
+            onClick={() => router.push('/login?callbackUrl=/cliente/pedidos')}
+            className="w-full bg-[#103569] hover:bg-[#103569]/90 text-white py-4 rounded-2xl font-black transition-all shadow-md"
+          >
+            Ir para Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className={`px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 font-bold border ${
-            toast.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-100'
-              : 'bg-red-50 text-red-800 border-red-100'
-          }`}>
-            {toast.type === 'success' ? <CheckCircle className="text-emerald-600" /> : <AlertTriangle className="text-red-500" />}
-            <span>{toast.message}</span>
-          </div>
-        </div>
-      )}
-
+    <div className="max-w-[1200px] mx-auto p-6 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header Section */}
-      <div>
-        <h2 className="text-3xl font-black text-[#103569] tracking-tighter uppercase">Meus Pedidos</h2>
-        <p className="text-slate-500 font-bold">Acompanhe orçamentos, mude status e organize o fluxo de trabalho.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-[#103569] tracking-tighter uppercase">Meus Pedidos</h2>
+          <p className="text-slate-500 font-bold">Acompanhe o status e atualizações dos seus orçamentos em tempo real.</p>
+        </div>
+        <Button 
+          onClick={loadOrders} 
+          disabled={loading}
+          variant="outline" 
+          className="h-11 rounded-2xl font-bold border-slate-200 text-[#103569] flex items-center gap-2 hover:bg-slate-50 shrink-0"
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Sincronizar Pedidos
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -265,7 +296,7 @@ export default function ProfessionalOrdersPage() {
         <div className="relative flex-1 w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <Input 
-            placeholder="Buscar por código do pedido ou nome do cliente..." 
+            placeholder="Buscar por código do pedido ou nome do profissional..." 
             className="pl-12 h-12 rounded-2xl border-slate-100 focus:ring-[#f7941d] bg-slate-50/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -283,29 +314,29 @@ export default function ProfessionalOrdersPage() {
       {loading && orders.length === 0 ? (
         <div className="bg-white p-16 text-center rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-4">
           <Loader2 className="animate-spin text-[#103569]" size={40} />
-          <p className="text-[#103569] font-bold">Buscando solicitações reais no banco de dados...</p>
+          <p className="text-[#103569] font-bold">Buscando seus orçamentos do banco de dados...</p>
         </div>
       ) : (
         <div className="space-y-6">
           {filteredOrders.map((order) => (
             <div 
               key={order.id} 
-              className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group"
+              className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group animate-in fade-in duration-300"
             >
               {/* Card Top */}
               <div className="p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-50">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[#103569]/5 flex items-center justify-center font-black text-xl text-[#103569] border border-[#103569]/10">
+                  <div className="w-14 h-14 rounded-2xl bg-[#f7941d]/5 flex items-center justify-center font-black text-xl text-[#f7941d] border border-[#f7941d]/10">
                     {order.avatar}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-black text-[#103569] text-lg leading-tight">{order.clientName}</h4>
+                      <h4 className="font-black text-[#103569] text-lg leading-tight">{order.professionalName}</h4>
                       <span className="text-[10px] font-black text-slate-400">{order.id}</span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-400 font-bold">
-                      <span className="flex items-center gap-1"><Mail size={12} /> {order.clientEmail}</span>
-                      <span className="flex items-center gap-1"><Phone size={12} /> {order.clientPhone}</span>
+                      <span className="flex items-center gap-1"><Mail size={12} /> {order.professionalEmail}</span>
+                      <span className="flex items-center gap-1"><Phone size={12} /> {order.professionalPhone}</span>
                     </div>
                   </div>
                 </div>
@@ -348,7 +379,7 @@ export default function ProfessionalOrdersPage() {
                       <p className="text-slate-700 text-xs font-black mt-0.5">{order.scheduledAt}</p>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1 justify-end"><CircleDollarSign size={12} /> Valor</span>
+                      <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1 justify-end"><CircleDollarSign size={12} /> Valor Combinado</span>
                       <p className="text-lg font-black text-[#f7941d] leading-none mt-0.5">{order.agreedPrice}</p>
                     </div>
                   </div>
@@ -374,55 +405,24 @@ export default function ProfessionalOrdersPage() {
                     variant="outline" 
                     className="h-10 rounded-xl font-bold border-slate-200 text-slate-500 text-xs"
                   >
-                    <a href={`tel:${order.clientPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
+                    <a href={`tel:${order.professionalPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
                       <Phone size={14} />
-                      Ligar
+                      Ligar para Profissional
                     </a>
                   </Button>
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">
                   {order.status === 'PENDENTE' && (
-                    <>
-                      <Button 
-                        onClick={() => {
-                          const price = prompt('Digite o valor acordado para o serviço (ex: R$ 850,00):');
-                          if (price) {
-                            handleUpdateStatus(order.id, 'EM_ANDAMENTO', price);
-                          } else {
-                            handleUpdateStatus(order.id, 'EM_ANDAMENTO');
-                          }
-                        }}
-                        className="flex-1 sm:flex-none h-10 rounded-xl font-black bg-[#f7941d] hover:bg-[#f7941d]/90 text-white text-xs px-6 shadow-sm active:scale-95 transition-all"
-                      >
-                        Aceitar & Combinar
-                      </Button>
-                      <Button 
-                        onClick={() => handleUpdateStatus(order.id, 'CANCELADO')}
-                        variant="outline" 
-                        className="flex-1 sm:flex-none h-10 rounded-xl font-bold border-red-100 hover:border-red-200 text-red-500 hover:bg-red-50 text-xs"
-                      >
-                        Recusar
-                      </Button>
-                    </>
+                    <span className="flex items-center gap-1.5 text-xs font-black text-yellow-600 bg-yellow-50/80 px-4 py-2 rounded-xl border border-yellow-100">
+                      <Clock size={14} /> Aguardando Profissional
+                    </span>
                   )}
 
                   {order.status === 'EM_ANDAMENTO' && (
-                    <>
-                      <Button 
-                        onClick={() => handleUpdateStatus(order.id, 'CONCLUIDO')}
-                        className="flex-1 sm:flex-none h-10 rounded-xl font-black bg-green-600 hover:bg-green-700 text-white text-xs px-6 shadow-sm active:scale-95 transition-all"
-                      >
-                        Concluir Serviço
-                      </Button>
-                      <Button 
-                        onClick={() => handleUpdateStatus(order.id, 'CANCELADO')}
-                        variant="outline" 
-                        className="flex-1 sm:flex-none h-10 rounded-xl font-bold border-red-100 hover:border-red-200 text-red-500 hover:bg-red-50 text-xs"
-                      >
-                        Cancelar
-                      </Button>
-                    </>
+                    <span className="flex items-center gap-1.5 text-xs font-black text-blue-600 bg-blue-50/80 px-4 py-2 rounded-xl border border-blue-100">
+                      <TrendingUp size={14} /> Serviço Em Andamento
+                    </span>
                   )}
 
                   {order.status === 'CONCLUIDO' && (
@@ -433,7 +433,7 @@ export default function ProfessionalOrdersPage() {
 
                   {order.status === 'CANCELADO' && (
                     <span className="flex items-center gap-1.5 text-xs font-black text-red-500 bg-red-50/80 px-4 py-2 rounded-xl border border-red-100">
-                      <XCircle size={14} /> Pedido Cancelado
+                      <XCircle size={14} /> Pedido Cancelado/Recusado
                     </span>
                   )}
                 </div>
@@ -448,10 +448,10 @@ export default function ProfessionalOrdersPage() {
               </div>
               <h3 className="text-xl font-black text-[#103569]">Nenhum pedido nesta aba</h3>
               <p className="text-slate-400 font-bold mt-1 max-w-sm mx-auto text-sm">
-                {activeTab === 'PENDENTE' && 'Você não possui novas solicitações de orçamento pendentes no momento.'}
-                {activeTab === 'EM_ANDAMENTO' && 'Nenhum serviço está marcado como em andamento no momento.'}
-                {activeTab === 'CONCLUIDO' && 'Você ainda não concluiu nenhum pedido ou orçamento nesta conta.'}
-                {activeTab === 'CANCELADO' && 'Nenhum pedido foi cancelado ou recusado.'}
+                {activeTab === 'PENDENTE' && 'Você não possui orçamentos pendentes de aprovação.'}
+                {activeTab === 'EM_ANDAMENTO' && 'Nenhum dos seus pedidos está em andamento.'}
+                {activeTab === 'CONCLUIDO' && 'Você ainda não concluiu nenhum orçamento nesta conta.'}
+                {activeTab === 'CANCELADO' && 'Nenhum pedido foi cancelado.'}
               </p>
             </div>
           )}

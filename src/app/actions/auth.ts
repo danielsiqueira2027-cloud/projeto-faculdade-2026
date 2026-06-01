@@ -211,3 +211,8 @@ export async function ativarProfissionalAction(
 
   redirect('/dashboard/profissional');
 }
+
+export async function getCurrentUserAction() {
+  const { getCurrentUser } = await import('@/lib/auth');
+  return await getCurrentUser();
+}

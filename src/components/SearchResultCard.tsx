@@ -15,10 +15,10 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
   return (
     <article
       className="src-card"
-      onClick={() => router.push(`/perfil-profissional`)}
+      onClick={() => router.push(`/perfil-profissional?id=${professional.id}`)}
       role="button"
       tabIndex={0}
-      onKeyDown={e => e.key === 'Enter' && router.push(`/perfil-profissional`)}
+      onKeyDown={e => e.key === 'Enter' && router.push(`/perfil-profissional?id=${professional.id}`)}
       aria-label={`Ver perfil de ${professional.name}`}
     >
       {/* Avatar */}

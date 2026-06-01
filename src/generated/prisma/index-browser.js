@@ -249,6 +249,21 @@ exports.Prisma.CertificationScalarFieldEnum = {
   issuer: 'issuer'
 };
 
+exports.Prisma.ChatRoomScalarFieldEnum = {
+  id: 'id',
+  orderId: 'orderId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ChatMessageScalarFieldEnum = {
+  id: 'id',
+  roomId: 'roomId',
+  senderId: 'senderId',
+  type: 'type',
+  content: 'content',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -374,6 +389,19 @@ exports.Prisma.CertificationOrderByRelevanceFieldEnum = {
   name: 'name',
   issuer: 'issuer'
 };
+
+exports.Prisma.ChatRoomOrderByRelevanceFieldEnum = {
+  id: 'id',
+  orderId: 'orderId'
+};
+
+exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
+  id: 'id',
+  roomId: 'roomId',
+  senderId: 'senderId',
+  type: 'type',
+  content: 'content'
+};
 exports.ServiceStatus = exports.$Enums.ServiceStatus = {
   ativo: 'ativo',
   inativo: 'inativo'
@@ -404,7 +432,9 @@ exports.Prisma.ModelName = {
   PortfolioItem: 'PortfolioItem',
   Testimonial: 'Testimonial',
   Appointment: 'Appointment',
-  Certification: 'Certification'
+  Certification: 'Certification',
+  ChatRoom: 'ChatRoom',
+  ChatMessage: 'ChatMessage'
 };
 
 /**
