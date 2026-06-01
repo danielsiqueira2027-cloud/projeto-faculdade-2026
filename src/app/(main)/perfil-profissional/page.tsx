@@ -1,46 +1,54 @@
 import React from 'react';
 import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
 import { ProfileCard } from '../perfil/ProfileCard';
 import { PortfolioGrid } from '../perfil/PortfolioGrid';
-import { Professional } from '@/types';
+import { getProfessionalDetails } from '@/app/actions/professionals';
+import { prisma } from '@/lib/database';
 
-const MOCK_PROFESSIONAL: Professional = {
-  id: '1',
-  name: 'Guilherme Freitas',
-  avatar: '/imgs/who/lucas.jpg',
-  specialty: 'Eletricista Residencial',
-  description: 'Especialista em instalações elétricas modernas e automação residencial.',
-  rating: 5.0,
-  reviewCount: 85,
-  yearsOfExperience: 8,
-  certifications: ['Técnico em Eletrotécnica', 'Automação Predial'],
-  portfolio: [
-    { id: '1', title: 'Iluminação LED Jardim', category: 'Elétrica', imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop', year: 2024 },
-    { id: '2', title: 'Painel Elétrico Industrial', category: 'Elétrica', imageUrl: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=600&h=400&fit=crop', year: 2024 },
-    { id: '3', title: 'Instalação Solar Residencial', category: 'Energia', imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=600&h=400&fit=crop', year: 2023 },
-  ],
-  testimonials: [
-    { id: '1', author: 'João Pedro', role: 'Cliente', content: 'Muito profissional e pontual.', rating: 5 },
-  ]
-};
+interface PageProps {
+  searchParams: Promise<{ id?: string }>;
+}
 
-export default function PerfilProfissionalPage() {
+export default async function PerfilProfissionalPage({ searchParams }: PageProps) {
+  const { id } = await searchParams;
+
+  // Se nenhum ID for fornecido, tenta buscar o primeiro profissional do banco
+  if (!id) {
+    const firstProf = await prisma.professional.findFirst({
+      select: { id: true },
+    });
+    if (firstProf) {
+      redirect(`/perfil-profissional?id=${firstProf.id}`);
+    }
+    return notFound();
+  }
+
+  const professional = await getProfessionalDetails(id);
+
+  if (!professional) {
+    return notFound();
+  }
+
   return (
-    <div className="container mx-auto p-4 md:p-8 space-y-8">
+    <div className="container mx-auto p-4 md:p-8 space-y-8 max-w-[1200px]">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-[#0A1A2F]">Perfil do Profissional</h1>
-        <Link href="/buscas" className="text-blue-600 hover:underline">
+        <h1 className="text-3xl font-black text-[#0b2545] tracking-tight uppercase">Perfil do Profissional</h1>
+        <Link href="/buscas" className="text-[#f7941d] font-bold no-underline hover:underline flex items-center gap-1">
           &larr; Voltar para buscas
         </Link>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-3">
-          <ProfileCard professional={MOCK_PROFESSIONAL} />
+          <ProfileCard professional={professional} />
         </div>
-        <div className="lg:col-span-3">
-          <PortfolioGrid items={MOCK_PROFESSIONAL.portfolio} />
-        </div>
+        
+        {professional.portfolio && professional.portfolio.length > 0 && (
+          <div className="lg:col-span-3">
+            <PortfolioGrid items={professional.portfolio} />
+          </div>
+        )}
       </div>
     </div>
   );

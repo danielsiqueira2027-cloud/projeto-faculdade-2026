@@ -49,7 +49,7 @@ export function ProfileCard({ professional }: ProfileCardProps) {
           </div>
 
           <div className="flex gap-4">
-            <Link href="/orcamento">
+            <Link href={`/orcamento?profId=${professional.id}`}>
               <Button size="lg" className="bg-bp-primary hover:bg-bp-primary/90 text-white rounded-2xl px-8 h-14 shadow-lg font-bold">
                 Solicitar Orçamento
               </Button>
