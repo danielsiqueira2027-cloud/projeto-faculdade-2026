@@ -20,7 +20,6 @@ const navLinks = [
   { name: 'Agenda',        href: '/dashboard/profissional/agenda',        icon: Briefcase },
   { name: 'Meus Serviços', href: '/dashboard/profissional/meus-servicos', icon: FileText },
   { name: 'Pedidos',       href: '/dashboard/profissional/pedidos',       icon: ClipboardList },
-  { name: 'Perfil',        href: '/dashboard/profissional/perfil',        icon: Settings },
 ];
 
 export default function ProDashboardNav({ userName, hasClient }: ProDashboardNavProps) {
@@ -48,9 +47,9 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
 
   return (
     <header className="sticky top-0 z-50 bg-[#103569] text-white shadow-lg overflow-visible">
-      <div className="container mx-auto px-6 py-3 flex items-center justify-between overflow-visible">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between overflow-visible">
+        <div className="flex items-center gap-2 xl:gap-4 min-w-0">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="bg-white p-1.5 rounded-lg shadow-inner">
               <Briefcase className="w-6 h-6 text-[#103569]" />
             </div>
@@ -63,7 +62,7 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                className={`px-2 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-1 xl:gap-2 whitespace-nowrap shrink-0 ${
                   pathname === link.href
                     ? 'bg-white/10 text-white shadow-inner'
                     : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -76,8 +75,8 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden lg:flex relative w-64">
+        <div className="flex items-center gap-2 lg:gap-4 shrink-0">
+          <div className="hidden lg:flex relative w-32 xl:w-56 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={16} />
             <Input
               placeholder="Buscar orçamentos..."
@@ -134,12 +133,12 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
             )}
           </div>
 
-          <div className="h-8 w-px bg-white/10 mx-2" />
+          <div className="h-8 w-px bg-white/10 mx-1 lg:mx-2 shrink-0" />
 
-          <div className="relative flex items-center gap-5" ref={menuRef}>
+          <div className="relative flex items-center gap-2 lg:gap-3 shrink-0" ref={menuRef}>
             <Link
               href="/dashboard/profissional/planos"
-              className="bg-gradient-to-r from-[#f7941d] to-[#ffb35c] text-white hover:from-[#f08a11] hover:to-[#ffa946] text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 uppercase tracking-[0.1em] hidden md:flex items-center gap-2 whitespace-nowrap no-underline ring-1 ring-white/20"
+              className="bg-gradient-to-r from-[#f7941d] to-[#ffb35c] text-white hover:from-[#f08a11] hover:to-[#ffa946] text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 uppercase tracking-[0.1em] hidden md:flex items-center gap-2 whitespace-nowrap shrink-0 no-underline ring-1 ring-white/20"
             >
               <Briefcase size={14} className="opacity-90" />
               <span>Acesso Pro</span>
@@ -147,14 +146,14 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-3 hover:bg-white/5 p-1.5 rounded-2xl transition-all cursor-pointer border-none bg-transparent group"
+              className="flex items-center gap-2 hover:bg-white/5 p-1.5 rounded-2xl transition-all cursor-pointer border-none bg-transparent group shrink-0"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 group-hover:border-white/40 flex items-center justify-center font-black shadow-lg text-white transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 group-hover:border-white/40 flex items-center justify-center font-black shadow-lg text-white transition-colors shrink-0">
                 {initials}
               </div>
-              <div className="text-left hidden sm:block">
-                <p className="text-[13px] font-black text-white whitespace-nowrap">{userName}</p>
-                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-[0.1em] whitespace-nowrap">Profissional</p>
+              <div className="text-left hidden 2xl:block max-w-[120px]">
+                <p className="text-[13px] font-black text-white truncate">{userName}</p>
+                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-[0.1em] truncate">Profissional</p>
               </div>
             </button>
 

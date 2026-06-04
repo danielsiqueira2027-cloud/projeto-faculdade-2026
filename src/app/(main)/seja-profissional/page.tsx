@@ -156,7 +156,7 @@ export default function SejaProPage() {
           />
         </div>
 
-        <div style={{ padding: '20px 40px 50px' }}>
+        <div className="pro-section-padding" style={{ padding: '20px 40px 50px' }}>
           <h2
             style={{
               textAlign: 'center',
@@ -188,6 +188,7 @@ export default function SejaProPage() {
 
       {/* ── COMO FUNCIONA ─────────────────────────────────── */}
       <section
+        className="pro-section-padding"
         style={{
           background: '#FFF7D6',
           padding: '40px 40px 50px',
@@ -246,6 +247,7 @@ export default function SejaProPage() {
 
       {/* ── REQUISITOS + CTA ──────────────────────────────── */}
       <section
+        className="pro-section-padding"
         style={{
           background: '#fff',
           padding: '40px 40px 50px',
@@ -333,6 +335,7 @@ export default function SejaProPage() {
 
       {/* ── DEPOIMENTO ────────────────────────────────────── */}
       <section
+        className="pro-section-padding"
         style={{
           background: '#fff',
           borderRadius: 14,

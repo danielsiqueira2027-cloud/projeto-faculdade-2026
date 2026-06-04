@@ -4,6 +4,7 @@ import { LayoutDashboard, Users, Wrench, DollarSign, Settings, LogOut } from "lu
 import { ReactNode } from "react";
 import { adminAuth } from "@/lib/auth-admin";
 import { logoutAdminAction } from "@/app/actions/auth-admin";
+import { AdminMobileNav } from "./_components/AdminMobileNav";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Segunda camada de proteção: defesa em profundidade server-side.
@@ -25,6 +26,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <div className="flex h-screen bg-gray-50 text-slate-800">
+      {/* Mobile navigation overlay */}
+      <AdminMobileNav user={session.user} navItems={navItems} />
+
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r flex-col justify-between hidden md:flex">
         <div className="p-6">

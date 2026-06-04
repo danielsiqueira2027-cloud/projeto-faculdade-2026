@@ -569,4 +569,10 @@
   .benefits-pro-grid { grid-template-columns: 1fr; }
   .steps-pro-grid    { grid-template-columns: 1fr; }
   .req-cta-wrapper   { flex-direction: column; }
+
+  /* Reduz padding horizontal em mobile para sections com inline style fixo */
+  .pro-section-padding {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
 }

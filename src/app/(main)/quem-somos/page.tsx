@@ -62,13 +62,13 @@ export default function QuemSomosPage() {
         <h1
           style={{
             textAlign: 'center',
-            fontSize: 32,
-            fontWeight: 700,
-            marginBottom: 25,
-            color: '#0A1A2F',
-          }}
-        >
-          Nossa História
+          fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+          fontWeight: 700,
+          marginBottom: 25,
+          color: '#0A1A2F',
+        }}
+      >
+        Nossa História
         </h1>
 
         {/* Caixa de história */}
@@ -104,12 +104,12 @@ export default function QuemSomosPage() {
           style={{
             textAlign: 'center',
             marginBottom: 40,
-            fontSize: 26,
-            fontWeight: 700,
-            color: '#0A1A2F',
-          }}
-        >
-          Integrantes do Projeto
+          fontSize: 'clamp(1.3rem, 3.5vw, 1.625rem)',
+          fontWeight: 700,
+          color: '#0A1A2F',
+        }}
+      >
+        Integrantes do Projeto
         </h2>
 
         {/* Grid de membros */}
@@ -127,7 +127,7 @@ export default function QuemSomosPage() {
               </div>
               <h3
                 style={{
-                  fontSize: 22,
+                  fontSize: 'clamp(1rem, 3vw, 1.375rem)',
                   fontWeight: 700,
                   color: '#0A1A2F',
                   marginBottom: 6,
