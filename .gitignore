@@ -46,6 +46,9 @@ next-env.d.ts
 AGENTS.md
 CLAUDE.md
 
+# scratch / backups
+scratch/
+
 # documentation
 README.md
 readme.md

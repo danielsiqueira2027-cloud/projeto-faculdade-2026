@@ -90,6 +90,10 @@ export default function LoginPage() {
               Ainda não tem cadastro?{' '}
               <Link href="/cadastro" className="register-link">Crie uma conta</Link>
             </p>
+
+            <Link href="/auth/login" className="admin-link">
+              Gestão
+            </Link>
           </form>
         </div>
       </div>
@@ -182,6 +186,11 @@ export default function LoginPage() {
         .register-text { text-align: center; font-size: 0.9rem; color: #444; margin-top: 10px; }
         .register-link { color: #1f3c88; text-decoration: none; font-weight: 600; transition: 0.2s; }
         .register-link:hover { text-decoration: underline; }
+        .admin-link {
+          display: block; text-align: center; margin-top: 15px;
+          font-size: 0.75rem; color: #bbb; text-decoration: none;
+        }
+        .admin-link:hover { color: #1f3c88; }
         @media (max-width: 750px) {
           .login-container { flex-direction: column; height: auto; }
           .login-left { padding: 25px; }
