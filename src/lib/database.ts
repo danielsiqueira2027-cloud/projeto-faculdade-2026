@@ -23,8 +23,8 @@ if (!globalForPrisma.adapter) {
   const poolConfig = {
     host: dbUrl.hostname || 'localhost',
     port: parseInt(dbUrl.port) || 3306,
-    user: 'root',
-    password: '',
+    user: dbUrl.username || 'root',
+    password: dbUrl.password || '',
     database: dbUrl.pathname.substring(1).split('?')[0],
     connectionLimit: 5,
   };

@@ -29,6 +29,7 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
             src={professional.avatarUrl} 
             alt={`Foto de ${professional.name}`} 
             fill
+            sizes="(max-width: 900px) 100vw, 220px"
             className="object-cover"
           />
         ) : null}

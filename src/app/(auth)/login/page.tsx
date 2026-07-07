@@ -84,7 +84,7 @@ export default function LoginPage() {
               {pending ? 'ENTRANDO...' : 'ENTRAR'}
             </button>
 
-            <Link href="#" className="forgot">Esqueci minha senha</Link>
+            <Link href="/forgot-password" className="forgot">Esqueci minha senha</Link>
 
             <p className="register-text">
               Ainda não tem cadastro?{' '}

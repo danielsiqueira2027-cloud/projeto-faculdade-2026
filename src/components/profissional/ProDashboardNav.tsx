@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   Briefcase, Bell, User as UserIcon, LogOut,
@@ -9,10 +10,12 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { logoutAction } from '@/app/actions/auth';
+import { getNotifications, markNotificationAsRead, deleteNotification } from '@/app/actions/notifications';
 
 interface ProDashboardNavProps {
   userName: string;
   hasClient?: boolean;
+  avatarUrl?: string | null;
 }
 
 const navLinks = [
@@ -22,12 +25,13 @@ const navLinks = [
   { name: 'Pedidos',       href: '/dashboard/profissional/pedidos',       icon: ClipboardList },
 ];
 
-export default function ProDashboardNav({ userName, hasClient }: ProDashboardNavProps) {
+export default function ProDashboardNav({ userName, hasClient, avatarUrl }: ProDashboardNavProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const menuRef = React.useRef<HTMLDivElement>(null);
   const notifRef = React.useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -38,6 +42,35 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  React.useEffect(() => {
+    async function loadNotifs() {
+      const data = await getNotifications();
+      setNotifications(data);
+    }
+    loadNotifs();
+
+    const eventSource = new EventSource('/api/sse');
+    eventSource.addEventListener('notification', () => {
+      loadNotifs();
+    });
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  const handleMarkAsRead = async (id: string) => {
+    await markNotificationAsRead(id);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteNotification(id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const initials = userName
     .split(' ')
     .slice(0, 2)
@@ -46,16 +79,13 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
     .toUpperCase();
 
   return (
-    <header className="sticky top-0 z-50 bg-[#103569] text-white shadow-lg overflow-visible">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between overflow-visible">
-        <div className="flex items-center gap-2 xl:gap-4 min-w-0">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="bg-white p-1.5 rounded-lg shadow-inner">
-              <Briefcase className="w-6 h-6 text-[#103569]" />
-            </div>
-            <span className="text-xl font-black tracking-tighter">ClickServiço</span>
-            <span className="bg-[#f7941d] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ml-1">Pro</span>
-          </Link>
+    <header className="sticky top-0 z-50 bg-[#103569] text-white shadow-md px-6 py-3 flex items-center justify-between transition-all duration-300 min-h-[70px] overflow-visible">
+      <div className="flex items-center gap-2 xl:gap-4 min-w-0">
+        <Link href="/" className="flex items-center gap-2 no-underline text-white font-bold text-xl hover:opacity-80 transition-opacity shrink-0">
+          <Image src="/imgs/misc/logo.png" alt="ClickServiço" width={35} height={35} className="object-contain" />
+          <span className="tracking-tighter text-[#f7941d]">ClickServiço</span>
+          <span className="bg-[#f7941d] text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ml-1">Pro</span>
+        </Link>
 
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => (
@@ -90,11 +120,13 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
               className="relative p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
             >
               <Bell size={20} className="text-white/80" />
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#103569]" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#103569]" />
+              )}
             </button>
 
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-lg shadow-2xl border border-gray-100 z-50 flex flex-col text-[#103569]">
+              <div className="absolute right-0 top-full mt-2 w-[400px] bg-white rounded-lg shadow-2xl border border-gray-100 z-50 flex flex-col text-[#103569] overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                   <h3 className="font-bold text-[15px] text-gray-800">Notificações</h3>
                   <div className="flex items-center gap-1">
@@ -104,23 +136,33 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
                   </div>
                 </div>
 
-                <div className="max-h-[380px] overflow-y-auto">
-                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Novo pedido de orçamento recebido: Instalação elétrica moderna e projeto de iluminação em LED.</p>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Há 2 horas</span>
+                <div className="max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 font-medium">
+                      Nenhuma notificação no momento.
                     </div>
-                  </div>
-                  
-                  <div className="p-4 border-b border-gray-100 hover:bg-gray-50/50 transition-colors">
-                    <p className="text-[15px] text-gray-700 leading-snug mb-3">Mensagem de cliente: Gostaria de orçamento para automação residencial. Atuo há mais de 8 anos transformando casas com segurança e tecnologia.</p>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Há 1 dia</span>
-                    </div>
-                  </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div 
+                        key={notif.id} 
+                        className={`p-4 hover:bg-slate-50/50 transition-colors flex items-start justify-between gap-3 ${!notif.read ? 'bg-blue-50/30' : ''}`}
+                      >
+                        <div className="flex-1 cursor-pointer" onClick={() => handleMarkAsRead(notif.id)}>
+                          <p className={`text-[13px] leading-snug ${!notif.read ? 'font-bold text-[#103569]' : 'text-gray-600'}`}>{notif.title}</p>
+                          <span className="text-[11px] text-gray-400 mt-1 block">{notif.time}</span>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(notif.id); }}
+                          className="text-gray-400 hover:text-red-500 p-1 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer border-none bg-transparent shrink-0"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
 
-                <div className="p-3 bg-slate-50/80 text-center rounded-b-lg">
+                <div className="p-3 bg-slate-50/80 text-center rounded-b-lg border-t border-gray-100">
                   <Link 
                     href="/dashboard/profissional/notificacoes" 
                     onClick={() => setNotifOpen(false)}
@@ -136,25 +178,35 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
           <div className="h-8 w-px bg-white/10 mx-1 lg:mx-2 shrink-0" />
 
           <div className="relative flex items-center gap-2 lg:gap-3 shrink-0" ref={menuRef}>
-            <Link
-              href="/dashboard/profissional/planos"
-              className="bg-gradient-to-r from-[#f7941d] to-[#ffb35c] text-white hover:from-[#f08a11] hover:to-[#ffa946] text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 uppercase tracking-[0.1em] hidden md:flex items-center gap-2 whitespace-nowrap shrink-0 no-underline ring-1 ring-white/20"
-            >
-              <Briefcase size={14} className="opacity-90" />
-              <span>Acesso Pro</span>
-            </Link>
+            {hasClient && (
+              <Link
+                href="/dashboard/cliente"
+                className="bg-linear-to-r from-[#f7941d] to-[#ffb35c] text-white hover:from-[#f08a11] hover:to-[#ffa946] text-[11px] font-black px-4 py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95 uppercase tracking-widest hidden md:flex items-center gap-2 whitespace-nowrap shrink-0 no-underline ring-1 ring-white/20"
+              >
+                <Briefcase size={14} className="opacity-90" />
+                <span>Acesso Cliente</span>
+              </Link>
+            )}
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="flex items-center gap-2 hover:bg-white/5 p-1.5 rounded-2xl transition-all cursor-pointer border-none bg-transparent group shrink-0"
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f7941d] to-[#ffb35c] border-2 border-white/20 group-hover:border-white/40 flex items-center justify-center font-black shadow-lg text-white transition-colors shrink-0">
-                {initials}
-              </div>
-              <div className="text-left hidden 2xl:block max-w-[120px]">
-                <p className="text-[13px] font-black text-white truncate">{userName}</p>
-                <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-[0.1em] truncate">Profissional</p>
-              </div>
+              {avatarUrl ? (
+                <div className="w-10 h-10 rounded-full overflow-hidden relative shadow-lg ring-2 ring-white/20 group-hover:ring-white/40 transition-all shrink-0">
+                  <Image src={avatarUrl} alt={userName} fill sizes="40px" className="object-cover" />
+                </div>
+              ) : (
+                <>
+                  <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#f7941d] to-[#ffb35c] text-white flex items-center justify-center font-black shadow-lg ring-2 ring-white/20 group-hover:ring-white/40 transition-all shrink-0">
+                    {initials}
+                  </div>
+                  <div className="text-left hidden 2xl:block max-w-[120px]">
+                    <p className="text-[13px] font-black text-white truncate">{userName}</p>
+                    <p className="text-[10px] font-bold text-[#f7941d] uppercase tracking-widest truncate">Profissional</p>
+                  </div>
+                </>
+              )}
             </button>
 
             {menuOpen && (
@@ -164,13 +216,15 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
                   <p className="text-sm font-bold text-[#103569]">{userName}</p>
                 </div>
 
+
+
                 <Link
                   href="/dashboard/profissional/perfil"
                   className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <Settings size={16} />
-                  Configurações
+                  <UserIcon size={16} />
+                  Meu Perfil
                 </Link>
 
                 <Link
@@ -191,7 +245,7 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
                       onClick={() => setMenuOpen(false)}
                     >
                       <ArrowLeft size={16} />
-                      Área Cliente
+                      Acesso Cliente
                     </Link>
                   </>
                 )}
@@ -211,7 +265,6 @@ export default function ProDashboardNav({ userName, hasClient }: ProDashboardNav
             )}
           </div>
         </div>
-      </div>
     </header>
   );
 }

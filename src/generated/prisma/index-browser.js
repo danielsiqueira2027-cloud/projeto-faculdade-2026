@@ -199,6 +199,7 @@ exports.Prisma.OrderScalarFieldEnum = {
   address: 'address',
   urgency: 'urgency',
   attachments: 'attachments',
+  period: 'period',
   agreedPrice: 'agreedPrice',
   scheduledAt: 'scheduledAt',
   notes: 'notes',
@@ -261,6 +262,23 @@ exports.Prisma.ChatMessageScalarFieldEnum = {
   senderId: 'senderId',
   type: 'type',
   content: 'content',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  createdAt: 'createdAt',
+  read: 'read'
+};
+
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
   createdAt: 'createdAt'
 };
 
@@ -353,6 +371,7 @@ exports.Prisma.OrderOrderByRelevanceFieldEnum = {
   locationCep: 'locationCep',
   address: 'address',
   urgency: 'urgency',
+  period: 'period',
   notes: 'notes'
 };
 
@@ -402,6 +421,18 @@ exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
   type: 'type',
   content: 'content'
 };
+
+exports.Prisma.NotificationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title'
+};
+
+exports.Prisma.PasswordResetTokenOrderByRelevanceFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  token: 'token'
+};
 exports.ServiceStatus = exports.$Enums.ServiceStatus = {
   ativo: 'ativo',
   inativo: 'inativo'
@@ -434,7 +465,9 @@ exports.Prisma.ModelName = {
   Appointment: 'Appointment',
   Certification: 'Certification',
   ChatRoom: 'ChatRoom',
-  ChatMessage: 'ChatMessage'
+  ChatMessage: 'ChatMessage',
+  Notification: 'Notification',
+  PasswordResetToken: 'PasswordResetToken'
 };
 
 /**

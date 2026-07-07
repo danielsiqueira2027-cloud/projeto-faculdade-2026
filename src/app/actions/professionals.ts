@@ -155,6 +155,7 @@ export async function getProfessionalDetails(id: string) {
         content: t.content,
         rating: t.rating,
       })),
+      categories: prof.categories.map((c) => c.category.name),
     };
   } catch (error) {
     console.error('[getProfessionalDetails] Erro ao obter detalhes do profissional:', error);

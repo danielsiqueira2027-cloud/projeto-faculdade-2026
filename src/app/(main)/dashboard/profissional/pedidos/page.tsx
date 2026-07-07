@@ -43,6 +43,7 @@ interface OrderItem {
   status: OrderStatusType;
   createdAt: string;
   avatar: string;
+  period: string;
 }
 
 export default function ProfessionalOrdersPage() {
@@ -76,6 +77,15 @@ export default function ProfessionalOrdersPage() {
 
   useEffect(() => {
     loadOrders();
+
+    const eventSource = new EventSource('/api/sse');
+    eventSource.addEventListener('order', () => {
+      loadOrders();
+    });
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -346,6 +356,9 @@ export default function ProfessionalOrdersPage() {
                     <div>
                       <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1"><Calendar size={12} /> Agendamento</span>
                       <p className="text-slate-700 text-xs font-black mt-0.5">{order.scheduledAt}</p>
+                      {order.period && (
+                        <p className="text-[10px] text-[#f7941d] font-bold mt-0.5">Turno: {order.period}</p>
+                      )}
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1 justify-end"><CircleDollarSign size={12} /> Valor</span>
@@ -385,14 +398,7 @@ export default function ProfessionalOrdersPage() {
                   {order.status === 'PENDENTE' && (
                     <>
                       <Button 
-                        onClick={() => {
-                          const price = prompt('Digite o valor acordado para o serviço (ex: R$ 850,00):');
-                          if (price) {
-                            handleUpdateStatus(order.id, 'EM_ANDAMENTO', price);
-                          } else {
-                            handleUpdateStatus(order.id, 'EM_ANDAMENTO');
-                          }
-                        }}
+                        onClick={() => handleUpdateStatus(order.id, 'EM_ANDAMENTO')}
                         className="flex-1 sm:flex-none h-10 rounded-xl font-black bg-[#f7941d] hover:bg-[#f7941d]/90 text-white text-xs px-6 shadow-sm active:scale-95 transition-all"
                       >
                         Aceitar & Combinar

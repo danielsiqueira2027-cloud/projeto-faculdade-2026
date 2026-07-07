@@ -3,7 +3,7 @@ import { Inter, Manrope, Work_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import TempNavFooter from "@/components/TempNavFooter";
+
 
 const inter = Inter({
   variable: "--font-inter",

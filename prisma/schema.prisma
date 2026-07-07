@@ -32,6 +32,8 @@ model User {
   testimonials Testimonial[]
 
   chatMessages ChatMessage[]
+  notifications Notification[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -177,6 +179,7 @@ model Order {
   address      String?  @db.Text
   urgency      String?  @db.VarChar(50)                        // 'o_mais_rapido', etc.
   attachments  Json?                                           // URLs dos arquivos enviados
+  period       String?  @db.VarChar(50)  @map("period")                  // turno preferencial: Manhã, Tarde, Noite
 
   // Dados acordados com o profissional (preenchidos após contato)
   agreedPrice Decimal?  @db.Decimal(10, 2) @map("agreed_price") // valor combinado
@@ -302,3 +305,27 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
+model Notification {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @map("user_id") @db.VarChar(36)
+  title     String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  read      Boolean  @default(false)
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @map("user_id") @db.VarChar(36)
+  token     String   @unique @db.VarChar(64)
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}

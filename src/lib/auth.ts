@@ -8,6 +8,7 @@ export type SessionUser = {
   name: string;
   email: string;
   phone: string | null;
+  avatarUrl: string | null;
   hasClient: boolean;
   hasProfessional: boolean;
 };
@@ -29,6 +30,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
         name: true,
         email: true,
         phone: true,
+        avatarUrl: true,
         client: { select: { id: true } },
         professional: { select: { id: true } },
       },
@@ -41,6 +43,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      avatarUrl: user.avatarUrl,
       hasClient: !!user.client,
       hasProfessional: !!user.professional,
     };

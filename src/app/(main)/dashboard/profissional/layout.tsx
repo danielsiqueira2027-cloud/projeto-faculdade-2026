@@ -18,7 +18,7 @@ export default async function ProfessionalDashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#f8f6c9]/20">
-      <ProDashboardNav userName={user.name} hasClient={user.hasClient} />
+      <ProDashboardNav userName={user.name} hasClient={user.hasClient} avatarUrl={user.avatarUrl} />
       <main className="container mx-auto px-4 py-8">
         {children}
       </main>

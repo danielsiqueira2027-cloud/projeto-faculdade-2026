@@ -107,6 +107,15 @@ export default function ClientOrdersPage() {
   useEffect(() => {
     if (isLogged && hasClientRole) {
       loadOrders();
+
+      const eventSource = new EventSource('/api/sse');
+      eventSource.addEventListener('order', () => {
+        loadOrders();
+      });
+
+      return () => {
+        eventSource.close();
+      };
     }
   }, [isLogged, hasClientRole]);
 

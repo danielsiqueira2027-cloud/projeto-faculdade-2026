@@ -90,8 +90,7 @@ export default function PedidosPage() {
                     </td>
                     <td className="px-6 py-6 text-right">
                       <div className="flex items-center justify-end gap-1 font-bold text-bp-primary">
-                        <span className="text-xs text-gray-400">R$</span>
-                        <span>{order.price.toFixed(2)}</span>
+                        <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.price)}</span>
                       </div>
                     </td>
                     <td className="px-6 py-6 text-right">
@@ -158,7 +157,7 @@ export default function PedidosPage() {
             </CardHeader>
             <CardContent>
               <p className="text-3xl font-bold text-bp-primary">
-                R$ {CLIENT_ORDERS_MOCK.reduce((acc, o) => acc + o.price, 0).toFixed(2)}
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(CLIENT_ORDERS_MOCK.reduce((acc, o) => acc + o.price, 0))}
               </p>
             </CardContent>
           </Card>

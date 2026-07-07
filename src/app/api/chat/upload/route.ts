@@ -4,6 +4,9 @@ import path from 'path';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/database';
 
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+
 export async function POST(req: NextRequest) {
   try {
     const currentUser = await getCurrentUser();
@@ -17,6 +20,22 @@ export async function POST(req: NextRequest) {
 
     if (!file || !orderId) {
       return NextResponse.json({ error: 'Arquivo ou ID do pedido ausente' }, { status: 400 });
+    }
+
+    // ── Validação de tipo MIME ────────────────────────────────────────────
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { error: 'Tipo de arquivo não permitido. Envie uma imagem JPG, PNG, WebP ou GIF.' },
+        { status: 400 }
+      );
+    }
+
+    // ── Validação de tamanho (5MB) ────────────────────────────────────────
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: 'Arquivo muito grande. O limite é 5MB.' },
+        { status: 400 }
+      );
     }
 
     // Valida o pedido e a permissão do usuário
@@ -54,8 +73,14 @@ export async function POST(req: NextRequest) {
     // Cria as pastas se não existirem
     await fs.mkdir(uploadDir, { recursive: true });
 
-    // Gera um nome seguro mantendo a extensão
-    const ext = path.extname(file.name) || '.jpg';
+    // ── Gera nome seguro ignorando extensão original do cliente ──────────
+    const mimeToExt: Record<string, string> = {
+      'image/jpeg': '.jpg',
+      'image/png': '.png',
+      'image/webp': '.webp',
+      'image/gif': '.gif',
+    };
+    const ext = mimeToExt[file.type] || '.jpg';
     const timestamp = Date.now();
     const filename = `foto_${timestamp}${ext}`;
     const filePath = path.join(uploadDir, filename);

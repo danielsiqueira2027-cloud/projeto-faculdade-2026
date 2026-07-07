@@ -27,8 +27,14 @@ export async function loginAction(
     return { error: 'Preencha e-mail e senha.' };
   }
 
-  // Busca o usuário no banco
-  const user = await prisma.user.findUnique({ where: { email } });
+  // Busca o usuário no banco com seus perfis vinculados
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: {
+      client: { select: { id: true } },
+      professional: { select: { id: true } },
+    },
+  });
   if (!user) {
     return { error: 'E-mail ou senha incorretos.' };
   }
@@ -41,7 +47,15 @@ export async function loginAction(
 
   // Cria sessão JWT em cookie httpOnly
   await createSession(user.id);
-  redirect('/');
+
+  const hasClient = !!user.client;
+  const hasProfessional = !!user.professional;
+
+  if (hasProfessional && !hasClient) {
+    redirect('/dashboard/profissional');
+  } else {
+    redirect('/');
+  }
 }
 
 // ─── REGISTRO ─────────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
+import { appEvents } from '@/lib/events';
 
 /**
  * Encontra ou cria uma sala de chat vinculada a um pedido.
@@ -234,6 +235,23 @@ export async function sendMessageAction(
     },
   });
 
+  const clientUserId = order.client.userId;
+  const professionalUserId = order.professional.userId;
+
+  const formattedMsg = {
+    id: message.id,
+    senderId: message.senderId,
+    senderName: message.sender.name,
+    type: message.type as 'texto' | 'imagem',
+    content: message.content,
+    createdAt: message.createdAt,
+    isMe: false,
+  };
+
+  // Emitir eventos via SSE
+  appEvents.emit(`message:${clientUserId}`, { orderId, message: { ...formattedMsg, isMe: clientUserId === currentUser.id } });
+  appEvents.emit(`message:${professionalUserId}`, { orderId, message: { ...formattedMsg, isMe: professionalUserId === currentUser.id } });
+
   return {
     id: message.id,
     senderId: message.senderId,
@@ -312,7 +330,9 @@ export async function getChatRoomDetails(orderId: string) {
     orderId: order.id,
     serviceType: order.serviceType || 'Serviço',
     status: order.status,
-    agreedPrice: order.agreedPrice ? `R$ ${Number(order.agreedPrice).toFixed(2)}` : 'A combinar',
+    agreedPrice: order.agreedPrice 
+      ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
+      : 'A combinar',
     scheduledAt: order.scheduledAt ? new Date(order.scheduledAt).toLocaleString('pt-BR') : 'Sem agendamento',
     interlocutor,
     myRole: isClient ? 'client' : 'professional',

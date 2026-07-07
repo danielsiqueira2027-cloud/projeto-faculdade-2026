@@ -43,6 +43,7 @@ function OrcamentoForm() {
   const [serviceType, setServiceType] = useState('Residencial');
   const [urgency, setUrgency] = useState('Sem pressa');
   const [scheduledAt, setScheduledAt] = useState('');
+  const [period, setPeriod] = useState('Manhã');
   const [endereco, setEndereco] = useState<Endereco>({
     cep: '',
     logradouro: '',
@@ -94,7 +95,7 @@ function OrcamentoForm() {
         const prof = await getProfessionalDetails(profId);
         if (prof) {
           setProfessionalName(prof.name);
-          setProfessionalSpecialty(prof.specialty);
+          setProfessionalSpecialty(prof.categories?.[0] || prof.specialty || 'Profissional');
         }
       }
       setUserLoading(false);
@@ -158,28 +159,44 @@ function OrcamentoForm() {
       return;
     }
 
+    if (scheduledAt) {
+      const dateObj = new Date(scheduledAt);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dateObj < today) {
+        setToast({ message: 'A data agendada não pode ser no passado.', type: 'error' });
+        return;
+      }
+    }
+
     setSubmitLoading(true);
     const fullAddress = `${endereco.logradouro}, ${endereco.numero} - ${endereco.bairro}, ${endereco.cidade} - ${endereco.estado}`;
 
-    const res = await createOrderAction({
-      professionalId: profId,
-      serviceType,
-      description,
-      cep: endereco.cep,
-      address: fullAddress,
-      urgency,
-      scheduledAt,
-    });
+    try {
+      const res = await createOrderAction({
+        professionalId: profId,
+        serviceType,
+        description,
+        cep: endereco.cep,
+        address: fullAddress,
+        urgency,
+        scheduledAt,
+        period,
+      });
 
-    setSubmitLoading(false);
-
-    if (res.error) {
-      setToast({ message: res.error, type: 'error' });
-    } else {
-      setToast({ message: 'Orçamento solicitado com sucesso! Redirecionando para a tela de pedidos...', type: 'success' });
-      setTimeout(() => {
-        router.push('/cliente/pedidos');
-      }, 2000);
+      if (res.error) {
+        setToast({ message: res.error, type: 'error' });
+      } else {
+        setToast({ message: 'Orçamento solicitado com sucesso! Redirecionando para a tela de pedidos...', type: 'success' });
+        setTimeout(() => {
+          router.push('/cliente/pedidos');
+        }, 2000);
+      }
+    } catch (err: any) {
+      console.error('[OrcamentoForm] Erro inesperado:', err);
+      setToast({ message: 'Ocorreu um erro interno ao processar a solicitação. Tente novamente mais tarde.', type: 'error' });
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -290,20 +307,6 @@ function OrcamentoForm() {
               )}
             </div>
 
-            {/* Imagem Blueprint Style */}
-            <div className="relative rounded-[40px] overflow-hidden shadow-2xl border-4 border-white aspect-video bg-[#103569]">
-              <img
-                src="https://images.unsplash.com/photo-1503387762-592dee58c460?q=80&w=1000&auto=format&fit=crop"
-                alt="Blueprint Design"
-                className="w-full h-full object-cover opacity-40 mix-blend-overlay"
-              />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-32 h-32 rounded-full border-2 border-white/20 animate-pulse flex items-center justify-center">
-                  <div className="w-24 h-24 rounded-full border-2 border-white/40" />
-                </div>
-              </div>
-            </div>
-
             {/* Feature Card */}
             <div>
               <div className="bg-white/60 backdrop-blur-md p-6 rounded-3xl border border-white shadow-sm">
@@ -325,7 +328,7 @@ function OrcamentoForm() {
                     <div className="w-1.5 h-10 bg-[#f7941d] rounded-full" />
                     <div>
                       <h2 className="text-2xl font-black text-[#103569] tracking-tight">Especificação do Projeto</h2>
-                      <p className="text-xs text-[#103569]/40 font-bold uppercase tracking-widest mt-1">Defina a intenção estrutural da sua obra.</p>
+                      <p className="text-xs text-[#103569]/40 font-bold uppercase tracking-widest mt-1">Escreva o que precisa ser feito.</p>
                     </div>
                   </div>
 
@@ -352,7 +355,6 @@ function OrcamentoForm() {
                           <option value="Residencial">Residencial</option>
                           <option value="Comercial">Comercial</option>
                           <option value="Industrial">Industrial</option>
-                          <option value="Reforma">Reforma / Reparo</option>
                         </select>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#103569]/30 pointer-events-none" size={18} />
                       </div>
@@ -481,6 +483,22 @@ function OrcamentoForm() {
                           onChange={(e) => setScheduledAt(e.target.value)}
                           className={`${fieldClass} pl-12`}
                         />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className={labelClass}>Turno de Preferência</label>
+                      <div className="relative">
+                        <select
+                          value={period}
+                          onChange={(e) => setPeriod(e.target.value)}
+                          className={`${fieldClass} appearance-none cursor-pointer`}
+                        >
+                          <option value="Manhã">Manhã</option>
+                          <option value="Tarde">Tarde</option>
+                          <option value="Noite">Noite</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#103569]/30 pointer-events-none" size={18} />
                       </div>
                     </div>
 

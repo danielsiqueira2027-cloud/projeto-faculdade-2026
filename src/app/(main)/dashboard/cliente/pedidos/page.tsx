@@ -77,7 +77,7 @@ export default function ClientOrdersPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold text-[#103569]">
-              R$ {MOCK_ORDERS.reduce((acc, o) => acc + o.price, 0).toFixed(2)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(MOCK_ORDERS.reduce((acc, o) => acc + o.price, 0))}
             </p>
           </CardContent>
         </Card>
@@ -113,8 +113,7 @@ export default function ClientOrdersPage() {
                   </td>
                   <td className="px-6 py-6 text-right">
                     <div className="flex items-center justify-end gap-1 font-bold text-[#103569]">
-                      <span className="text-xs text-slate-400">R$</span>
-                      <span>{order.price.toFixed(2)}</span>
+                      <span>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.price)}</span>
                     </div>
                   </td>
                   <td className="px-6 py-6 text-right">

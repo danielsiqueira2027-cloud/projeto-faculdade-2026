@@ -1,6 +1,5 @@
 import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import TempNavFooter from "@/components/TempNavFooter";
 
 export default function MainLayout({
   children,
@@ -13,7 +12,6 @@ export default function MainLayout({
       <main className="grow">
         {children}
       </main>
-      <TempNavFooter />
       <Footer />
     </>
   );
