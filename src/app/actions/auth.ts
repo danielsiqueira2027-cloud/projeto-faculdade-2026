@@ -45,6 +45,11 @@ export async function loginAction(
     return { error: 'E-mail ou senha incorretos.' };
   }
 
+  // Verifica se a conta está ativa (não suspensa pelo admin)
+  if (!user.isActive) {
+    return { error: 'Conta suspensa. Entre em contato com o suporte.' };
+  }
+
   // Cria sessão JWT em cookie httpOnly
   await createSession(user.id);
 

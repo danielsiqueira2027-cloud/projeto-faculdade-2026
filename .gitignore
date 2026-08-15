@@ -54,3 +54,11 @@ README.md
 readme.md
 docs/
 
+# Relatórios de auditoria/histórico (uso interno, não versionar)
+HISTORICO_AUDITORIA_CLICKSERVICO.md
+Auditoria_*.md
+Correcao_*.md
+Diagnostico_*.md
+Limpeza_*.md
+Relatorio_Tecnico_*.md
+Verificacao_*.md
