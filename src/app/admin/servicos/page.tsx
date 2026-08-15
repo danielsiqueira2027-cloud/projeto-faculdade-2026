@@ -1,20 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertCircle, Search } from "lucide-react";
-import { mockServices } from "../_data/mock";
 import { ServiceOrder } from "../types";
 import { StatusBadge } from "../_components/StatusBadge";
+import { getAllOrdersForAdminAction, markOrderAsDisputedAction } from "@/app/actions/admin";
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<ServiceOrder[]>(mockServices);
+  const [services, setServices] = useState<ServiceOrder[]>([]);
+
+  const loadOrders = async () => {
+    const data = await getAllOrdersForAdminAction();
+    setServices(data);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    getAllOrdersForAdminAction().then(data => {
+      if (mounted) {
+        setServices(data);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
   };
 
-  const resolveDispute = (id: string) => {
-    setServices(services.map(s => s.id === id ? { ...s, status: "Em andamento" } : s));
+  const resolveDispute = async (id: string) => {
+    setServices(services.map(s => s.id === id ? { ...s, status: "Em Disputa" } : s));
+    try {
+      await markOrderAsDisputedAction(id);
+    } catch {
+      await loadOrders();
+    }
   };
 
   return (
@@ -59,17 +79,17 @@ export default function ServicesPage() {
                     <StatusBadge status={service.status} />
                   </td>
                   <td className="p-4 text-sm text-right space-x-2 whitespace-nowrap">
-                    {service.status === "Em Disputa" ? (
+                    {service.status !== "Em Disputa" ? (
                        <button 
                          onClick={() => resolveDispute(service.id)}
                          className="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-semibold transition-colors shadow-sm ring-1 ring-red-700" 
-                         title="Entrar na Disputa"
+                         title="Marcar como Disputa"
                        >
                          <AlertCircle className="w-4 h-4 mr-1.5" />
-                         Entrar na Disputa
+                         Marcar como Disputa
                        </button>
                     ) : (
-                      <span className="text-slate-400 text-xs italic">Nenhuma ação</span>
+                      <span className="text-red-500 font-bold text-xs italic">Em Disputa</span>
                     )}
                   </td>
                 </tr>

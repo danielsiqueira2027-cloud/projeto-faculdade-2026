@@ -59,9 +59,9 @@ export default function EditProfilePage() {
         const data = await getProfessionalProfile();
         if (data) {
           setProfile({
-            name: data.user?.name || '',
-            email: data.user?.email || '',
-            avatarUrl: data.user?.avatarUrl || '',
+            name: data.name || '',
+            email: data.email || '',
+            avatarUrl: data.avatarUrl || '',
             specialty: data.specialty || '',
             bio: data.bio || '',
             phone: data.phone || '',
@@ -73,7 +73,7 @@ export default function EditProfilePage() {
             addressCity: data.addressCity || '',
             addressState: data.addressState || '',
             addressCep: data.addressCep || '',
-            cpf: data.cpf || '',
+            cpf: data.cpfMasked || '',
           });
         }
       } catch (err) {
@@ -310,12 +310,13 @@ export default function EditProfilePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">CPF</label>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">CPF (cadastrado)</label>
                   <Input 
                     value={profile.cpf}
-                    onChange={(e) => setProfile({...profile, cpf: e.target.value})}
-                    placeholder="000.000.000-00"
-                    className="h-12 rounded-xl border-slate-100 focus:ring-[#f7941d] font-bold text-[#103569]"
+                    readOnly
+                    placeholder="Não informado"
+                    className="h-12 rounded-xl border-slate-100 bg-slate-50 text-slate-400 font-bold cursor-not-allowed"
+                    title="O CPF só pode ser alterado via suporte."
                   />
                 </div>
               </div>

@@ -1,17 +1,43 @@
-import { DollarSign, Users, Wrench, ChevronRight } from "lucide-react";
+import { DollarSign, Users, Wrench, ChevronRight, Briefcase } from "lucide-react";
 import { MetricCard } from "./_components/MetricCard";
-import { mockActivities } from "./_data/mock";
+import { getAdminDashboardMetrics, getRecentActivity } from "@/app/actions/admin";
 
-export default function DashboardPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function DashboardPage() {
+  const metrics = await getAdminDashboardMetrics();
+  const activities = await getRecentActivity();
+
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold text-slate-800">Visão Geral</h2>
 
       {/* Cards de Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MetricCard title="Total de Faturamento" value="R$ 124.500,00" icon={DollarSign} color="green" />
-        <MetricCard title="Total de Clientes" value="4.205" icon={Users} color="blue" />
-        <MetricCard title="Serviços Solicitados" value="1.832" icon={Wrench} color="purple" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <MetricCard 
+          title="Total de Faturamento" 
+          value={`R$ ${metrics.revenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
+          icon={DollarSign} 
+          color="green" 
+        />
+        <MetricCard 
+          title="Total de Clientes" 
+          value={metrics.clients.toLocaleString('pt-BR')} 
+          icon={Users} 
+          color="blue" 
+        />
+        <MetricCard 
+          title="Profissionais" 
+          value={metrics.professionals.toLocaleString('pt-BR')} 
+          icon={Briefcase} 
+          color="red" 
+        />
+        <MetricCard 
+          title="Serviços Solicitados" 
+          value={metrics.orders.toLocaleString('pt-BR')} 
+          icon={Wrench} 
+          color="purple" 
+        />
       </div>
 
       {/* Últimas Atividades */}
@@ -23,12 +49,18 @@ export default function DashboardPage() {
           </button>
         </div>
         <div className="divide-y divide-slate-100">
-          {mockActivities.map((activity) => (
-            <div key={activity.id} className="p-4 px-6 flex justify-between items-center hover:bg-slate-50 transition-colors">
-              <span className="text-sm text-slate-700 font-medium">{activity.description}</span>
-              <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{activity.time}</span>
+          {activities.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 font-medium bg-slate-50/50">
+              Nenhuma solicitação de serviço registrada ainda.
             </div>
-          ))}
+          ) : (
+            activities.map((activity) => (
+              <div key={activity.id} className="p-4 px-6 flex justify-between items-center hover:bg-slate-50 transition-colors">
+                <span className="text-sm text-slate-700 font-medium">{activity.description}</span>
+                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">{activity.time}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

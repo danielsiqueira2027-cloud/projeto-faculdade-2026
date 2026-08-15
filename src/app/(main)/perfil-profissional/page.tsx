@@ -1,8 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ProfileCard } from '../perfil/ProfileCard';
-import { PortfolioGrid } from '../perfil/PortfolioGrid';
+import { ProfileCard } from '@/components/ProfileCard';
+import { PortfolioGrid } from '@/components/PortfolioGrid';
 import { getProfessionalDetails } from '@/app/actions/professionals';
 import { prisma } from '@/lib/database';
 

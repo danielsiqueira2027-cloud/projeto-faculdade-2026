@@ -252,12 +252,14 @@ export async function getOrderAppointment(orderId: string) {
     const currentUser = await getCurrentUser();
     if (!currentUser) return null;
 
-    // Retorna o order com scheduledAt sugerido pelo cliente + appointment se existir
+    // Busca o order com vínculos de client e professional para verificar ownership
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       select: {
         scheduledAt: true,
         serviceType: true,
+        client: { select: { userId: true } },
+        professional: { select: { userId: true } },
         appointments: {
           orderBy: { createdAt: 'desc' },
           take: 1,
@@ -271,7 +273,13 @@ export async function getOrderAppointment(orderId: string) {
       },
     });
 
-    if (!order) return null;
+    // ── Verificação de ownership ────────────────────────────────────────────
+    const isClient       = order?.client.userId       === currentUser.id;
+    const isProfessional = order?.professional.userId === currentUser.id;
+
+    if (!order || (!isClient && !isProfessional)) {
+      return null; // usuário não é parte deste pedido
+    }
 
     return {
       suggestedAt: order.scheduledAt,  // data que o cliente sugeriu no formulário

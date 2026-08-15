@@ -2,7 +2,7 @@ import { ElementType } from "react";
 
 export type UserStatus = "Ativo" | "Suspenso";
 export type UserType = "cliente" | "prestador";
-export type ServiceStatus = "Em aberto" | "Em andamento" | "Concluído" | "Em Disputa";
+export type ServiceStatus = "Em aberto" | "Em andamento" | "Concluído" | "Em Disputa" | "Cancelado" | "Pendente";
 export type PaymentStatus = "Pago" | "Pendente" | "Estornado";
 
 export interface DashboardMetric {

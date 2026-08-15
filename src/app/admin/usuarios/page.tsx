@@ -1,22 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, History, Ban, CheckCircle } from "lucide-react";
-import { mockUsers } from "../_data/mock";
 import { User, UserType } from "../types";
 import { StatusBadge } from "../_components/StatusBadge";
+import { getAllUsersAction, toggleUserStatusAction } from "@/app/actions/admin";
 
 export default function UsuariosPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const [activeTab, setActiveTab] = useState<UserType>("cliente");
 
-  const toggleStatus = (id: string) => {
-    setUsers(users.map(u => {
-      if (u.id === id) {
-        return { ...u, status: u.status === "Ativo" ? "Suspenso" : "Ativo" };
-      }
-      return u;
-    }));
+  const loadUsers = async () => {
+    const data = await getAllUsersAction();
+    setUsers(data);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    getAllUsersAction().then(data => {
+      if (mounted) setUsers(data);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const toggleStatus = async (id: string) => {
+    // Basic optimistic UI
+    setUsers(users.map(u => u.id === id ? { ...u, status: u.status === "Ativo" ? "Suspenso" : "Ativo" } : u));
+    try {
+      await toggleUserStatusAction(id);
+    } catch {
+      await loadUsers(); // revert on fail
+    }
   };
 
   const filteredUsers = users.filter(u => u.type === activeTab);

@@ -91,13 +91,41 @@ export async function getProfessionalProfile() {
 
   if (!prof) return null;
 
-  // Prisma Decimal cannot be passed to Client Components — serialize to plain object
+  // Máscara do CPF: exibe apenas os 3 primeiros e os 2 últimos dígitos numéricos.
+  // O CPF completo nunca é enviado ao client component.
+  const cpfMasked = prof.cpf
+    ? prof.cpf.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.***.***-$2')
+    : null;
+
   return {
-    ...prof,
-    rating: Number(prof.rating),
-    agreedPrice: prof.agreedPrice !== undefined && prof.agreedPrice !== null
-      ? Number(prof.agreedPrice)
-      : null,
+    // Dados de identidade
+    id:            prof.id,
+    userId:        prof.userId,
+    // Dados do user vinculado
+    name:          prof.user.name,
+    email:         prof.user.email,
+    phone:         prof.user.phone      ?? null,
+    avatarUrl:     prof.user.avatarUrl  ?? null,
+    // Dados profissionais
+    specialty:     prof.specialty       ?? null,
+    bio:           prof.bio             ?? null,
+    location:      prof.location        ?? null,
+    addressStreet:       prof.addressStreet       ?? null,
+    addressNumber:       prof.addressNumber       ?? null,
+    addressComplement:   prof.addressComplement   ?? null,
+    addressNeighborhood: prof.addressNeighborhood ?? null,
+    addressCity:         prof.addressCity         ?? null,
+    addressState:        prof.addressState        ?? null,
+    addressCep:          prof.addressCep          ?? null,
+    // CPF mascarado — nunca o valor bruto
+    cpfMasked,
+    // Métricas
+    isVerified:    prof.isVerified,
+    isAvailable:   prof.isAvailable,
+    rating:        Number(prof.rating),
+    reviewCount:   prof.reviewCount,
+    createdAt:     prof.createdAt,
+    updatedAt:     prof.updatedAt,
   };
 }
 
