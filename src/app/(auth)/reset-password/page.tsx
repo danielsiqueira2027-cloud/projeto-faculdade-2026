@@ -1,29 +1,19 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function ResetPasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    if (!token) {
-      setMessage({ type: 'error', text: 'Token de redefinição inválido ou ausente.' });
-    }
-  }, [token]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
 
     if (password.length < 6) {
       setMessage({ type: 'error', text: 'A nova senha deve ter pelo menos 6 caracteres.' });
@@ -42,7 +32,7 @@ function ResetPasswordForm() {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ password }),
       });
 
       if (res.ok) {
@@ -52,15 +42,15 @@ function ResetPasswordForm() {
         });
         setTimeout(() => {
           router.push('/login');
-        }, 3000);
+        }, 2500);
       } else {
         const data = await res.json();
         setMessage({
           type: 'error',
-          text: data.error || 'Ocorreu um erro ao redefinir a senha.',
+          text: data.error || 'Ocorreu um erro ao redefinir a senha. O link pode ter expirado.',
         });
       }
-    } catch (error) {
+    } catch {
       setMessage({
         type: 'error',
         text: 'Erro de conexão. Tente novamente mais tarde.',
@@ -70,17 +60,6 @@ function ResetPasswordForm() {
     }
   };
 
-  if (!token) {
-    return (
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-[#103569] mb-4">Link Inválido</h1>
-        <p className="text-slate-500 mb-6">O link que você acessou é inválido ou expirou.</p>
-        <Link href="/forgot-password" className="text-[#f7941d] font-bold hover:underline">
-          Solicitar novo link
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <>

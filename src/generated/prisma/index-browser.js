@@ -124,7 +124,6 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   name: 'name',
   email: 'email',
-  password: 'password',
   phone: 'phone',
   avatarUrl: 'avatarUrl',
   isActive: 'isActive',
@@ -277,15 +276,6 @@ exports.Prisma.NotificationScalarFieldEnum = {
   read: 'read'
 };
 
-exports.Prisma.PasswordResetTokenScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  token: 'token',
-  expiresAt: 'expiresAt',
-  usedAt: 'usedAt',
-  createdAt: 'createdAt'
-};
-
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -345,8 +335,7 @@ exports.Prisma.ModelName = {
   Certification: 'Certification',
   ChatRoom: 'ChatRoom',
   ChatMessage: 'ChatMessage',
-  Notification: 'Notification',
-  PasswordResetToken: 'PasswordResetToken'
+  Notification: 'Notification'
 };
 
 /**

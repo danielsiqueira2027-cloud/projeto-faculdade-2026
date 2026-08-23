@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/database';
+import { uploadChatImage } from '@/lib/supabase/storage';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
@@ -67,33 +66,30 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Caminho da pasta correspondente no diretório public/
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'chat', `pedido_${orderId}`);
-    
-    // Cria as pastas se não existirem
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    // ── Gera nome seguro ignorando extensão original do cliente ──────────
+    // ── Determina extensão segura ─────────────────────────────────────────
     const mimeToExt: Record<string, string> = {
-      'image/jpeg': '.jpg',
-      'image/png': '.png',
-      'image/webp': '.webp',
-      'image/gif': '.gif',
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
     };
-    const ext = mimeToExt[file.type] || '.jpg';
-    const timestamp = Date.now();
-    const filename = `foto_${timestamp}${ext}`;
-    const filePath = path.join(uploadDir, filename);
+    const ext = mimeToExt[file.type] || 'jpg';
 
-    // Grava o arquivo localmente
-    await fs.writeFile(filePath, buffer);
+    // ── Faz o upload no Supabase Storage ───────────────────────────────────
+    const { url } = await uploadChatImage(
+      orderId,
+      buffer,
+      ext,
+      file.type
+    );
 
-    // Caminho público que será salvo no banco e exibido nas páginas
-    const relativeUrl = `/uploads/chat/pedido_${orderId}/${filename}`;
-
-    return NextResponse.json({ success: true, url: relativeUrl });
-  } catch (error: any) {
+    return NextResponse.json({ success: true, url });
+  } catch (error: unknown) {
     console.error('[Upload API Error]', error);
-    return NextResponse.json({ error: 'Erro interno ao salvar arquivo localmente' }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Erro interno ao salvar arquivo' },
+      { status: 500 }
+    );
   }
 }
+

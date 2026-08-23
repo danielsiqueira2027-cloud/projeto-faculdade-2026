@@ -1,18 +1,23 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+import { createServerClient } from './server';
 
 /**
- * Cliente Supabase com escopo para operações de Storage
+ * Cliente Supabase com escopo para operações de Storage (SSR com fallback para anon client)
  */
-export function getStorageClient() {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase URL ou Anon Key ausente nas variáveis de ambiente');
+export async function getStorageClient() {
+  try {
+    return await createServerClient();
+  } catch {
+    const supabaseUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseAnonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Supabase URL ou Anon Key ausente nas variáveis de ambiente');
+    }
+    return createSupabaseClient(supabaseUrl, supabaseAnonKey);
   }
-  return createSupabaseClient(supabaseUrl, supabaseAnonKey);
 }
 
 export interface UploadOptions {
@@ -39,7 +44,7 @@ export async function uploadToStorage({
   contentType,
   upsert = true,
 }: UploadOptions): Promise<UploadResult> {
-  const supabase = getStorageClient();
+  const supabase = await getStorageClient();
 
   const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
     contentType,
@@ -61,8 +66,8 @@ export async function uploadToStorage({
 /**
  * Retorna a URL pública de um arquivo no Supabase Storage.
  */
-export function getStoragePublicUrl(path: string, bucket = 'uploads'): string {
-  const supabase = getStorageClient();
+export async function getStoragePublicUrl(path: string, bucket = 'uploads'): Promise<string> {
+  const supabase = await getStorageClient();
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 }
@@ -71,7 +76,7 @@ export function getStoragePublicUrl(path: string, bucket = 'uploads'): string {
  * Remove um ou mais arquivos do Supabase Storage.
  */
 export async function deleteFromStorage(paths: string[], bucket = 'uploads'): Promise<void> {
-  const supabase = getStorageClient();
+  const supabase = await getStorageClient();
   const { error } = await supabase.storage.from(bucket).remove(paths);
   if (error) {
     throw new Error(`Erro ao remover arquivo do Supabase Storage: ${error.message}`);
@@ -83,11 +88,12 @@ export async function deleteFromStorage(paths: string[], bucket = 'uploads'): Pr
  */
 export async function uploadAvatar(
   userId: string,
-  file: File | Blob | Buffer,
+  file: File | Blob | Buffer | Uint8Array | ArrayBuffer,
   fileExtension = 'jpg',
   contentType = 'image/jpeg'
 ): Promise<UploadResult> {
-  const filename = `${userId}-${Date.now()}.${fileExtension}`;
+  const cleanExt = fileExtension.replace(/^\./, '');
+  const filename = `${userId}-${Date.now()}.${cleanExt}`;
   const path = `avatars/${filename}`;
   return uploadToStorage({
     bucket: 'uploads',
@@ -103,11 +109,12 @@ export async function uploadAvatar(
  */
 export async function uploadServiceImage(
   identifier: string,
-  file: File | Blob | Buffer,
+  file: File | Blob | Buffer | Uint8Array | ArrayBuffer,
   fileExtension = 'jpg',
   contentType = 'image/jpeg'
 ): Promise<UploadResult> {
-  const filename = `${identifier}-${Date.now()}.${fileExtension}`;
+  const cleanExt = fileExtension.replace(/^\./, '');
+  const filename = `${identifier}-${Date.now()}.${cleanExt}`;
   const path = `services/${filename}`;
   return uploadToStorage({
     bucket: 'uploads',
@@ -123,11 +130,12 @@ export async function uploadServiceImage(
  */
 export async function uploadChatImage(
   orderId: string,
-  file: File | Blob | Buffer,
+  file: File | Blob | Buffer | Uint8Array | ArrayBuffer,
   fileExtension = 'jpg',
   contentType = 'image/jpeg'
 ): Promise<UploadResult> {
-  const filename = `${Date.now()}.${fileExtension}`;
+  const cleanExt = fileExtension.replace(/^\./, '');
+  const filename = `${Date.now()}.${cleanExt}`;
   const path = `chat/pedido_${orderId}/${filename}`;
   return uploadToStorage({
     bucket: 'uploads',

@@ -79,7 +79,6 @@ export async function supabaseSignUp({
             name,
             email: email.toLowerCase(),
             phone: phone || null,
-            password: '', // Gerenciado de forma segura pelo Supabase Auth
           },
         });
 

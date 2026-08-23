@@ -1,8 +1,8 @@
 'use server';
 
-import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
+import { createServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export async function getClientProfile() {
@@ -45,22 +45,26 @@ export async function saveClientProfile(data: {
       return { error: 'Este e-mail já está cadastrado em outra conta.' };
     }
 
-    const updateData: any = {
-      name: data.name.trim(),
-      email: data.email.trim().toLowerCase(),
-      phone: data.phone?.trim() || null,
-      avatarUrl: data.avatarUrl || null,
-    };
-
     if (data.password && data.password.trim().length >= 6) {
-      updateData.password = await bcrypt.hash(data.password, 10);
+      const supabase = await createServerClient();
+      const { error: pwdError } = await supabase.auth.updateUser({
+        password: data.password.trim(),
+      });
+      if (pwdError) {
+        return { error: `Erro ao atualizar senha: ${pwdError.message}` };
+      }
     } else if (data.password && data.password.trim().length > 0) {
       return { error: 'A nova senha deve possuir pelo menos 6 caracteres.' };
     }
 
     await prisma.user.update({
       where: { id: currentUser.id },
-      data: updateData,
+      data: {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        phone: data.phone?.trim() || null,
+        avatarUrl: data.avatarUrl || null,
+      },
     });
 
     revalidatePath('/', 'layout');
@@ -91,35 +95,29 @@ export async function getProfessionalProfile() {
 
   if (!prof) return null;
 
-  // Máscara do CPF: exibe apenas os 3 primeiros e os 2 últimos dígitos numéricos.
-  // O CPF completo nunca é enviado ao client component.
   const cpfMasked = prof.cpf
     ? prof.cpf.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.***.***-$2')
     : null;
 
   return {
-    // Dados de identidade
     id:            prof.id,
     userId:        prof.userId,
-    // Dados do user vinculado
     name:          prof.user.name,
     email:         prof.user.email,
     phone:         prof.user.phone      ?? null,
     avatarUrl:     prof.user.avatarUrl  ?? null,
-    // Dados profissionais
     specialty:     prof.specialty       ?? null,
     bio:           prof.bio             ?? null,
     location:      prof.location        ?? null,
-    addressStreet:       prof.addressStreet       ?? null,
-    addressNumber:       prof.addressNumber       ?? null,
-    addressComplement:   prof.addressComplement   ?? null,
+    addressStreet: prof.addressStreet   ?? null,
+    addressNumber: prof.addressNumber   ?? null,
+    addressComplement: prof.addressComplement ?? null,
     addressNeighborhood: prof.addressNeighborhood ?? null,
-    addressCity:         prof.addressCity         ?? null,
-    addressState:        prof.addressState        ?? null,
-    addressCep:          prof.addressCep          ?? null,
-    // CPF mascarado — nunca o valor bruto
+    addressCity:   prof.addressCity     ?? null,
+    addressState:  prof.addressState    ?? null,
+    addressCep:    prof.addressCep      ?? null,
+    cpf:           prof.cpf             ?? null,
     cpfMasked,
-    // Métricas
     isVerified:    prof.isVerified,
     isAvailable:   prof.isAvailable,
     rating:        Number(prof.rating),
@@ -132,6 +130,7 @@ export async function getProfessionalProfile() {
 export async function saveProfessionalProfile(data: {
   name: string;
   email: string;
+  password?: string | null;
   avatarUrl?: string | null;
   specialty?: string | null;
   bio?: string | null;
@@ -145,13 +144,11 @@ export async function saveProfessionalProfile(data: {
   addressState?: string | null;
   addressCep?: string | null;
   cpf?: string | null;
-  password?: string | null;
 }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) return { error: 'Não autorizado' };
 
   try {
-    // Validate unique email
     const existing = await prisma.user.findFirst({
       where: {
         email: data.email.trim().toLowerCase(),
@@ -163,7 +160,6 @@ export async function saveProfessionalProfile(data: {
       return { error: 'Este e-mail já está cadastrado em outra conta.' };
     }
 
-    // Validate unique CPF if provided
     if (data.cpf && data.cpf.trim().length > 0) {
       const formattedCpf = data.cpf.trim();
       const existingCpf = await prisma.professional.findFirst({
@@ -178,25 +174,27 @@ export async function saveProfessionalProfile(data: {
       }
     }
 
-    // Update User model
-    const userUpdateData: any = {
-      name: data.name.trim(),
-      email: data.email.trim().toLowerCase(),
-      avatarUrl: data.avatarUrl || null,
-    };
-
     if (data.password && data.password.trim().length >= 6) {
-      userUpdateData.password = await bcrypt.hash(data.password, 10);
+      const supabase = await createServerClient();
+      const { error: pwdError } = await supabase.auth.updateUser({
+        password: data.password.trim(),
+      });
+      if (pwdError) {
+        return { error: `Erro ao atualizar senha: ${pwdError.message}` };
+      }
     } else if (data.password && data.password.trim().length > 0) {
       return { error: 'A nova senha deve possuir pelo menos 6 caracteres.' };
     }
 
     await prisma.user.update({
       where: { id: currentUser.id },
-      data: userUpdateData,
+      data: {
+        name: data.name.trim(),
+        email: data.email.trim().toLowerCase(),
+        avatarUrl: data.avatarUrl || null,
+      },
     });
 
-    // Update Professional model
     await prisma.professional.update({
       where: { userId: currentUser.id },
       data: {
