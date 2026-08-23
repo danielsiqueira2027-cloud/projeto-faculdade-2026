@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { adminAuth } from "@/lib/auth-admin";
-import { decrypt } from "@/lib/session";
+import { updateSupabaseSession } from "@/lib/supabase/middleware";
 
-// Rotas que requerem qualquer sessão autenticada (JWT manual)
+// Rotas que requerem qualquer sessão autenticada (Supabase Auth)
 const PRIVATE_ROUTES = ['/dashboard', '/cliente'];
 
 export async function middleware(request: NextRequest) {
@@ -20,22 +20,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── Protege rotas privadas do app com JWT manual ──────────────────────
+  // ── Atualiza/renova sessão Supabase Auth ───────────────────────────────
+  const { supabaseResponse, user } = await updateSupabaseSession(request);
+
+  // ── Protege rotas privadas do app com Supabase Auth ───────────────────
   const isPrivateRoute = PRIVATE_ROUTES.some((route) => pathname.startsWith(route));
   if (isPrivateRoute) {
-    const sessionCookie = request.cookies.get("session")?.value;
-    const payload = await decrypt(sessionCookie);
-
-    if (!payload?.userId) {
+    if (!user) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {
   matcher: ["/admin/:path*", "/dashboard/:path*", "/cliente/:path*"],
 };
+

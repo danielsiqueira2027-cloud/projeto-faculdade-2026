@@ -1,9 +1,13 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/database';
-import { createSession, deleteSession } from '@/lib/session';
+import {
+  supabaseSignUp,
+  supabaseSignIn,
+  supabaseSignOut,
+  getSupabaseUser,
+} from '@/lib/supabase/auth';
 
 // ─── Tipos de estado retornado pelas actions ──────────────────────────────────
 
@@ -27,34 +31,28 @@ export async function loginAction(
     return { error: 'Preencha e-mail e senha.' };
   }
 
-  // Busca o usuário no banco com seus perfis vinculados
-  const user = await prisma.user.findUnique({
-    where: { email },
-    include: {
-      client: { select: { id: true } },
-      professional: { select: { id: true } },
-    },
-  });
-  if (!user) {
-    return { error: 'E-mail ou senha incorretos.' };
+  const result = await supabaseSignIn({ email, password });
+
+  if (!result.success) {
+    const errorMsg = result.error || '';
+    if (
+      errorMsg.toLowerCase().includes('invalid login credentials') ||
+      errorMsg.toLowerCase().includes('invalid credential') ||
+      errorMsg.toLowerCase().includes('invalid grant')
+    ) {
+      return { error: 'E-mail ou senha incorretos.' };
+    }
+    return { error: result.error || 'E-mail ou senha incorretos.' };
   }
 
-  // Verifica senha
-  const senhaCorreta = await bcrypt.compare(password, user.password);
-  if (!senhaCorreta) {
-    return { error: 'E-mail ou senha incorretos.' };
-  }
-
-  // Verifica se a conta está ativa (não suspensa pelo admin)
-  if (!user.isActive) {
+  const userProfile = (result.user as unknown as { profile?: { isActive?: boolean; client?: unknown; professional?: unknown } })?.profile;
+  if (userProfile && userProfile.isActive === false) {
+    await supabaseSignOut();
     return { error: 'Conta suspensa. Entre em contato com o suporte.' };
   }
 
-  // Cria sessão JWT em cookie httpOnly
-  await createSession(user.id);
-
-  const hasClient = !!user.client;
-  const hasProfessional = !!user.professional;
+  const hasClient = !!userProfile?.client;
+  const hasProfessional = !!userProfile?.professional;
 
   if (hasProfessional && !hasClient) {
     redirect('/dashboard/profissional');
@@ -95,41 +93,44 @@ export async function registerAction(
     };
   }
 
-  // Verifica se e-mail já existe
-  const existente = await prisma.user.findUnique({ where: { email } });
-  if (existente) {
+  const result = await supabaseSignUp({
+    name,
+    email,
+    password,
+    phone,
+    tipo: tipo || 'cliente',
+  });
+
+  if (!result.success) {
+    const errorMsg = result.error || '';
+    if (
+      errorMsg.toLowerCase().includes('already registered') ||
+      errorMsg.toLowerCase().includes('already in use') ||
+      errorMsg.toLowerCase().includes('already exists') ||
+      errorMsg.toLowerCase().includes('duplicate') ||
+      errorMsg.toLowerCase().includes('user already exists')
+    ) {
+      return {
+        fieldErrors: { email: 'Este e-mail já está cadastrado.' },
+        fields: {
+          name: name || '',
+          email: email || '',
+          phone: phone || '',
+          tipo: tipo || 'cliente',
+        },
+      };
+    }
+
     return {
-      fieldErrors: { email: 'Este e-mail já está cadastrado.' },
+      error: result.error || 'Erro ao criar conta. Tente novamente.',
       fields: {
         name: name || '',
         email: email || '',
         phone: phone || '',
         tipo: tipo || 'cliente',
-      }
+      },
     };
   }
-
-  // Hash da senha
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Cria o usuário e o perfil correto em uma transação
-  const user = await prisma.$transaction(async (tx) => {
-    const newUser = await tx.user.create({
-      data: { name, email, phone, password: hashedPassword },
-    });
-
-    if (tipo === 'cliente') {
-      await tx.client.create({ data: { userId: newUser.id } });
-    } else {
-      // Profissional: cria o registro base (sem dados extras ainda)
-      await tx.professional.create({ data: { userId: newUser.id } });
-    }
-
-    return newUser;
-  });
-
-  // Cria sessão
-  await createSession(user.id);
 
   // Redireciona para a tela correta
   if (tipo === 'profissional') {
@@ -142,7 +143,7 @@ export async function registerAction(
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 
 export async function logoutAction(): Promise<void> {
-  await deleteSession();
+  await supabaseSignOut();
   redirect('/');
 }
 
@@ -152,9 +153,8 @@ export async function ativarProfissionalAction(
   _prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
-  const { getSessionPayload } = await import('@/lib/session');
-  const payload = await getSessionPayload();
-  if (!payload?.userId) redirect('/login');
+  const currentUser = await getSupabaseUser();
+  if (!currentUser?.id) redirect('/login');
 
   const bio         = (formData.get('bio') as string)?.trim() || null;
   const experiencia = (formData.get('experiencia') as string)?.trim() || null;
@@ -177,9 +177,9 @@ export async function ativarProfissionalAction(
     await prisma.$transaction(async (tx) => {
       // Upsert: pode já existir o Professional (criado no cadastro)
       const prof = await tx.professional.upsert({
-        where: { userId: payload.userId },
+        where: { userId: currentUser.id },
         create: {
-          userId: payload.userId,
+          userId: currentUser.id,
           bio,
           phone,
           cpf,
@@ -232,6 +232,5 @@ export async function ativarProfissionalAction(
 }
 
 export async function getCurrentUserAction() {
-  const { getCurrentUser } = await import('@/lib/auth');
-  return await getCurrentUser();
+  return await getSupabaseUser();
 }

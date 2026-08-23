@@ -58,6 +58,12 @@ export async function supabaseSignUp({
     return { success: false, error: 'Não foi possível criar o usuário no Supabase Auth.' };
   }
 
+  // No Supabase com confirmação de e-mail / proteção contra enumeração,
+  // quando o e-mail já existe, o Supabase retorna um usuário com identities vazio ([]).
+  if (data.user.identities && data.user.identities.length === 0) {
+    return { success: false, error: 'User already registered' };
+  }
+
   const userId = data.user.id;
 
   // Sincroniza o usuário criado no Supabase com o banco de dados público via Prisma
@@ -181,21 +187,14 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
         email: true,
         phone: true,
         avatarUrl: true,
+        isActive: true,
         client: { select: { id: true } },
         professional: { select: { id: true } },
       },
     });
 
-    if (!dbUser) {
-      return {
-        id: user.id,
-        name: (user.user_metadata?.name as string) || user.email || 'Usuário',
-        email: user.email || '',
-        phone: (user.user_metadata?.phone as string) || null,
-        avatarUrl: null,
-        hasClient: user.user_metadata?.tipo === 'cliente',
-        hasProfessional: user.user_metadata?.tipo === 'profissional',
-      };
+    if (!dbUser || !dbUser.isActive) {
+      return null;
     }
 
     return {
@@ -212,45 +211,5 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
   }
 }
 
-/**
- * Helper utilitário para atualizar/renovar a sessão Supabase no Middleware Next.js
- */
-export async function updateSupabaseSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+export { updateSupabaseSession } from './middleware';
 
-  const supabaseUrl =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return supabaseResponse;
-  }
-
-  const { createServerClient } = await import('@supabase/ssr');
-
-  const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  return { supabaseResponse, user };
-}

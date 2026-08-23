@@ -2,3 +2,5 @@ export { createClient as createBrowserClient, supabaseClient } from './client';
 export { createClient as createServerClient } from './server';
 export * from './storage';
 export * from './auth';
+export * from './middleware';
+
