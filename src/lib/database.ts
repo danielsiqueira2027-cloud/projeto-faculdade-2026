@@ -1,9 +1,10 @@
 import { PrismaClient } from '@/generated/prisma';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 /**
  * Instância global do Prisma Client.
- * No Prisma 7, usamos o driver adapter para conexão direta com o MySQL/MariaDB.
+ * No Prisma 7, usamos o driver adapter para conexão direta com o PostgreSQL (Supabase).
  */
 
 const urlString = process.env.DATABASE_URL;
@@ -11,26 +12,19 @@ if (!urlString) {
   throw new Error('DATABASE_URL is not defined in environment variables');
 }
 
-const dbUrl = new URL(urlString);
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
-  pool: any;
-  adapter: any;
+  pool: Pool | undefined;
+  adapter: PrismaPg | undefined;
 };
 
 if (!globalForPrisma.adapter) {
-  const poolConfig = {
-    host: dbUrl.hostname || 'localhost',
-    port: parseInt(dbUrl.port) || 3306,
-    user: dbUrl.username || 'root',
-    password: dbUrl.password || '',
-    database: dbUrl.pathname.substring(1).split('?')[0],
-    connectionLimit: 5,
-  };
-
-  console.log(`[${new Date().toISOString()}] [Prisma] Inicializando adaptador com:`, { ...poolConfig, password: '****' });
-  globalForPrisma.adapter = new PrismaMariaDb(poolConfig);
+  const pool = new Pool({
+    connectionString: urlString,
+    max: 5,
+  });
+  globalForPrisma.pool = pool;
+  globalForPrisma.adapter = new PrismaPg(pool);
 }
 
 export const prisma =
@@ -43,3 +37,4 @@ export const prisma =
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
+

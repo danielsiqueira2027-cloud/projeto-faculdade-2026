@@ -296,148 +296,20 @@ exports.Prisma.NullableJsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
 exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
-};
-
-exports.Prisma.UserOrderByRelevanceFieldEnum = {
-  id: 'id',
-  name: 'name',
-  email: 'email',
-  password: 'password',
-  phone: 'phone',
-  avatarUrl: 'avatarUrl'
-};
-
-exports.Prisma.ClientOrderByRelevanceFieldEnum = {
-  id: 'id',
-  userId: 'userId'
-};
-
-exports.Prisma.ProfessionalOrderByRelevanceFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  specialty: 'specialty',
-  bio: 'bio',
-  phone: 'phone',
-  location: 'location',
-  addressStreet: 'addressStreet',
-  addressNumber: 'addressNumber',
-  addressComplement: 'addressComplement',
-  addressNeighborhood: 'addressNeighborhood',
-  addressCity: 'addressCity',
-  addressState: 'addressState',
-  addressCep: 'addressCep',
-  cpf: 'cpf'
-};
-
-exports.Prisma.CategoryOrderByRelevanceFieldEnum = {
-  id: 'id',
-  name: 'name',
-  slug: 'slug',
-  description: 'description'
-};
-
-exports.Prisma.ProfessionalCategoryOrderByRelevanceFieldEnum = {
-  professionalId: 'professionalId',
-  categoryId: 'categoryId'
 };
 
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
-};
-
-exports.Prisma.QueryMode = {
-  default: 'default',
-  insensitive: 'insensitive'
-};
-
-exports.Prisma.ServiceOrderByRelevanceFieldEnum = {
-  id: 'id',
-  professionalId: 'professionalId',
-  categoryId: 'categoryId',
-  title: 'title',
-  priceText: 'priceText',
-  duration: 'duration',
-  description: 'description',
-  location: 'location'
-};
-
-exports.Prisma.OrderOrderByRelevanceFieldEnum = {
-  id: 'id',
-  clientId: 'clientId',
-  professionalId: 'professionalId',
-  serviceId: 'serviceId',
-  categoryId: 'categoryId',
-  serviceType: 'serviceType',
-  description: 'description',
-  locationCep: 'locationCep',
-  address: 'address',
-  urgency: 'urgency',
-  period: 'period',
-  notes: 'notes'
-};
-
-exports.Prisma.PortfolioItemOrderByRelevanceFieldEnum = {
-  id: 'id',
-  professionalId: 'professionalId',
-  categoryId: 'categoryId',
-  title: 'title',
-  imageUrl: 'imageUrl'
-};
-
-exports.Prisma.TestimonialOrderByRelevanceFieldEnum = {
-  id: 'id',
-  professionalId: 'professionalId',
-  authorId: 'authorId',
-  authorName: 'authorName',
-  authorRole: 'authorRole',
-  content: 'content'
-};
-
-exports.Prisma.AppointmentOrderByRelevanceFieldEnum = {
-  id: 'id',
-  orderId: 'orderId',
-  professionalId: 'professionalId',
-  clientId: 'clientId',
-  address: 'address',
-  serviceName: 'serviceName',
-  notes: 'notes'
-};
-
-exports.Prisma.CertificationOrderByRelevanceFieldEnum = {
-  id: 'id',
-  professionalId: 'professionalId',
-  name: 'name',
-  issuer: 'issuer'
-};
-
-exports.Prisma.ChatRoomOrderByRelevanceFieldEnum = {
-  id: 'id',
-  orderId: 'orderId'
-};
-
-exports.Prisma.ChatMessageOrderByRelevanceFieldEnum = {
-  id: 'id',
-  roomId: 'roomId',
-  senderId: 'senderId',
-  type: 'type',
-  content: 'content'
-};
-
-exports.Prisma.NotificationOrderByRelevanceFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  title: 'title'
-};
-
-exports.Prisma.PasswordResetTokenOrderByRelevanceFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  token: 'token'
 };
 exports.ServiceStatus = exports.$Enums.ServiceStatus = {
   ativo: 'ativo',

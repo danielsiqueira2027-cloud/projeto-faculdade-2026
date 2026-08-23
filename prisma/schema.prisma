@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // schema.prisma — ClickServiço
-// Provider: MySQL  |  ORM: Prisma
+// Provider: PostgreSQL (Supabase)  |  ORM: Prisma
 // ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 // ─── USERS (conta de login) ───────────────────────────────────────────────────
