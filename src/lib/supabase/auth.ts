@@ -1,7 +1,6 @@
 import 'server-only';
 import { createClient as createServerClient } from './server';
 import { prisma } from '@/lib/database';
-import { NextResponse, type NextRequest } from 'next/server';
 import type { SessionUser } from '@/lib/auth';
 import type { User, Session } from '@supabase/supabase-js';
 

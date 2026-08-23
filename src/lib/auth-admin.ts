@@ -4,7 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 /**
  * Configuração exclusiva do Auth.js v5 para o painel /admin.
  * Separada de lib/auth.ts para não conflitar com o sistema de auth
- * do app principal (baseado em cookie JWT manual via lib/session.ts).
+ * do app principal (gerenciado via Supabase Auth).
  */
 export const { handlers, auth: adminAuth, signIn: adminSignIn, signOut: adminSignOut } = NextAuth({
   providers: [
