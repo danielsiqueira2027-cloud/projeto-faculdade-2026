@@ -21,6 +21,7 @@ model User {
   password  String   @db.VarChar(255) // hash bcrypt
   phone     String?  @db.VarChar(20)
   avatarUrl String?  @db.Text         @map("avatar_url")
+  isActive  Boolean  @default(true)   @map("is_active")
   createdAt DateTime @default(now())  @map("created_at")
   updatedAt DateTime @updatedAt       @map("updated_at")
 
@@ -138,6 +139,11 @@ model Service {
   priceText      String?       @db.VarChar(100) @map("price_text")   // 'A partir de R$ 25/m²'
   priceValue     Decimal?      @db.Decimal(10, 2) @map("price_value") // valor numérico
   duration       String?       @db.VarChar(50)          // '2 horas'
+  
+  description    String?       @db.Text
+  location       String?       @db.VarChar(255)
+  imageUrls      Json?         @map("image_urls")
+
   status         ServiceStatus @default(ativo)
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt      @map("updated_at")
@@ -204,6 +210,7 @@ enum OrderStatus {
   EM_ANDAMENTO
   CONCLUIDO
   CANCELADO
+  DISPUTA
 }
 
 // ─── PORTFOLIO_ITEMS ──────────────────────────────────────────────────────────

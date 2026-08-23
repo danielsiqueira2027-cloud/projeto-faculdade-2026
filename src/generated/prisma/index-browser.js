@@ -127,6 +127,7 @@ exports.Prisma.UserScalarFieldEnum = {
   password: 'password',
   phone: 'phone',
   avatarUrl: 'avatarUrl',
+  isActive: 'isActive',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -181,6 +182,9 @@ exports.Prisma.ServiceScalarFieldEnum = {
   priceText: 'priceText',
   priceValue: 'priceValue',
   duration: 'duration',
+  description: 'description',
+  location: 'location',
+  imageUrls: 'imageUrls',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -340,15 +344,6 @@ exports.Prisma.ProfessionalCategoryOrderByRelevanceFieldEnum = {
   categoryId: 'categoryId'
 };
 
-exports.Prisma.ServiceOrderByRelevanceFieldEnum = {
-  id: 'id',
-  professionalId: 'professionalId',
-  categoryId: 'categoryId',
-  title: 'title',
-  priceText: 'priceText',
-  duration: 'duration'
-};
-
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
@@ -358,6 +353,17 @@ exports.Prisma.JsonNullValueFilter = {
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
+};
+
+exports.Prisma.ServiceOrderByRelevanceFieldEnum = {
+  id: 'id',
+  professionalId: 'professionalId',
+  categoryId: 'categoryId',
+  title: 'title',
+  priceText: 'priceText',
+  duration: 'duration',
+  description: 'description',
+  location: 'location'
 };
 
 exports.Prisma.OrderOrderByRelevanceFieldEnum = {
@@ -442,7 +448,8 @@ exports.OrderStatus = exports.$Enums.OrderStatus = {
   PENDENTE: 'PENDENTE',
   EM_ANDAMENTO: 'EM_ANDAMENTO',
   CONCLUIDO: 'CONCLUIDO',
-  CANCELADO: 'CANCELADO'
+  CANCELADO: 'CANCELADO',
+  DISPUTA: 'DISPUTA'
 };
 
 exports.AppointmentStatus = exports.$Enums.AppointmentStatus = {
