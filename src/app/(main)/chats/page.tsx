@@ -167,7 +167,7 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="max-w-[800px] mx-auto p-6 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
+    <div className="max-w-200 mx-auto p-6 md:p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans">
       {/* Header Section */}
       <div>
         <h2 className="text-3xl font-black text-[#103569] tracking-tighter uppercase flex items-center gap-3">

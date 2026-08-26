@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, use } from 'react';
+import React, { useState, useEffect, useRef, useCallback, use } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, 
@@ -12,7 +13,6 @@ import {
   TrendingUp, 
   CheckCircle,
   Loader2,
-  AlertTriangle,
   Lock,
   X,
   MessageSquare,
@@ -109,9 +109,9 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     return parseFloat(clean) / 100;
   };
 
-  const scrollToBottom = (behavior: 'smooth' | 'instant' = 'smooth') => {
+  const scrollToBottom = useCallback((behavior: 'smooth' | 'instant' = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
-  };
+  }, []);
 
   // Fecha o menu de ações ao clicar fora
   useEffect(() => {
@@ -142,19 +142,19 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
   }, [router, orderId]);
 
   // Carrega os detalhes do chat/pedido
-  const loadDetails = async () => {
+  const loadDetails = useCallback(async () => {
     try {
       const roomDetails = await getChatRoomDetails(orderId);
-      setDetails(roomDetails as any);
-    } catch (err: any) {
+      setDetails(roomDetails as ChatRoomDetails);
+    } catch (err: unknown) {
       console.error('Erro ao carregar detalhes do chat:', err);
-      alert(err.message || 'Erro ao carregar a conversa');
+      alert(err instanceof Error ? err.message : 'Erro ao carregar a conversa');
       router.push('/chats');
     }
-  };
+  }, [orderId, router]);
 
   // Carrega as mensagens e dados de agendamento
-  const loadMessages = async (isInitial = false) => {
+  const loadMessages = useCallback(async (isInitial = false) => {
     try {
       const res = await fetch(`/api/chat/${orderId}/messages`);
       if (!res.ok) throw new Error('Falha ao consultar mensagens');
@@ -163,9 +163,10 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       setMessages(data.messages);
       
       // Atualiza o status do pedido se mudou na polling
-      if (details && details.status !== data.orderStatus) {
-        setDetails(prev => prev ? { ...prev, status: data.orderStatus } : null);
-      }
+      setDetails(prev => {
+        if (!prev || prev.status === data.orderStatus) return prev;
+        return { ...prev, status: data.orderStatus };
+      });
 
       // Atualiza dados de agendamento vindos da API
       if (data.suggestedAt !== undefined) setSuggestedAt(data.suggestedAt);
@@ -179,14 +180,18 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     } finally {
       if (isInitial) setLoading(false);
     }
-  };
+  }, [orderId, scrollToBottom]);
 
   useEffect(() => {
-    if (isLogged) {
-      loadDetails();
-      loadMessages(true);
-    }
-  }, [isLogged, orderId]);
+    if (!isLogged) return;
+
+    const init = async () => {
+      await loadDetails();
+      await loadMessages(true);
+    };
+
+    void init();
+  }, [isLogged, orderId, loadDetails, loadMessages]);
 
   // Subscrever ao SSE em tempo real
   useEffect(() => {
@@ -236,14 +241,14 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     return () => {
       eventSource.close();
     };
-  }, [isLogged, orderId]);
+  }, [isLogged, orderId, loadDetails, loadMessages, scrollToBottom]);
 
   // Auto-scroll sempre que novas mensagens chegarem
   useEffect(() => {
     if (messages.length > 0) {
       scrollToBottom('smooth');
     }
-  }, [messages.length]);
+  }, [messages.length, scrollToBottom]);
 
   // Trata envio de texto
   const handleSendText = async (e: React.FormEvent) => {
@@ -258,11 +263,11 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       const newMsg = await sendMessageAction(orderId, 'texto', content);
       setMessages(prev => {
         if (prev.some(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg as any];
+        return [...prev, newMsg as MessageItem];
       });
       setTimeout(() => scrollToBottom('smooth'), 50);
-    } catch (err: any) {
-      alert(err.message || 'Erro ao enviar mensagem');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erro ao enviar mensagem');
       setTextInput(content);
     } finally {
       setSending(false);
@@ -298,11 +303,11 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       const newMsg = await sendMessageAction(orderId, 'imagem', uploadData.url);
       setMessages(prev => {
         if (prev.some(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg as any];
+        return [...prev, newMsg as MessageItem];
       });
       setTimeout(() => scrollToBottom('smooth'), 50);
-    } catch (err: any) {
-      alert(err.message || 'Falha ao processar imagem');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Falha ao processar imagem');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -356,24 +361,27 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
 
       {/* Lightbox Modal */}
       {lightboxImage && (
-        <div className="fixed inset-0 bg-black/95 z-[150] flex items-center justify-center animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/95 z-150 flex items-center justify-center animate-in fade-in duration-300">
           <button 
             onClick={() => setLightboxImage(null)}
             className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all border-none cursor-pointer"
           >
             <X size={24} />
           </button>
-          <img 
+          <Image 
             src={lightboxImage} 
             alt="Visualização aproximada" 
-            className="max-w-[90%] max-h-[85%] object-contain rounded-xl shadow-2xl border border-white/10 animate-in zoom-in duration-200"
+            width={1200}
+            height={900}
+            unoptimized
+            className="w-auto h-auto max-w-[90%] max-h-[85%] object-contain rounded-xl shadow-2xl border border-white/10 animate-in zoom-in duration-200"
           />
         </div>
       )}
 
       {/* Top Header Card */}
       <div className="bg-[#103569] text-white shadow-xl shrink-0">
-        <div className="max-w-[1000px] mx-auto p-4 md:py-5 md:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="max-w-250 mx-auto p-4 md:py-5 md:px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           
           {/* Back & Interlocutor Info */}
           <div className="flex items-center gap-3">
@@ -450,7 +458,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       </div>
 
       {/* Message Body Container */}
-      <div className="grow max-w-[1000px] w-full mx-auto p-4 md:p-6 space-y-4 flex flex-col">
+      <div className="grow max-w-250 w-full mx-auto p-4 md:p-6 space-y-4 flex flex-col">
         {messages.length === 0 ? (
           <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 max-w-md mx-auto text-center border border-slate-100 shadow-sm space-y-4 my-auto">
             <div className="w-16 h-16 bg-[#103569]/5 rounded-full flex items-center justify-center text-[#103569] mx-auto border border-[#103569]/10">
@@ -499,11 +507,14 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
                 >
                   {msg.type === 'imagem' ? (
                     <div className="relative group cursor-zoom-in">
-                      <img 
+                      <Image 
                         src={msg.content} 
                         alt="Imagem enviada no chat" 
+                        width={400}
+                        height={300}
+                        unoptimized
                         onClick={() => setLightboxImage(msg.content)}
-                        className="rounded-2xl max-w-full max-h-[300px] object-cover transition-opacity duration-200 hover:opacity-90 shadow-inner"
+                        className="rounded-2xl max-w-full max-h-75 w-auto h-auto object-cover transition-opacity duration-200 hover:opacity-90 shadow-inner"
                       />
                     </div>
                   ) : (
@@ -524,7 +535,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
 
       {/* Floating Action footer input bar */}
       <div className="sticky bottom-0 z-30 bg-[#fefccf]/10 backdrop-blur-md border-t border-slate-200/40 shrink-0 px-4 pt-2 pb-3">
-        <div className="max-w-[800px] mx-auto">
+        <div className="max-w-200 mx-auto">
           {isCompleted ? (
             <div className="bg-[#103569] text-white p-4 rounded-2xl shadow-lg border border-[#f7941d]/10 flex items-center justify-center gap-3 text-center animate-in fade-in zoom-in duration-300">
               <Lock className="text-[#f7941d] shrink-0" size={18} />
@@ -653,7 +664,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
 
       {/* Modal de Definir Preço */}
       {priceModalOpen && (
-        <div className="fixed inset-0 bg-[#103569]/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-[#103569]/60 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl border border-slate-100 max-w-md w-full space-y-6 animate-in zoom-in duration-200">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
