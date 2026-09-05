@@ -1,0 +1,74 @@
+# ==============================================================================
+# Workflow: Supabase Keep-Alive (Prevenção de Pausa por Inatividade)
+# ==============================================================================
+#
+# O QUE ESTE WORKFLOW FAZ:
+# O Supabase Free Tier pausa projetos automaticamente após 7 dias consecutivos sem
+# atividade de API ou banco de dados. Este workflow executa periodicamente uma
+# requisição REST leve contra a API do Supabase para registrar tráfego ativo e
+# manter o banco 100% online.
+#
+# AGENDAMENTO:
+# - Automático: Toda quarta-feira às 12:00 UTC (09:00 BRT) -> Cron: '0 12 * * 3'
+# - Manual: Aba "Actions" > "Supabase Keep-Alive" > "Run workflow"
+#
+# COMO CADASTRAR OS SECRETS NO GITHUB:
+# 1. Acesse o repositório no GitHub: https://github.com/<seu-usuario>/<seu-repo>
+# 2. Navegue até: Settings > Secrets and variables > Actions
+# 3. Na seção "Repository secrets", clique em "New repository secret"
+# 4. Cadastre os dois segredos abaixo (valores obtidos no seu arquivo .env):
+#    - Nome: SUPABASE_URL
+#      Valor: https://<seu-ref>.supabase.co
+#    - Nome: SUPABASE_ANON_KEY
+#      Valor: <sua-chave-anon-ou-publishable>
+# ==============================================================================
+
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    # Executa toda quarta-feira às 12:00 UTC (a cada 7 dias, garantindo renovação antes do limite)
+    - cron: '0 12 * * 3'
+  workflow_dispatch: # Permite disparo manual via interface do GitHub
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validar Configuração de Secrets
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ] || [ -z "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+            echo "❌ ERRO: Secrets SUPABASE_URL ou SUPABASE_ANON_KEY não configurados no repositório."
+            echo "Acesse Settings > Secrets and variables > Actions e configure ambos."
+            exit 1
+          fi
+          echo "✅ Secrets configurados. Prosseguindo com o ping..."
+
+      - name: Enviar Ping à API REST do Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          CLEAN_URL="${SUPABASE_URL%/}"
+          ENDPOINT="${CLEAN_URL}/rest/v1/categories?select=id&limit=1"
+          
+          echo "🌐 Enviando GET para: ${ENDPOINT}"
+          
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${ENDPOINT}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            --connect-timeout 15 \
+            --max-time 30)
+
+          echo "📡 Resposta HTTP: ${HTTP_STATUS}"
+
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "🎉 SUCESSO: Projeto Supabase ativo e respondendo normalmente!"
+            exit 0
+          else
+            echo "❌ FALHA: Supabase retornou status HTTP ${HTTP_STATUS}. Verifique se o projeto está pausado ou se as credenciais estão corretas."
+            exit 1
+          fi

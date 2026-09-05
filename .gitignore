@@ -30,8 +30,16 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+!.env.local.example
+
 
 # vercel
 .vercel
@@ -46,8 +54,19 @@ next-env.d.ts
 AGENTS.md
 CLAUDE.md
 
+# scratch / backups
+scratch/
+
 # documentation
 README.md
 readme.md
 docs/
 
+# Relatórios de auditoria/histórico (uso interno, não versionar)
+HISTORICO_AUDITORIA_CLICKSERVICO.md
+Auditoria_*.md
+Correcao_*.md
+Diagnostico_*.md
+Limpeza_*.md
+Relatorio_Tecnico_*.md
+Verificacao_*.md

@@ -82,13 +82,10 @@ export function Header() {
             <Link href="/categorias" className="no-underline font-medium hover:underline" style={{ color: '#0b2545' }}>
               Categorias
             </Link>
-            <Link href="/cliente/pedidos" className="no-underline font-medium hover:underline" style={{ color: '#0b2545' }}>
-              Meus pedidos
-            </Link>
           </nav>
 
           {/* Botão "Seja profissional" (develop) */}
-          <Link href="/cadastro">
+          <Link href="/seja-profissional">
             <button
               className="cursor-pointer transition-colors font-semibold"
               style={{ backgroundColor: '#0b2545', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px' }}
@@ -154,9 +151,7 @@ export function Header() {
                   <User size={14} /> Dashboard
                 </Link>
 
-                <Link href="/cliente/pedidos" className="flex items-center gap-2 py-2 text-sm no-underline" style={{ color: '#555' }} onClick={() => setMenuOpen(false)}>
-                  Meus pedidos
-                </Link>
+
 
                 <Link href="/login" className="flex items-center gap-2 py-2 text-sm no-underline font-bold" style={{ color: '#0b2545' }} onClick={() => setMenuOpen(false)}>
                   Fazer login

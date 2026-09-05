@@ -1,0 +1,323 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// schema.prisma — ClickServiço
+// Provider: PostgreSQL (Supabase)  |  ORM: Prisma
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── USERS (conta de login) ───────────────────────────────────────────────────
+// Um mesmo usuário pode ter perfil de cliente E/OU profissional.
+model User {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  name      String   @db.VarChar(150)
+  email     String   @unique @db.VarChar(191)
+  phone     String?  @db.VarChar(20)
+  avatarUrl String?  @map("avatar_url") @db.Text
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Um user pode ter ambos os perfis simultaneamente
+  client       Client?
+  professional Professional?
+
+  // Avaliações escritas pelo usuário (enquanto cliente)
+  testimonials Testimonial[]
+
+  chatMessages  ChatMessage[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+// ─── CLIENTS (perfil cliente) ─────────────────────────────────────────────────
+// Criado quando o usuário se cadastra como cliente.
+// Simples — sem dados extras além do vínculo com users.
+model Client {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @unique @map("user_id") @db.VarChar(36)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@map("clients")
+}
+
+// ─── PROFESSIONALS (perfil profissional) ─────────────────────────────────────
+// Requer dados adicionais de confirmação (CPF, endereço).
+// isVerified começa false e pode ser aprovado futuramente.
+model Professional {
+  id        String  @id @default(uuid()) @db.VarChar(36)
+  userId    String  @unique @map("user_id") @db.VarChar(36)
+  specialty String? @db.VarChar(150) // ex: 'Eletricista Residencial'
+  bio       String? @db.Text
+  phone     String? @db.VarChar(20) // telefone de contato profissional
+
+  // Localização (exibida na busca)
+  location String? @db.VarChar(255) // ex: "Santa Bárbara d'Oeste - SP"
+
+  // Endereço completo
+  addressStreet       String? @map("address_street") @db.VarChar(255)
+  addressNumber       String? @map("address_number") @db.VarChar(20)
+  addressComplement   String? @map("address_complement") @db.VarChar(100)
+  addressNeighborhood String? @map("address_neighborhood") @db.VarChar(100)
+  addressCity         String? @map("address_city") @db.VarChar(100)
+  addressState        String? @map("address_state") @db.VarChar(2) // UF: 'SP'
+  addressCep          String? @map("address_cep") @db.VarChar(10) // '13450-000'
+
+  // Dado de verificação
+  cpf         String? @unique @db.VarChar(14) // '000.000.000-00'
+  isVerified  Boolean @default(false) @map("is_verified") // aprovado pelo admin
+  isAvailable Boolean @default(true) @map("is_available") // visível na busca
+
+  // Métricas desnormalizadas para performance nas listagens
+  rating      Decimal @default(0.00) @db.Decimal(3, 2)
+  reviewCount Int     @default(0) @map("review_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories     ProfessionalCategory[]
+  services       Service[]
+  orders         Order[]
+  portfolio      PortfolioItem[]
+  testimonials   Testimonial[]
+  appointments   Appointment[]
+  certifications Certification[]
+
+  @@map("professionals")
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+// Imagens serão usadas futuramente via campo imageUrl ou CMS externo.
+model Category {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  name        String   @db.VarChar(100) // 'ENCANADOR'
+  slug        String   @unique @db.VarChar(100) // 'encanador'
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  professionals ProfessionalCategory[]
+  services      Service[]
+  orders        Order[]
+  portfolio     PortfolioItem[]
+
+  @@map("categories")
+}
+
+// ─── PROFESSIONAL_CATEGORIES (N:N) ───────────────────────────────────────────
+// Um profissional pode ter múltiplas especialidades/categorias.
+model ProfessionalCategory {
+  professionalId String @map("professional_id") @db.VarChar(36)
+  categoryId     String @map("category_id") @db.VarChar(36)
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([professionalId, categoryId])
+  @@map("professional_categories")
+}
+
+// ─── SERVICES ────────────────────────────────────────────────────────────────
+// Catálogo de serviços que um profissional oferece.
+model Service {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  professionalId String   @map("professional_id") @db.VarChar(36)
+  categoryId     String?  @map("category_id") @db.VarChar(36)
+  title          String   @db.VarChar(150) // 'Pintura Residencial'
+  priceText      String?  @map("price_text") @db.VarChar(100) // 'A partir de R$ 25/m²'
+  priceValue     Decimal? @map("price_value") @db.Decimal(10, 2) // valor numérico
+  duration       String?  @db.VarChar(50) // '2 horas'
+
+  description String? @db.Text
+  location    String? @db.VarChar(255)
+  imageUrls   Json?   @map("image_urls")
+
+  status    ServiceStatus @default(ativo)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  category     Category?    @relation(fields: [categoryId], references: [id])
+  orders       Order[]
+
+  @@map("services")
+}
+
+enum ServiceStatus {
+  ativo
+  inativo
+}
+
+// ─── ORDERS (pedidos) ─────────────────────────────────────────────────────────
+// O cliente envia um pedido → chega para o profissional como PENDENTE.
+// O profissional entra em contato, combina valores/datas
+// e atualiza para EM_ANDAMENTO, CONCLUIDO ou CANCELADO.
+//
+// Fluxo:
+//   Cliente preenche formulário → PENDENTE
+//   Profissional aceita e combina detalhes → EM_ANDAMENTO
+//   Serviço concluído → CONCLUIDO
+//   Qualquer lado cancela → CANCELADO
+model Order {
+  id             String      @id @default(uuid()) @db.VarChar(36)
+  clientId       String      @map("client_id") @db.VarChar(36)
+  professionalId String      @map("professional_id") @db.VarChar(36)
+  serviceId      String?     @map("service_id") @db.VarChar(36) // serviço do catálogo (opcional)
+  categoryId     String?     @map("category_id") @db.VarChar(36) // categoria do serviço
+  status         OrderStatus @default(PENDENTE)
+
+  // Dados preenchidos pelo cliente na solicitação
+  serviceType String? @map("service_type") @db.VarChar(150) // 'Pintura Residencial'
+  description String? @db.Text // detalhes do que precisa
+  locationCep String? @map("location_cep") @db.VarChar(10)
+  address     String? @db.Text
+  urgency     String? @db.VarChar(50) // 'o_mais_rapido', etc.
+  attachments Json? // URLs dos arquivos enviados
+  period      String? @map("period") @db.VarChar(50) // turno preferencial: Manhã, Tarde, Noite
+
+  // Dados acordados com o profissional (preenchidos após contato)
+  agreedPrice Decimal?  @map("agreed_price") @db.Decimal(10, 2) // valor combinado
+  scheduledAt DateTime? @map("scheduled_at") // data/hora agendada
+  notes       String?   @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client       Client        @relation(fields: [clientId], references: [id])
+  professional Professional  @relation(fields: [professionalId], references: [id])
+  service      Service?      @relation(fields: [serviceId], references: [id])
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  appointments Appointment[]
+  chatRoom     ChatRoom?
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDO
+  CANCELADO
+  DISPUTA
+}
+
+// ─── PORTFOLIO_ITEMS ──────────────────────────────────────────────────────────
+model PortfolioItem {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  professionalId String   @map("professional_id") @db.VarChar(36)
+  categoryId     String?  @map("category_id") @db.VarChar(36)
+  title          String   @db.VarChar(150)
+  imageUrl       String?  @map("image_url") @db.Text
+  year           Int?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  category     Category?    @relation(fields: [categoryId], references: [id])
+
+  @@map("portfolio_items")
+}
+
+// ─── TESTIMONIALS ─────────────────────────────────────────────────────────────
+model Testimonial {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  professionalId String   @map("professional_id") @db.VarChar(36)
+  authorId       String?  @map("author_id") @db.VarChar(36) // null se depoimento externo/importado
+  authorName     String?  @map("author_name") @db.VarChar(150) // fallback
+  authorRole     String?  @map("author_role") @db.VarChar(100) // ex: 'Cliente'
+  content        String   @db.Text
+  rating         Int // 1 a 5
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  author       User?        @relation(fields: [authorId], references: [id])
+
+  @@map("testimonials")
+}
+
+// ─── APPOINTMENTS ─────────────────────────────────────────────────────────────
+// Agendamentos/visitas técnicas gerados a partir de um pedido confirmado.
+model Appointment {
+  id             String            @id @default(uuid()) @db.VarChar(36)
+  orderId        String?           @map("order_id") @db.VarChar(36) // nullable: pode existir sem order
+  professionalId String            @map("professional_id") @db.VarChar(36)
+  clientId       String            @map("client_id") @db.VarChar(36) // referência direta para queries rápidas
+  scheduledAt    DateTime          @map("scheduled_at")
+  address        String?           @db.Text
+  serviceName    String?           @map("service_name") @db.VarChar(150)
+  status         AppointmentStatus @default(CONFIRMADO)
+  notes          String?           @db.Text
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  order        Order?       @relation(fields: [orderId], references: [id])
+  professional Professional @relation(fields: [professionalId], references: [id])
+
+  @@map("appointments")
+}
+
+enum AppointmentStatus {
+  CONFIRMADO
+  PENDENTE
+  CONCLUIDO
+  CANCELADO
+}
+
+// ─── CERTIFICATIONS ───────────────────────────────────────────────────────────
+model Certification {
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  professionalId String    @map("professional_id") @db.VarChar(36)
+  name           String    @db.VarChar(200) // 'Técnico em Eletrotécnica'
+  issuedAt       DateTime? @map("issued_at")
+  expiresAt      DateTime? @map("expires_at")
+  issuer         String?   @db.VarChar(150) // instituição emissora
+
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@map("certifications")
+}
+
+model ChatRoom {
+  id        String   @id @default(uuid())
+  orderId   String   @unique @map("order_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order    Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  senderId  String   @map("sender_id")
+  type      String   @db.VarChar(10) // "texto" | "imagem"
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @map("user_id") @db.VarChar(36)
+  title     String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  read      Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}

@@ -10,6 +10,7 @@ export interface Professional {
   certifications: string[];
   portfolio: PortfolioItem[];
   testimonials: Testimonial[];
+  categories?: string[];
 }
 
 export interface PortfolioItem {

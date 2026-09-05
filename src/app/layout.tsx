@@ -3,7 +3,7 @@ import { Inter, Manrope, Work_Sans } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import TempNavFooter from "@/components/TempNavFooter";
+
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,12 +39,7 @@ export default function RootLayout({
       className={`${inter.variable} ${manrope.variable} ${workSans.variable} h-full antialiased font-sans`}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <main className="grow">
-          {children}
-        </main>
-        <TempNavFooter />
-        <Footer />
+        {children}
       </body>
     </html>
   );
