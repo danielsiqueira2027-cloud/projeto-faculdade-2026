@@ -23,7 +23,7 @@ export default async function ClientDashboardPage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link
-          href="/dashboard/cliente/pedidos"
+          href="/cliente/pedidos"
           className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group"
         >
           <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-[#103569] mb-5 group-hover:scale-110 transition-transform">

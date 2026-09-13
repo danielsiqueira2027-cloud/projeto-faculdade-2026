@@ -1,8 +1,6 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
-import { Professional, PROFESSIONALS_MOCK } from '@/types/professional';
+import { getTopProfessionals } from '@/app/actions/professionals';
 
 /* ── Subcomponente: StarRating ───────────────────────────── */
 
@@ -22,37 +20,35 @@ function StarRating({ nota }: { nota: number }) {
 
 /* ── Subcomponente: ProfissionalCard ─────────────────────── */
 
-function ProfissionalCard({ pro }: { pro: Professional }) {
+interface DestaqueProfessional {
+  id: string;
+  name: string;
+  role: string;
+  rating: number;
+  distance: number;
+  location: string;
+  avatarUrl?: string | null;
+}
+
+function ProfissionalCard({ pro }: { pro: DestaqueProfessional }) {
   return (
     <Link
-      href="/perfil-profissional"
+      href={`/perfil-profissional?id=${pro.id}`}
       style={{ textDecoration: 'none' }}
       aria-label={`Ver perfil de ${pro.name}, ${pro.role}`}
     >
       <div
+        className="transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:border-[#103569]"
         style={{
           background: '#fff',
           borderRadius: 14,
           padding: '22px 20px',
           boxShadow: '0 3px 12px rgba(0,0,0,0.07)',
           border: '1px solid transparent',
-          transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
           cursor: 'pointer',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
-        }}
-        onMouseEnter={(e) => {
-          const el = e.currentTarget as HTMLDivElement;
-          el.style.transform = 'translateY(-4px)';
-          el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
-          el.style.borderColor = '#103569';
-        }}
-        onMouseLeave={(e) => {
-          const el = e.currentTarget as HTMLDivElement;
-          el.style.transform = 'translateY(0)';
-          el.style.boxShadow = '0 3px 12px rgba(0,0,0,0.07)';
-          el.style.borderColor = 'transparent';
         }}
       >
         {/* Topo: avatar + info principal */}
@@ -134,10 +130,8 @@ function ProfissionalCard({ pro }: { pro: Professional }) {
 
 /* ── Componente principal ────────────────────────────────── */
 
-const DESTAQUE_IDS = ['1', '2', '3', '4'];
-
-export function ProfissionaisDestaque() {
-  const destaques = PROFESSIONALS_MOCK.filter((p) => DESTAQUE_IDS.includes(p.id));
+export async function ProfissionaisDestaque() {
+  const destaques = await getTopProfessionals(4);
 
   return (
     <section className="w-full" style={{ padding: '70px 20px', backgroundColor: '#ebebeb' }}>
@@ -201,3 +195,4 @@ export function ProfissionaisDestaque() {
     </section>
   );
 }
+

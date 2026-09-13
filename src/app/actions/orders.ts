@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
-import { OrderStatus } from '@/generated/prisma';
+import { OrderStatus, type Prisma } from '@/generated/prisma';
 import { appEvents } from '@/lib/events';
 
 export type ActionResponse = {
@@ -105,7 +105,7 @@ export async function createOrderAction(data: {
     appEvents.emit(`notification:${professional.userId}`, { type: 'new_order' });
 
     return { success: true, orderId: order.id };
-  } catch (error: any) {
+  } catch (error) {
     console.error('[createOrderAction] Erro detalhado ao criar orçamento:', error);
     return { error: 'Ocorreu um erro interno ao processar a solicitação. Verifique os logs.' };
   }
@@ -225,12 +225,14 @@ export async function getClientOrders() {
       createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
       avatar: order.professional.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
+      hasTestimonial: Boolean(order.notes && order.notes.includes('[AVALIAÇÃO:')),
     }));
   } catch (error) {
     console.error('[getClientOrders]', error);
     return [];
   }
 }
+
 
 /**
  * Atualiza o status e/ou preço acordado de um pedido pelo profissional.
@@ -255,7 +257,7 @@ export async function updateOrderStatusAction(
     if (!order) return { error: 'Pedido não encontrado.' };
     if (order.professionalId !== prof.id) return { error: 'Não autorizado para este pedido.' };
 
-    const updateData: any = { status };
+    const updateData: Prisma.OrderUpdateInput = { status };
     if (agreedPrice !== undefined && agreedPrice !== null) {
       updateData.agreedPrice = agreedPrice;
     }

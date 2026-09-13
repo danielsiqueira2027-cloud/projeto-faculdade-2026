@@ -39,9 +39,11 @@ export function ProfileCard({ professional }: ProfileCardProps) {
                 Solicitar Orçamento
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="border-2 border-bp-primary text-bp-primary rounded-2xl px-8 h-14 font-bold hover:bg-bp-primary/5">
-              Enviar Mensagem
-            </Button>
+            <Link href={`/orcamento?profId=${professional.id}`}>
+              <Button size="lg" variant="outline" className="border-2 border-bp-primary text-bp-primary rounded-2xl px-8 h-14 font-bold hover:bg-bp-primary/5">
+                Enviar Mensagem
+              </Button>
+            </Link>
           </div>
         </div>
 

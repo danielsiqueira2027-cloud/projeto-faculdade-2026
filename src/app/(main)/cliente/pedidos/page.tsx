@@ -17,7 +17,8 @@ import {
   MapPin,
   CircleDollarSign,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ import { getClientOrders } from '@/app/actions/orders';
 import { getOrCreateChatRoom } from '@/app/actions/chat';
 import { getCurrentUserAction } from '@/app/actions/auth';
 import { useRouter } from 'next/navigation';
+import { AvaliacaoModal } from '@/components/cliente/AvaliacaoModal';
 
 type OrderStatusType = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 
@@ -44,6 +46,7 @@ interface OrderItem {
   status: OrderStatusType;
   createdAt: string;
   avatar: string;
+  hasTestimonial?: boolean;
 }
 
 export default function ClientOrdersPage() {
@@ -55,6 +58,7 @@ export default function ClientOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<OrderStatusType>('PENDENTE');
   const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
+  const [evaluatingOrder, setEvaluatingOrder] = useState<OrderItem | null>(null);
   const router = useRouter();
 
   const handleStartChat = async (orderId: string) => {
@@ -435,9 +439,23 @@ export default function ClientOrdersPage() {
                   )}
 
                   {order.status === 'CONCLUIDO' && (
-                    <span className="flex items-center gap-1.5 text-xs font-black text-green-600 bg-green-50/80 px-4 py-2 rounded-xl border border-green-100">
-                      <CheckCircle size={14} /> Serviço Concluído
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {order.hasTestimonial ? (
+                        <span className="flex items-center gap-1.5 text-xs font-black text-emerald-700 bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-200">
+                          <Star size={14} className="fill-emerald-600 text-emerald-600" /> Avaliação enviada
+                        </span>
+                      ) : (
+                        <Button
+                          onClick={() => setEvaluatingOrder(order)}
+                          className="h-9 px-4 rounded-xl font-black bg-[#f7941d] hover:bg-[#e68516] text-white text-xs flex items-center gap-1.5 shadow-sm cursor-pointer border-none"
+                        >
+                          <Star size={14} className="fill-white" /> Avaliar serviço
+                        </Button>
+                      )}
+                      <span className="flex items-center gap-1.5 text-xs font-black text-green-600 bg-green-50/80 px-4 py-2 rounded-xl border border-green-100">
+                        <CheckCircle size={14} /> Serviço Concluído
+                      </span>
+                    </div>
                   )}
 
                   {order.status === 'CANCELADO' && (
@@ -466,6 +484,20 @@ export default function ClientOrdersPage() {
           )}
         </div>
       )}
+
+      {/* Modal de Avaliação de Serviço Concluído */}
+      {evaluatingOrder && (
+        <AvaliacaoModal
+          orderId={evaluatingOrder.id}
+          professionalName={evaluatingOrder.professionalName}
+          serviceType={evaluatingOrder.serviceType}
+          onClose={() => setEvaluatingOrder(null)}
+          onSuccess={() => {
+            loadOrders();
+          }}
+        />
+      )}
     </div>
   );
 }
+

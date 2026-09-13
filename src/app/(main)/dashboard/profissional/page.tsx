@@ -5,17 +5,53 @@ import { Button } from '@/components/ui/button';
 import { DashboardStats } from '@/components/profissional/DashboardStats';
 import { ServiceCardPro } from '@/components/profissional/ServiceCardPro';
 import { getCurrentUser } from '@/lib/auth';
-
-const MOCK_SERVICES = [
-  { id: '1', title: 'Reforma Residencial Completa', category: 'Construção', price: 'A partir de R$ 5.000', location: 'São Paulo, SP' },
-  { id: '2', title: 'Instalação Elétrica Industrial', category: 'Elétrica', price: 'A partir de R$ 1.200', location: 'Guarulhos, SP' },
-  { id: '3', title: 'Pintura Fachada de Prédios', category: 'Pintura', price: 'Sob orçamento', location: 'Santo André, SP' },
-  { id: '4', title: 'Reparo de Telhados e Calhas', category: 'Manutenção', price: 'A partir de R$ 450', location: 'São Bernardo, SP' },
-];
+import { getMyServicesAction } from '@/app/actions/services';
+import { prisma } from '@/lib/database';
 
 export default async function ProfessionalDashboardPage() {
   const user = await getCurrentUser();
   const userName = user?.name || 'Profissional';
+
+  // 1. Busca os serviços reais cadastrados pelo profissional
+  const services = await getMyServicesAction();
+
+  // 2. Busca métricas e ordens reais do profissional logado
+  let totalOrders = 0;
+  let rating = 0;
+  let reviewCount = 0;
+  let activeServicesCount = services.length;
+  let recentOrders: any[] = [];
+
+  if (user) {
+    const prof = await prisma.professional.findUnique({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        rating: true,
+        reviewCount: true,
+        _count: {
+          select: {
+            orders: true,
+          }
+        },
+        orders: {
+          take: 3,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            client: { include: { user: { select: { name: true } } } },
+            service: { select: { title: true } }
+          }
+        }
+      }
+    });
+
+    if (prof) {
+      totalOrders = prof._count.orders;
+      rating = Number(prof.rating);
+      reviewCount = prof.reviewCount;
+      recentOrders = prof.orders;
+    }
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -41,14 +77,19 @@ export default async function ProfessionalDashboardPage() {
         </div>
       </div>
 
-      <DashboardStats />
+      <DashboardStats 
+        totalOrders={totalOrders}
+        rating={rating}
+        reviewCount={reviewCount}
+        activeServices={activeServicesCount}
+      />
 
       <div className="space-y-6">
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-black text-[#103569]">Seus Serviços Divulgados</h3>
             <span className="bg-slate-100 text-slate-500 text-xs font-black px-2 py-0.5 rounded-lg">
-              {MOCK_SERVICES.length}
+              {services.length}
             </span>
           </div>
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
@@ -62,8 +103,15 @@ export default async function ProfessionalDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {MOCK_SERVICES.map((service) => (
-            <ServiceCardPro key={service.id} {...service} />
+          {services.map((service) => (
+            <ServiceCardPro 
+              key={service.id} 
+              id={service.id}
+              title={service.title}
+              category={service.categoryName}
+              price={service.priceText || (service.priceValue ? `R$ ${service.priceValue}` : 'A combinar')}
+              location={service.location || 'Local a combinar'}
+            />
           ))}
 
           <Link 
@@ -82,25 +130,44 @@ export default async function ProfessionalDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
         <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
           <h3 className="text-xl font-black text-[#103569] mb-6">Orçamentos Recentes</h3>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition-colors group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-[#103569]">
-                    DS
+          {recentOrders.length === 0 ? (
+            <p className="text-sm text-slate-400 font-medium text-center py-6">
+              Nenhum orçamento recebido até o momento.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {recentOrders.map((order) => {
+                const clientName = order.client?.user?.name || 'Cliente';
+                const initials = clientName.split(' ').slice(0, 2).map((n: string) => n[0]).join('').toUpperCase();
+                const serviceTitle = order.service?.title || order.serviceType || 'Serviço Geral';
+                return (
+                  <div key={order.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition-colors group">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-[#103569]">
+                        {initials}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[#103569]">{clientName}</h4>
+                        <p className="text-xs text-slate-400">{serviceTitle}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${
+                        order.status === 'CONCLUIDO' ? 'text-green-600 bg-green-50' :
+                        order.status === 'EM_ANDAMENTO' ? 'text-blue-600 bg-blue-50' :
+                        'text-yellow-600 bg-yellow-50'
+                      }`}>
+                        {order.status}
+                      </span>
+                      <Button asChild variant="ghost" size="sm" className="font-bold text-[#103569] group-hover:bg-white shadow-none">
+                        <Link href="/dashboard/profissional/pedidos">Ver detalhes</Link>
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-[#103569]">Daniel Siqueira</h4>
-                    <p className="text-xs text-slate-400">Solicitado há 2 horas • Reforma Residencial</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">Pendente</span>
-                  <Button variant="ghost" size="sm" className="font-bold text-[#103569] group-hover:bg-white shadow-none">Ver detalhes</Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div className="bg-[#103569] rounded-3xl p-8 text-white relative overflow-hidden">
@@ -109,8 +176,10 @@ export default async function ProfessionalDashboardPage() {
           <p className="text-white/70 font-medium mb-6 relative z-10 leading-relaxed">
             "Profissionais que completam 100% do perfil e adicionam fotos de trabalhos realizados recebem 3x mais solicitações."
           </p>
-          <Button className="w-full bg-[#f7941d] hover:bg-[#f7941d]/90 text-white rounded-2xl h-12 font-black relative z-10">
-            Completar Perfil
+          <Button asChild className="w-full bg-[#f7941d] hover:bg-[#f7941d]/90 text-white rounded-2xl h-12 font-black relative z-10">
+            <Link href="/dashboard/profissional/perfil">
+              Completar Perfil
+            </Link>
           </Button>
         </div>
       </div>
