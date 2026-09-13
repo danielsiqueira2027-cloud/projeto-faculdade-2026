@@ -27,26 +27,44 @@ const StatCard = ({ label, value, icon, trend, color }: StatProps) => (
   </Card>
 );
 
-export function DashboardStats() {
+export interface DashboardStatsProps {
+  totalOrders?: number;
+  rating?: number;
+  reviewCount?: number;
+  activeServices?: number;
+}
+
+export function DashboardStats({
+  totalOrders = 0,
+  rating = 0,
+  reviewCount = 0,
+  activeServices = 0,
+}: DashboardStatsProps) {
+  const ratingFormatted = rating > 0 ? rating.toFixed(1) : 'Novo';
+  const reviewTrend =
+    reviewCount > 0
+      ? `Baseado em ${reviewCount} avaliaç${reviewCount > 1 ? 'ões' : 'ão'}`
+      : 'Sem avaliações ainda';
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <StatCard 
         label="Total de Orçamentos" 
-        value="24" 
+        value={totalOrders} 
         icon={<FileText size={24} />} 
-        trend="+4 esta semana"
+        trend={totalOrders > 0 ? `${totalOrders} solicitados` : 'Nenhum pedido ainda'}
         color="bg-[#103569]"
       />
       <StatCard 
         label="Avaliação Média" 
-        value="4.9" 
+        value={ratingFormatted} 
         icon={<Star size={24} />} 
-        trend="Baseado em 18 avaliações"
+        trend={reviewTrend}
         color="bg-[#f7941d]"
       />
       <StatCard 
         label="Serviços Ativos" 
-        value="08" 
+        value={String(activeServices).padStart(2, '0')} 
         icon={<Activity size={24} />} 
         color="bg-emerald-500"
       />
