@@ -162,3 +162,52 @@ export async function getProfessionalDetails(id: string) {
     return null;
   }
 }
+
+/**
+ * Busca os profissionais mais bem avaliados (destaques da home) no banco via Prisma.
+ * Ordenados por nota (rating) decrescente, limitando aos top 4.
+ */
+export async function getTopProfessionals(limit: number = 4) {
+  try {
+    const professionals = await prisma.professional.findMany({
+      where: {
+        isAvailable: true,
+      },
+      orderBy: [
+        { rating: 'desc' },
+        { reviewCount: 'desc' },
+      ],
+      take: limit,
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+            avatarUrl: true,
+          },
+        },
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+      },
+    });
+
+    return professionals.map((prof) => ({
+      id: prof.id,
+      name: prof.user.name,
+      role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
+      rating: prof.rating !== null ? Number(prof.rating) : 0,
+      distance: 1.5,
+      location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
+      avatarUrl: prof.user.avatarUrl || null,
+      bio: prof.bio || '',
+    }));
+  } catch (error) {
+    console.error('[getTopProfessionals] Erro ao buscar profissionais em destaque:', error);
+    return [];
+  }
+}
+
