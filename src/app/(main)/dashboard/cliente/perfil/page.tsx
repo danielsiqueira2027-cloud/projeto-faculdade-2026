@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { UserCircle, Mail, Phone, Camera, Save, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { UserCircle, Mail, Phone, Camera, Save, Lock, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getClientProfile, saveClientProfile } from '@/app/actions/profile-settings';
 import ImageCropper from '@/components/ImageCropper';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { DeleteAccountModal } from '@/components/DeleteAccountModal';
 
 const fieldClass =
   'w-full bg-[#fefccf]/30 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[#103569]/10 outline-none transition-all font-medium text-[#103569] placeholder:text-[#103569]/20';
@@ -26,6 +27,7 @@ export default function ClientProfilePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,8 +173,8 @@ export default function ClientProfilePage() {
           </div>
         </div>
 
-        {/* Form Card */}
-        <div className="lg:col-span-8">
+        {/* Form Column */}
+        <div className="lg:col-span-8 space-y-6">
           <div className="bg-white rounded-3xl p-8 md:p-10 border border-slate-100 shadow-sm">
             <h3 className="text-xl font-black text-[#103569] mb-8">Informações Pessoais</h3>
 
@@ -274,8 +276,46 @@ export default function ClientProfilePage() {
               </div>
             </form>
           </div>
+
+          {/* Zona de Perigo / Excluir Conta */}
+          <div className="bg-white rounded-3xl p-8 border border-rose-100 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="font-black text-rose-950 text-base">Zona de Perigo</h3>
+                <p className="text-xs text-rose-600/80 font-medium">
+                  Ações irreversíveis relacionadas à sua conta
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2 border-t border-rose-50">
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-gray-800">Excluir permanentemente sua conta</h4>
+                <p className="text-xs text-gray-500 max-w-xl">
+                  Ao excluir sua conta, todos os seus dados pessoais, histórico de pedidos e mensagens serão apagados definitivamente em conformidade com a LGPD.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl h-11 px-5 text-xs font-black shrink-0 transition-all cursor-pointer"
+              >
+                Excluir Conta
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Modal de Exclusão de Conta */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        userType="cliente"
+      />
 
       {/* Image Cropper Modal */}
       {selectedFile && (
