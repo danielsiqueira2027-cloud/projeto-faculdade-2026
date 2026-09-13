@@ -179,12 +179,13 @@ export default function ImageCropper({ file, onClose, onCropComplete }: ImageCro
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div className="shrink-0 px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white">
           <div>
             <h3 className="text-lg font-black text-[#103569]">Ajustar Enquadramento</h3>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Foto de Perfil</p>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-50 rounded-xl cursor-pointer border-none bg-transparent"
           >
@@ -192,78 +193,84 @@ export default function ImageCropper({ file, onClose, onCropComplete }: ImageCro
           </button>
         </div>
 
-        {/* Crop Area */}
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-50 relative">
-          <div
-            className="relative overflow-hidden bg-slate-200 shadow-inner rounded-3xl border-2 border-dashed border-[#f7941d] cursor-move select-none"
-            style={{ width: containerSize, height: containerSize }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUpOrLeave}
-            onMouseLeave={handleMouseUpOrLeave}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
-            {imageSrc && (
-              <img
-                ref={imageRef}
-                src={imageSrc}
-                alt="Crop preview"
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  setNaturalDimensions({ w: img.naturalWidth, h: img.naturalHeight });
-                }}
-                className="absolute pointer-events-none origin-center transition-transform duration-75"
-                style={{
-                  width: imgWidth,
-                  height: imgHeight,
-                  left: '50%',
-                  top: '50%',
-                  transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-                }}
-              />
-            )}
-            {/* Center target indicator helper */}
-            <div className="absolute inset-0 border border-white/20 pointer-events-none rounded-3xl" />
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {/* Crop Area */}
+          <div className="flex flex-col items-center justify-center p-6 bg-slate-50 relative">
+            <div
+              className="relative overflow-hidden bg-slate-200 shadow-inner rounded-3xl border-2 border-dashed border-[#f7941d] cursor-move select-none"
+              style={{ width: containerSize, height: containerSize }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUpOrLeave}
+              onMouseLeave={handleMouseUpOrLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              {imageSrc && (
+                <img
+                  ref={imageRef}
+                  src={imageSrc}
+                  alt="Crop preview"
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    setNaturalDimensions({ w: img.naturalWidth, h: img.naturalHeight });
+                  }}
+                  className="absolute pointer-events-none origin-center transition-transform duration-75"
+                  style={{
+                    width: imgWidth,
+                    height: imgHeight,
+                    left: '50%',
+                    top: '50%',
+                    transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                  }}
+                />
+              )}
+              {/* Center target indicator helper */}
+              <div className="absolute inset-0 border border-white/20 pointer-events-none rounded-3xl" />
+            </div>
+
+            <p className="text-xs text-slate-400 font-medium mt-4 text-center">
+              Arraste a imagem para mover e use a barra abaixo para ajustar o zoom.
+            </p>
           </div>
-
-          <p className="text-xs text-slate-400 font-medium mt-4 text-center">
-            Arraste a imagem para mover e use a barra abaixo para ajustar o zoom.
-          </p>
-        </div>
-
-        {/* Controls */}
-        <div className="px-6 py-6 space-y-6 border-t border-slate-100 bg-white">
-          {error && <p className="text-xs text-red-500 font-bold text-center bg-red-50 p-2.5 rounded-xl">{error}</p>}
 
           {/* Zoom Slider */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setScale(Math.max(1, scale - 0.1))}
-              className="text-[#103569] p-1 hover:bg-[#103569]/5 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-            >
-              <ZoomOut size={18} />
-            </button>
-            <input
-              type="range"
-              min="1"
-              max="3"
-              step="0.05"
-              value={scale}
-              onChange={(e) => setScale(parseFloat(e.target.value))}
-              className="flex-1 accent-[#f7941d] cursor-pointer h-1.5 bg-slate-100 rounded-lg appearance-none"
-            />
-            <button
-              onClick={() => setScale(Math.min(3, scale + 0.1))}
-              className="text-[#103569] p-1 hover:bg-[#103569]/5 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
-            >
-              <ZoomIn size={18} />
-            </button>
+          <div className="px-6 py-4 border-t border-slate-100 bg-white">
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => setScale(Math.max(1, scale - 0.1))}
+                className="text-[#103569] p-1 hover:bg-[#103569]/5 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <ZoomOut size={18} />
+              </button>
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+                value={scale}
+                onChange={(e) => setScale(parseFloat(e.target.value))}
+                className="flex-1 accent-[#f7941d] cursor-pointer h-1.5 bg-slate-100 rounded-lg appearance-none"
+              />
+              <button
+                type="button"
+                onClick={() => setScale(Math.min(3, scale + 0.1))}
+                className="text-[#103569] p-1 hover:bg-[#103569]/5 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <ZoomIn size={18} />
+              </button>
+            </div>
           </div>
+        </div>
 
-          {/* Bottom Actions */}
-          <div className="flex items-center justify-between gap-3 pt-2">
+        {/* Bottom Actions (Fixed Footer) */}
+        <div className="shrink-0 px-6 py-4 border-t border-slate-100 bg-white space-y-3">
+          {error && <p className="text-xs text-red-500 font-bold text-center bg-red-50 p-2.5 rounded-xl">{error}</p>}
+
+          <div className="flex items-center justify-between gap-3">
             <Button
               type="button"
               variant="outline"

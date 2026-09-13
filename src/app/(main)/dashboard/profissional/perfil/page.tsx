@@ -15,13 +15,15 @@ import {
   AlertCircle,
   CheckCircle2,
   Lock,
-  FileText
+  FileText,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { getProfessionalProfile, saveProfessionalProfile } from '@/app/actions/profile-settings';
 import ImageCropper from '@/components/ImageCropper';
+import { DeleteAccountModal } from '@/components/DeleteAccountModal';
 
 export default function EditProfilePage() {
   const router = useRouter();
@@ -49,6 +51,7 @@ export default function EditProfilePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -422,6 +425,37 @@ export default function EditProfilePage() {
               </Button>
             </div>
           </form>
+
+          {/* Zona de Perigo / Excluir Conta */}
+          <div className="bg-white rounded-3xl p-8 border border-rose-100 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600">
+                <Trash2 size={20} />
+              </div>
+              <div>
+                <h3 className="font-black text-rose-950 text-base">Zona de Perigo</h3>
+                <p className="text-xs text-rose-600/80 font-medium">
+                  Ações irreversíveis relacionadas à sua conta profissional
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2 border-t border-rose-50">
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-gray-800">Excluir permanentemente sua conta</h4>
+                <p className="text-xs text-gray-500 max-w-xl">
+                  Ao excluir sua conta, seus serviços cadastrados, fotos de portfólio, avaliações, propostas e dados de acesso serão apagados definitivamente em conformidade com a LGPD.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setShowDeleteModal(true)}
+                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl h-11 px-5 text-xs font-black shrink-0 transition-all cursor-pointer"
+              >
+                Excluir Conta
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Right Column: Preview & Tips */}
@@ -466,6 +500,13 @@ export default function EditProfilePage() {
           }}
         />
       )}
+
+      {/* Modal de Exclusão de Conta */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        userType="profissional"
+      />
     </div>
   );
 }
