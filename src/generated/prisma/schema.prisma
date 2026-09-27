@@ -73,10 +73,15 @@ model Professional {
   addressState        String? @map("address_state") @db.VarChar(2) // UF: 'SP'
   addressCep          String? @map("address_cep") @db.VarChar(10) // '13450-000'
 
-  // Dado de verificação
-  cpf         String? @unique @db.VarChar(14) // '000.000.000-00'
-  isVerified  Boolean @default(false) @map("is_verified") // aprovado pelo admin
-  isAvailable Boolean @default(true) @map("is_available") // visível na busca
+  // Dado de verificação — CPF armazenado com criptografia de dois campos:
+  //   cpfEncrypted: valor cifrado com AES-256-GCM (via src/lib/crypto.ts)
+  //   cpfHash     : HMAC-SHA256 do CPF normalizado (somente dígitos), usado para
+  //                 verificação de unicidade sem expor o valor real.
+  // IMPORTANTE: NÃO armazene o CPF em texto puro neste campo.
+  cpfEncrypted String? @map("cpf_encrypted") @db.Text // AES-256-GCM base64
+  cpfHash      String? @unique @map("cpf_hash") @db.VarChar(64) // HMAC-SHA256 hex
+  isVerified   Boolean @default(false) @map("is_verified") // aprovado pelo admin
+  isAvailable  Boolean @default(true) @map("is_available") // visível na busca
 
   // Métricas desnormalizadas para performance nas listagens
   rating      Decimal @default(0.00) @db.Decimal(3, 2)

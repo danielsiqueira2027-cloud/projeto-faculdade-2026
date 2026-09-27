@@ -8,6 +8,7 @@ import {
   supabaseSignOut,
   getSupabaseUser,
 } from '@/lib/supabase/auth';
+import { cifrarCPF, hashCPF } from '@/lib/crypto';
 
 // ─── Tipos de estado retornado pelas actions ──────────────────────────────────
 
@@ -158,8 +159,28 @@ export async function ativarProfissionalAction(
 
   const bio         = (formData.get('bio') as string)?.trim() || null;
   const experiencia = (formData.get('experiencia') as string)?.trim() || null;
-  const cpf         = (formData.get('cpf') as string)?.trim() || null;
+  const rawCpf      = (formData.get('cpf') as string)?.trim() || null;
   const phone       = (formData.get('phone') as string)?.trim() || null;
+
+  let cpfEncrypted: string | null = null;
+  let cpfHash: string | null = null;
+
+  if (rawCpf && rawCpf.length > 0) {
+    cpfHash = hashCPF(rawCpf);
+    cpfEncrypted = cifrarCPF(rawCpf);
+
+    // Validação de unicidade por hash para evitar duplicidade
+    const existingCpf = await prisma.professional.findFirst({
+      where: {
+        cpfHash,
+        userId: { not: currentUser.id },
+      },
+    });
+
+    if (existingCpf) {
+      return { error: 'Este CPF já está cadastrado em outra conta.' };
+    }
+  }
 
   // Endereço
   const addressCep          = (formData.get('cep') as string)?.trim() || null;
@@ -182,7 +203,8 @@ export async function ativarProfissionalAction(
           userId: currentUser.id,
           bio,
           phone,
-          cpf,
+          cpfEncrypted,
+          cpfHash,
           addressCep,
           addressStreet,
           addressNumber,
@@ -194,7 +216,7 @@ export async function ativarProfissionalAction(
         update: {
           bio,
           phone,
-          cpf,
+          ...(rawCpf ? { cpfEncrypted, cpfHash } : {}),
           addressCep,
           addressStreet,
           addressNumber,
