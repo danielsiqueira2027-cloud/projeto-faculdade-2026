@@ -4,6 +4,7 @@ import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { cifrarCPF, decifrarCPF, hashCPF } from '@/lib/crypto';
 
 export async function getClientProfile() {
   const currentUser = await getCurrentUser();
@@ -95,9 +96,21 @@ export async function getProfessionalProfile() {
 
   if (!prof) return null;
 
-  const cpfMasked = prof.cpf
-    ? prof.cpf.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.***.***-$2')
-    : null;
+  let cpfMasked: string | null = null;
+  if (prof.cpfEncrypted) {
+    try {
+      const decifrado = decifrarCPF(prof.cpfEncrypted);
+      const digits = decifrado.replace(/\D/g, '');
+      if (digits.length === 11) {
+        cpfMasked = `${digits.slice(0, 3)}.***.***-${digits.slice(9)}`;
+      } else {
+        cpfMasked = decifrado.replace(/(\d{3})\.\d{3}\.\d{3}-(\d{2})/, '$1.***.***-$2');
+      }
+    } catch (e) {
+      console.error('[getProfessionalProfile] Erro ao decifrar CPF:', e);
+      cpfMasked = '***.***.***-**';
+    }
+  }
 
   return {
     id:            prof.id,
@@ -116,7 +129,7 @@ export async function getProfessionalProfile() {
     addressCity:   prof.addressCity     ?? null,
     addressState:  prof.addressState    ?? null,
     addressCep:    prof.addressCep      ?? null,
-    cpf:           prof.cpf             ?? null,
+    // Segurança LGPD: NÃO expõe o CPF completo ou decifrado ao frontend, apenas mascarado
     cpfMasked,
     isVerified:    prof.isVerified,
     isAvailable:   prof.isAvailable,
@@ -160,17 +173,27 @@ export async function saveProfessionalProfile(data: {
       return { error: 'Este e-mail já está cadastrado em outra conta.' };
     }
 
-    if (data.cpf && data.cpf.trim().length > 0) {
-      const formattedCpf = data.cpf.trim();
-      const existingCpf = await prisma.professional.findFirst({
-        where: {
-          cpf: formattedCpf,
-          userId: { not: currentUser.id },
-        },
-      });
+    let cpfEncrypted: string | null | undefined = undefined;
+    let cpfHash: string | null | undefined = undefined;
 
-      if (existingCpf) {
-        return { error: 'Este CPF já está cadastrado em outra conta.' };
+    if (data.cpf && data.cpf.trim().length > 0) {
+      const rawCpf = data.cpf.trim();
+      // Ignora se for o valor mascarado vindo de exibição readonly
+      if (!rawCpf.includes('*')) {
+        const computedHash = hashCPF(rawCpf);
+        const existingCpf = await prisma.professional.findFirst({
+          where: {
+            cpfHash: computedHash,
+            userId: { not: currentUser.id },
+          },
+        });
+
+        if (existingCpf) {
+          return { error: 'Este CPF já está cadastrado em outra conta.' };
+        }
+
+        cpfHash = computedHash;
+        cpfEncrypted = cifrarCPF(rawCpf);
       }
     }
 
@@ -209,7 +232,7 @@ export async function saveProfessionalProfile(data: {
         addressCity: data.addressCity?.trim() || null,
         addressState: data.addressState?.trim() || null,
         addressCep: data.addressCep?.trim() || null,
-        cpf: data.cpf?.trim() || null,
+        ...(cpfEncrypted !== undefined ? { cpfEncrypted, cpfHash } : {}),
       },
     });
 

@@ -4729,7 +4729,8 @@ export namespace Prisma {
     addressCity: string | null
     addressState: string | null
     addressCep: string | null
-    cpf: string | null
+    cpfEncrypted: string | null
+    cpfHash: string | null
     isVerified: boolean | null
     isAvailable: boolean | null
     rating: Decimal | null
@@ -4752,7 +4753,8 @@ export namespace Prisma {
     addressCity: string | null
     addressState: string | null
     addressCep: string | null
-    cpf: string | null
+    cpfEncrypted: string | null
+    cpfHash: string | null
     isVerified: boolean | null
     isAvailable: boolean | null
     rating: Decimal | null
@@ -4775,7 +4777,8 @@ export namespace Prisma {
     addressCity: number
     addressState: number
     addressCep: number
-    cpf: number
+    cpfEncrypted: number
+    cpfHash: number
     isVerified: number
     isAvailable: number
     rating: number
@@ -4810,7 +4813,8 @@ export namespace Prisma {
     addressCity?: true
     addressState?: true
     addressCep?: true
-    cpf?: true
+    cpfEncrypted?: true
+    cpfHash?: true
     isVerified?: true
     isAvailable?: true
     rating?: true
@@ -4833,7 +4837,8 @@ export namespace Prisma {
     addressCity?: true
     addressState?: true
     addressCep?: true
-    cpf?: true
+    cpfEncrypted?: true
+    cpfHash?: true
     isVerified?: true
     isAvailable?: true
     rating?: true
@@ -4856,7 +4861,8 @@ export namespace Prisma {
     addressCity?: true
     addressState?: true
     addressCep?: true
-    cpf?: true
+    cpfEncrypted?: true
+    cpfHash?: true
     isVerified?: true
     isAvailable?: true
     rating?: true
@@ -4966,7 +4972,8 @@ export namespace Prisma {
     addressCity: string | null
     addressState: string | null
     addressCep: string | null
-    cpf: string | null
+    cpfEncrypted: string | null
+    cpfHash: string | null
     isVerified: boolean
     isAvailable: boolean
     rating: Decimal
@@ -5008,7 +5015,8 @@ export namespace Prisma {
     addressCity?: boolean
     addressState?: boolean
     addressCep?: boolean
-    cpf?: boolean
+    cpfEncrypted?: boolean
+    cpfHash?: boolean
     isVerified?: boolean
     isAvailable?: boolean
     rating?: boolean
@@ -5040,7 +5048,8 @@ export namespace Prisma {
     addressCity?: boolean
     addressState?: boolean
     addressCep?: boolean
-    cpf?: boolean
+    cpfEncrypted?: boolean
+    cpfHash?: boolean
     isVerified?: boolean
     isAvailable?: boolean
     rating?: boolean
@@ -5064,7 +5073,8 @@ export namespace Prisma {
     addressCity?: boolean
     addressState?: boolean
     addressCep?: boolean
-    cpf?: boolean
+    cpfEncrypted?: boolean
+    cpfHash?: boolean
     isVerified?: boolean
     isAvailable?: boolean
     rating?: boolean
@@ -5088,7 +5098,8 @@ export namespace Prisma {
     addressCity?: boolean
     addressState?: boolean
     addressCep?: boolean
-    cpf?: boolean
+    cpfEncrypted?: boolean
+    cpfHash?: boolean
     isVerified?: boolean
     isAvailable?: boolean
     rating?: boolean
@@ -5097,7 +5108,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ProfessionalOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "specialty" | "bio" | "phone" | "location" | "addressStreet" | "addressNumber" | "addressComplement" | "addressNeighborhood" | "addressCity" | "addressState" | "addressCep" | "cpf" | "isVerified" | "isAvailable" | "rating" | "reviewCount" | "createdAt" | "updatedAt", ExtArgs["result"]["professional"]>
+  export type ProfessionalOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "specialty" | "bio" | "phone" | "location" | "addressStreet" | "addressNumber" | "addressComplement" | "addressNeighborhood" | "addressCity" | "addressState" | "addressCep" | "cpfEncrypted" | "cpfHash" | "isVerified" | "isAvailable" | "rating" | "reviewCount" | "createdAt" | "updatedAt", ExtArgs["result"]["professional"]>
   export type ProfessionalInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     categories?: boolean | Professional$categoriesArgs<ExtArgs>
@@ -5142,7 +5153,8 @@ export namespace Prisma {
       addressCity: string | null
       addressState: string | null
       addressCep: string | null
-      cpf: string | null
+      cpfEncrypted: string | null
+      cpfHash: string | null
       isVerified: boolean
       isAvailable: boolean
       rating: Prisma.Decimal
@@ -5593,7 +5605,8 @@ export namespace Prisma {
     readonly addressCity: FieldRef<"Professional", 'String'>
     readonly addressState: FieldRef<"Professional", 'String'>
     readonly addressCep: FieldRef<"Professional", 'String'>
-    readonly cpf: FieldRef<"Professional", 'String'>
+    readonly cpfEncrypted: FieldRef<"Professional", 'String'>
+    readonly cpfHash: FieldRef<"Professional", 'String'>
     readonly isVerified: FieldRef<"Professional", 'Boolean'>
     readonly isAvailable: FieldRef<"Professional", 'Boolean'>
     readonly rating: FieldRef<"Professional", 'Decimal'>
@@ -18818,7 +18831,8 @@ export namespace Prisma {
     addressCity: 'addressCity',
     addressState: 'addressState',
     addressCep: 'addressCep',
-    cpf: 'cpf',
+    cpfEncrypted: 'cpfEncrypted',
+    cpfHash: 'cpfHash',
     isVerified: 'isVerified',
     isAvailable: 'isAvailable',
     rating: 'rating',
@@ -19308,7 +19322,8 @@ export namespace Prisma {
     addressCity?: StringNullableFilter<"Professional"> | string | null
     addressState?: StringNullableFilter<"Professional"> | string | null
     addressCep?: StringNullableFilter<"Professional"> | string | null
-    cpf?: StringNullableFilter<"Professional"> | string | null
+    cpfEncrypted?: StringNullableFilter<"Professional"> | string | null
+    cpfHash?: StringNullableFilter<"Professional"> | string | null
     isVerified?: BoolFilter<"Professional"> | boolean
     isAvailable?: BoolFilter<"Professional"> | boolean
     rating?: DecimalFilter<"Professional"> | Decimal | DecimalJsLike | number | string
@@ -19339,7 +19354,8 @@ export namespace Prisma {
     addressCity?: SortOrderInput | SortOrder
     addressState?: SortOrderInput | SortOrder
     addressCep?: SortOrderInput | SortOrder
-    cpf?: SortOrderInput | SortOrder
+    cpfEncrypted?: SortOrderInput | SortOrder
+    cpfHash?: SortOrderInput | SortOrder
     isVerified?: SortOrder
     isAvailable?: SortOrder
     rating?: SortOrder
@@ -19359,7 +19375,7 @@ export namespace Prisma {
   export type ProfessionalWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     userId?: string
-    cpf?: string
+    cpfHash?: string
     AND?: ProfessionalWhereInput | ProfessionalWhereInput[]
     OR?: ProfessionalWhereInput[]
     NOT?: ProfessionalWhereInput | ProfessionalWhereInput[]
@@ -19374,6 +19390,7 @@ export namespace Prisma {
     addressCity?: StringNullableFilter<"Professional"> | string | null
     addressState?: StringNullableFilter<"Professional"> | string | null
     addressCep?: StringNullableFilter<"Professional"> | string | null
+    cpfEncrypted?: StringNullableFilter<"Professional"> | string | null
     isVerified?: BoolFilter<"Professional"> | boolean
     isAvailable?: BoolFilter<"Professional"> | boolean
     rating?: DecimalFilter<"Professional"> | Decimal | DecimalJsLike | number | string
@@ -19388,7 +19405,7 @@ export namespace Prisma {
     testimonials?: TestimonialListRelationFilter
     appointments?: AppointmentListRelationFilter
     certifications?: CertificationListRelationFilter
-  }, "id" | "userId" | "cpf">
+  }, "id" | "userId" | "cpfHash">
 
   export type ProfessionalOrderByWithAggregationInput = {
     id?: SortOrder
@@ -19404,7 +19421,8 @@ export namespace Prisma {
     addressCity?: SortOrderInput | SortOrder
     addressState?: SortOrderInput | SortOrder
     addressCep?: SortOrderInput | SortOrder
-    cpf?: SortOrderInput | SortOrder
+    cpfEncrypted?: SortOrderInput | SortOrder
+    cpfHash?: SortOrderInput | SortOrder
     isVerified?: SortOrder
     isAvailable?: SortOrder
     rating?: SortOrder
@@ -19435,7 +19453,8 @@ export namespace Prisma {
     addressCity?: StringNullableWithAggregatesFilter<"Professional"> | string | null
     addressState?: StringNullableWithAggregatesFilter<"Professional"> | string | null
     addressCep?: StringNullableWithAggregatesFilter<"Professional"> | string | null
-    cpf?: StringNullableWithAggregatesFilter<"Professional"> | string | null
+    cpfEncrypted?: StringNullableWithAggregatesFilter<"Professional"> | string | null
+    cpfHash?: StringNullableWithAggregatesFilter<"Professional"> | string | null
     isVerified?: BoolWithAggregatesFilter<"Professional"> | boolean
     isAvailable?: BoolWithAggregatesFilter<"Professional"> | boolean
     rating?: DecimalWithAggregatesFilter<"Professional"> | Decimal | DecimalJsLike | number | string
@@ -20401,7 +20420,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -20432,7 +20452,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -20461,7 +20482,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -20492,7 +20514,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -20522,7 +20545,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -20544,7 +20568,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -20567,7 +20592,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -21703,7 +21729,8 @@ export namespace Prisma {
     addressCity?: SortOrder
     addressState?: SortOrder
     addressCep?: SortOrder
-    cpf?: SortOrder
+    cpfEncrypted?: SortOrder
+    cpfHash?: SortOrder
     isVerified?: SortOrder
     isAvailable?: SortOrder
     rating?: SortOrder
@@ -21731,7 +21758,8 @@ export namespace Prisma {
     addressCity?: SortOrder
     addressState?: SortOrder
     addressCep?: SortOrder
-    cpf?: SortOrder
+    cpfEncrypted?: SortOrder
+    cpfHash?: SortOrder
     isVerified?: SortOrder
     isAvailable?: SortOrder
     rating?: SortOrder
@@ -21754,7 +21782,8 @@ export namespace Prisma {
     addressCity?: SortOrder
     addressState?: SortOrder
     addressCep?: SortOrder
-    cpf?: SortOrder
+    cpfEncrypted?: SortOrder
+    cpfHash?: SortOrder
     isVerified?: SortOrder
     isAvailable?: SortOrder
     rating?: SortOrder
@@ -23991,7 +24020,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -24020,7 +24050,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -24168,7 +24199,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -24197,7 +24229,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -25175,7 +25208,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -25205,7 +25239,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -25276,7 +25311,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -25306,7 +25342,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -25367,7 +25404,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -25397,7 +25435,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -25522,7 +25561,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -25552,7 +25592,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -25646,7 +25687,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -25676,7 +25718,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -25858,7 +25901,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -25888,7 +25932,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26031,7 +26076,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26061,7 +26107,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26132,7 +26179,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26162,7 +26210,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26223,7 +26272,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26253,7 +26303,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26332,7 +26383,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26362,7 +26414,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26480,7 +26533,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26510,7 +26564,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26609,7 +26664,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26639,7 +26695,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26667,7 +26724,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26697,7 +26755,8 @@ export namespace Prisma {
     addressCity?: string | null
     addressState?: string | null
     addressCep?: string | null
-    cpf?: string | null
+    cpfEncrypted?: string | null
+    cpfHash?: string | null
     isVerified?: boolean
     isAvailable?: boolean
     rating?: Decimal | DecimalJsLike | number | string
@@ -26741,7 +26800,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -26771,7 +26831,8 @@ export namespace Prisma {
     addressCity?: NullableStringFieldUpdateOperationsInput | string | null
     addressState?: NullableStringFieldUpdateOperationsInput | string | null
     addressCep?: NullableStringFieldUpdateOperationsInput | string | null
-    cpf?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfEncrypted?: NullableStringFieldUpdateOperationsInput | string | null
+    cpfHash?: NullableStringFieldUpdateOperationsInput | string | null
     isVerified?: BoolFieldUpdateOperationsInput | boolean
     isAvailable?: BoolFieldUpdateOperationsInput | boolean
     rating?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
