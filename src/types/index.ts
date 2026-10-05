@@ -1,9 +1,11 @@
 export interface Professional {
   id: string;
   name: string;
-  avatar: string;
+  avatar?: string | null;
+  avatarUrl?: string | null;
   specialty: string;
   description: string;
+  bio?: string | null;
   rating: number;
   reviewCount: number;
   yearsOfExperience: number;
@@ -11,6 +13,9 @@ export interface Professional {
   portfolio: PortfolioItem[];
   testimonials: Testimonial[];
   categories?: string[];
+  phone?: string;
+  email?: string;
+  location?: string;
 }
 
 export interface PortfolioItem {

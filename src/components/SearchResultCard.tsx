@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { Professional } from '@/types/professional';
+import { ProfessionalAvatar } from '@/components/ProfessionalAvatar';
 
 interface SearchResultCardProps {
   professional: Professional;
@@ -23,16 +23,14 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
     >
       {/* Avatar */}
       <div className="src-card__avatar relative overflow-hidden" aria-hidden="true">
-        {/* Usando next/image para otimização automática */}
-        {professional.avatarUrl ? (
-          <Image 
-            src={professional.avatarUrl} 
-            alt={`Foto de ${professional.name}`} 
-            fill
-            sizes="(max-width: 900px) 100vw, 220px"
-            className="object-cover"
-          />
-        ) : null}
+        <ProfessionalAvatar 
+          src={professional.avatarUrl} 
+          name={professional.name} 
+          className="w-full h-full"
+          roundedClassName="rounded-none"
+          sizes="(max-width: 900px) 100vw, 220px"
+          alt={`Foto de ${professional.name}`}
+        />
       </div>
 
       {/* Info */}

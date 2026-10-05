@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 import type { Metadata } from 'next';
+import { getCurrentUser } from '@/lib/auth';
 import { SejaProCTA } from './SejaProCTA';
 
 export const metadata: Metadata = {
@@ -37,7 +38,10 @@ const requisitos = [
 
 /* ── Page ────────────────────────────────────────────────── */
 
-export default function SejaProPage() {
+export default async function SejaProPage() {
+  const user = await getCurrentUser();
+  const destination = user ? '/seja-profissional/ativar' : '/cadastro/profissional?next=/seja-profissional/ativar';
+
   return (
     <div
       style={{
@@ -121,7 +125,7 @@ export default function SejaProPage() {
           na sua região — sem taxa de cadastro.
         </p>
 
-        <SejaProCTA variant="hero" />
+        <SejaProCTA variant="hero" destination={destination} />
       </section>
 
       {/* ── BENEFÍCIOS ────────────────────────────────────── */}
@@ -322,10 +326,10 @@ export default function SejaProPage() {
               Cadastre-se agora e comece a receber pedidos de clientes
               próximos a você em minutos.
             </p>
-            <SejaProCTA variant="card" />
+            <SejaProCTA variant="card" destination={destination} />
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
               Já tem conta?{' '}
-              <a href="/login" style={{ color: '#fddfa2', fontWeight: 600, textDecoration: 'underline' }}>
+              <a href="/login?next=/seja-profissional/ativar" style={{ color: '#fddfa2', fontWeight: 600, textDecoration: 'underline' }}>
                 Faça login aqui
               </a>
             </p>

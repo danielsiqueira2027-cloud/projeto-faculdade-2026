@@ -145,3 +145,52 @@ export async function uploadChatImage(
     upsert: true,
   });
 }
+
+export const SERVICE_IMAGES_BUCKET = 'service-images';
+
+/**
+ * Cria Signed Upload URL para o bucket service-images.
+ * O path obrigatório pelo RLS é {userId}/{serviceId}/{uuid}.{ext}.
+ */
+export async function createServiceImageSignedUploadUrl(path: string): Promise<{
+  signedUrl: string;
+  path: string;
+  token: string;
+}> {
+  const supabase = await getStorageClient();
+  const { data, error } = await supabase.storage
+    .from(SERVICE_IMAGES_BUCKET)
+    .createSignedUploadUrl(path);
+
+  if (error || !data) {
+    throw new Error(`Falha ao gerar URL de upload: ${error?.message || 'Erro desconhecido'}`);
+  }
+
+  return {
+    signedUrl: data.signedUrl,
+    path: data.path,
+    token: data.token,
+  };
+}
+
+/**
+ * Remove imagens de serviços do bucket service-images
+ */
+export async function deleteServiceImagesFromStorage(paths: string[]): Promise<void> {
+  if (!paths.length) return;
+  const supabase = await getStorageClient();
+  const { error } = await supabase.storage.from(SERVICE_IMAGES_BUCKET).remove(paths);
+  if (error) {
+    throw new Error(`Erro ao remover imagens do serviço: ${error.message}`);
+  }
+}
+
+/**
+ * Retorna a URL pública de uma imagem de serviço
+ */
+export async function getServiceImagePublicUrl(path: string): Promise<string> {
+  const supabase = await getStorageClient();
+  const { data } = supabase.storage.from(SERVICE_IMAGES_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+

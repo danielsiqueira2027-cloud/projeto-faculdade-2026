@@ -10,16 +10,17 @@ interface CTAProps {
    *  'card'  → botão dentro do card de conversão
    */
   variant: 'hero' | 'card';
+  destination?: string;
 }
 
 /* ── Componente ──────────────────────────────────────────── */
 
-export function SejaProCTA({ variant }: CTAProps) {
+export function SejaProCTA({ variant, destination = '/cadastro/profissional?next=/seja-profissional/ativar' }: CTAProps) {
   const router = useRouter();
   const isHero = variant === 'hero';
 
   const handleCadastro = () => {
-    router.push('/seja-profissional/ativar');
+    router.push(destination);
   };
 
   const label = isHero ? 'Quero me cadastrar agora' : 'Criar conta de profissional';

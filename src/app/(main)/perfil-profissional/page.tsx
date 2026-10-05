@@ -64,12 +64,26 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
           &larr; Voltar para buscas
         </Link>
       </div>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-3">
           <ProfileCard professional={professional} />
         </div>
-        
+
+        {/* Seção Bio / Sobre o profissional — aparece somente quando preenchida */}
+        {professional.bio && (
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-[2.5rem] shadow-xl shadow-bp-primary/5 border border-bp-outline-variant p-8 md:p-10">
+              <h2 className="text-xl font-black text-[#0b2545] mb-4 uppercase tracking-tight">
+                Sobre o profissional
+              </h2>
+              <p className="text-bp-on-surface/80 font-medium leading-relaxed whitespace-pre-line">
+                {professional.bio}
+              </p>
+            </div>
+          </div>
+        )}
+
         {professional.portfolio && professional.portfolio.length > 0 && (
           <div className="lg:col-span-3">
             <PortfolioGrid items={professional.portfolio} />

@@ -1,9 +1,9 @@
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Professional } from '@/types';
 import { Star, MapPin, Briefcase, Award, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ProfessionalAvatar } from '@/components/ProfessionalAvatar';
 
 interface ProfileCardProps {
   professional: Professional;
@@ -20,12 +20,13 @@ export function ProfileCard({ professional }: ProfileCardProps) {
         {/* Avatar row — only the avatar overlaps the cover */}
         <div className="relative -mt-20 mb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="relative w-fit">
-            <Image 
-              src={professional.avatar} 
-              alt={professional.name}
-              width={148}
-              height={148}
-              className="rounded-[2rem] object-cover border-8 border-white shadow-xl bg-white"
+            <ProfessionalAvatar 
+              src={professional.avatar || professional.avatarUrl} 
+              name={professional.name}
+              size={148}
+              roundedClassName="rounded-[2rem]"
+              className="border-8 border-white shadow-xl bg-white"
+              priority
             />
             <div className="absolute -bottom-2 -right-2 bg-bp-secondary-container p-2 rounded-xl border-4 border-white shadow-lg text-bp-on-secondary-container">
               <CheckCircle2 size={22} />

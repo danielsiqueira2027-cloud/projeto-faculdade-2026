@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { getSupabaseUser } from '@/lib/supabase/auth';
 
 // Tipo retornado com os perfis incluídos
@@ -15,9 +16,11 @@ export type SessionUser = {
 /**
  * Lê a sessão ativa do Supabase Auth e busca o usuário no banco
  * com seus perfis (client + professional).
+ * Memoizado por requisição via React cache() para evitar queries duplicadas.
  * Retorna null se não autenticado, inativo ou se o usuário não existir.
  */
-export async function getCurrentUser(): Promise<SessionUser | null> {
+export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   return getSupabaseUser();
-}
+});
+
 
