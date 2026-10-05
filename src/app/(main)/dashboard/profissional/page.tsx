@@ -19,8 +19,15 @@ export default async function ProfessionalDashboardPage() {
   let totalOrders = 0;
   let rating = 0;
   let reviewCount = 0;
-  let activeServicesCount = services.length;
-  let recentOrders: any[] = [];
+  const activeServicesCount = services.length;
+  interface DashboardRecentOrder {
+    id: string;
+    status: string;
+    serviceType: string | null;
+    client: { user: { name: string } };
+    service: { title: string } | null;
+  }
+  let recentOrders: DashboardRecentOrder[] = [];
 
   if (user) {
     const prof = await prisma.professional.findUnique({
@@ -109,8 +116,9 @@ export default async function ProfessionalDashboardPage() {
               id={service.id}
               title={service.title}
               category={service.categoryName}
-              price={service.priceText || (service.priceValue ? `R$ ${service.priceValue}` : 'A combinar')}
-              location={service.location || 'Local a combinar'}
+              price={service.priceText}
+              location={service.location}
+              image={service.coverImage}
             />
           ))}
 
@@ -174,7 +182,7 @@ export default async function ProfessionalDashboardPage() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16"></div>
           <h3 className="text-xl font-black mb-4 relative z-10">Dica ClickServiço</h3>
           <p className="text-white/70 font-medium mb-6 relative z-10 leading-relaxed">
-            "Profissionais que completam 100% do perfil e adicionam fotos de trabalhos realizados recebem 3x mais solicitações."
+            &ldquo;Profissionais que completam 100% do perfil e adicionam fotos de trabalhos realizados recebem 3x mais solicitações.&rdquo;
           </p>
           <Button asChild className="w-full bg-[#f7941d] hover:bg-[#f7941d]/90 text-white rounded-2xl h-12 font-black relative z-10">
             <Link href="/dashboard/profissional/perfil">

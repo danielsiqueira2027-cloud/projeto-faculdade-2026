@@ -1,15 +1,100 @@
 'use client';
 
-import React, { useState, useActionState } from 'react';
+import React, { useState, useActionState, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { loginAction } from '@/app/actions/auth';
+import { useSearchParams } from 'next/navigation';
+import { validarRedirectSeguro } from '@/lib/validators';
 
-export default function LoginPage() {
+/* ── Inner form (needs useSearchParams) ──────────────────────────────── */
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const rawNext = searchParams.get('next') ?? searchParams.get('callbackUrl') ?? '';
+  const safeNext = validarRedirectSeguro(rawNext) ?? '';
+
   const [showPassword, setShowPassword] = useState(false);
   const [state, action, pending] = useActionState(loginAction, null);
 
+  // If "next" leads to the professional flow, point "Crie uma conta" directly to professional registration
+  const isProFlow = safeNext.includes('profissional') || safeNext.includes('ativar');
+  const registerHref = isProFlow
+    ? `/cadastro/profissional${safeNext ? `?next=${encodeURIComponent(safeNext)}` : ''}`
+    : (safeNext ? `/cadastro?next=${encodeURIComponent(safeNext)}` : '/cadastro');
+
+  return (
+    <form id="loginForm" className="login-form" action={action}>
+      {/* Campo oculto para preservar o destino pós-login */}
+      {safeNext && <input type="hidden" name="next" value={safeNext} />}
+
+      <h2>Acesse a sua conta</h2>
+
+      {/* Erro geral */}
+      {state?.error && (
+        <div className="login-error">{state.error}</div>
+      )}
+
+      {/* E-mail */}
+      <div className="input-group">
+        <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+          <polyline points="22,6 12,12 2,6" />
+        </svg>
+        <input
+          id="loginEmail"
+          name="email"
+          type="email"
+          placeholder="E-mail"
+          required
+          autoComplete="email"
+        />
+      </div>
+
+      {/* Senha */}
+      <div className="input-group">
+        <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <input
+          id="loginPassword"
+          name="password"
+          type={showPassword ? 'text' : 'password'}
+          placeholder="Senha"
+          required
+          autoComplete="current-password"
+        />
+        <button
+          type="button"
+          className="toggle-senha"
+          onClick={() => setShowPassword((v) => !v)}
+          aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+        >
+          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+        </button>
+      </div>
+
+      <button id="loginBtn" type="submit" className="btn" disabled={pending}>
+        {pending ? 'ENTRANDO...' : 'ENTRAR'}
+      </button>
+
+      <Link href="/forgot-password" className="forgot">Esqueci minha senha</Link>
+
+      <p className="register-text">
+        Ainda não tem cadastro?{' '}
+        <Link href={registerHref} className="register-link">Crie uma conta</Link>
+      </p>
+
+      <Link href="/auth/login" className="admin-link">
+        Gestão
+      </Link>
+    </form>
+  );
+}
+
+/* ── Page ────────────────────────────────────────────────────────────── */
+export default function LoginPage() {
   return (
     <div className="login-page-wrapper">
       <div className="login-container">
@@ -32,71 +117,12 @@ export default function LoginPage() {
 
         {/* Lado Direito */}
         <div className="login-right">
-          <form id="loginForm" className="login-form" action={action}>
-            <h2>Acesse a sua conta</h2>
-
-            {/* Erro geral */}
-            {state?.error && (
-              <div className="login-error">{state.error}</div>
-            )}
-
-            {/* E-mail */}
-            <div className="input-group">
-              <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                <polyline points="22,6 12,12 2,6" />
-              </svg>
-              <input
-                id="loginEmail"
-                name="email"
-                type="email"
-                placeholder="E-mail"
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            {/* Senha */}
-            <div className="input-group">
-              <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-              <input
-                id="loginPassword"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Senha"
-                required
-                autoComplete="current-password"
-              />
-              <button
-                type="button"
-                className="toggle-senha"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-
-            <button id="loginBtn" type="submit" className="btn" disabled={pending}>
-              {pending ? 'ENTRANDO...' : 'ENTRAR'}
-            </button>
-
-            <Link href="/forgot-password" className="forgot">Esqueci minha senha</Link>
-
-            <p className="register-text">
-              Ainda não tem cadastro?{' '}
-              <Link href="/cadastro" className="register-link">Crie uma conta</Link>
-            </p>
-
-            <Link href="/auth/login" className="admin-link">
-              Gestão
-            </Link>
-          </form>
+          <Suspense fallback={<div className="login-form"><p style={{textAlign:'center',color:'#888'}}>Carregando...</p></div>}>
+            <LoginForm />
+          </Suspense>
         </div>
       </div>
+
 
       <style>{`
         .login-page-wrapper {

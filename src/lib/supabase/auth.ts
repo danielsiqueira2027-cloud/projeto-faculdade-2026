@@ -10,6 +10,7 @@ export interface SignUpInput {
   password: string;
   phone?: string | null;
   tipo?: 'cliente' | 'profissional';
+  emailRedirectTo?: string;
 }
 
 export interface SignInInput {
@@ -34,6 +35,7 @@ export async function supabaseSignUp({
   password,
   phone,
   tipo = 'cliente',
+  emailRedirectTo,
 }: SignUpInput): Promise<SupabaseAuthResult> {
   const supabase = await createServerClient();
 
@@ -41,6 +43,7 @@ export async function supabaseSignUp({
     email,
     password,
     options: {
+      ...(emailRedirectTo ? { emailRedirectTo } : {}),
       data: {
         name,
         phone: phone || null,
@@ -86,11 +89,9 @@ export async function supabaseSignUp({
           await tx.client.create({
             data: { userId: newUser.id },
           });
-        } else {
-          await tx.professional.create({
-            data: { userId: newUser.id },
-          });
         }
+        // Nota: para tipo === 'profissional', NÃO criamos linha vazia em Professional aqui.
+        // A linha nasce exclusivamente em ativarProfissionalAction (upsert) com perfil completo.
       });
     }
   } catch (err) {
