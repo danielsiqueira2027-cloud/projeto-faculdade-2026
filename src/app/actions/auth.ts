@@ -140,10 +140,15 @@ export async function registerAction(
       errorMsg.toLowerCase().includes('already in use') ||
       errorMsg.toLowerCase().includes('already exists') ||
       errorMsg.toLowerCase().includes('duplicate') ||
-      errorMsg.toLowerCase().includes('user already exists')
+      errorMsg.toLowerCase().includes('user already exists') ||
+      errorMsg.toLowerCase().includes('cadastrado')
     ) {
       return {
-        fieldErrors: { email: 'Este e-mail já está cadastrado.' },
+        fieldErrors: {
+          email: result.error && result.error.includes('cadastrado')
+            ? result.error
+            : 'Este e-mail já está cadastrado. Faça login para continuar.',
+        },
         fields: currentFields,
       };
     }
@@ -234,10 +239,15 @@ export async function registerProfissionalAction(
       errorMsg.toLowerCase().includes('already in use') ||
       errorMsg.toLowerCase().includes('already exists') ||
       errorMsg.toLowerCase().includes('duplicate') ||
-      errorMsg.toLowerCase().includes('user already exists')
+      errorMsg.toLowerCase().includes('user already exists') ||
+      errorMsg.toLowerCase().includes('cadastrado')
     ) {
       return {
-        fieldErrors: { email: 'Este e-mail já está cadastrado.' },
+        fieldErrors: {
+          email: result.error && result.error.includes('cadastrado')
+            ? result.error
+            : 'Este e-mail já está cadastrado. Faça login para continuar.',
+        },
         fields: currentFields,
       };
     }

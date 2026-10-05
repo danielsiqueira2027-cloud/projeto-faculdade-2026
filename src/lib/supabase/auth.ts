@@ -37,10 +37,11 @@ export async function supabaseSignUp({
   tipo = 'cliente',
   emailRedirectTo,
 }: SignUpInput): Promise<SupabaseAuthResult> {
+  const normalizedEmail = email.trim().toLowerCase();
   const supabase = await createServerClient();
 
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: normalizedEmail,
     password,
     options: {
       ...(emailRedirectTo ? { emailRedirectTo } : {}),
@@ -75,28 +76,55 @@ export async function supabaseSignUp({
     });
 
     if (!existing) {
-      await prisma.$transaction(async (tx) => {
-        const newUser = await tx.user.create({
+      // Se já existe um usuário com este e-mail no Prisma (ex: seed ou recriação após exclusão no Auth),
+      // sincroniza o ID antigo para o novo ID do Supabase Auth (CASCADE atualiza tabelas filhas).
+      const existingByEmail = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (existingByEmail) {
+        await prisma.user.update({
+          where: { id: existingByEmail.id },
           data: {
             id: userId,
-            name,
-            email: email.toLowerCase(),
-            phone: phone || null,
+            name: name || existingByEmail.name,
+            phone: phone || existingByEmail.phone,
           },
         });
-
-        if (tipo === 'cliente') {
-          await tx.client.create({
-            data: { userId: newUser.id },
+      } else {
+        await prisma.$transaction(async (tx) => {
+          const newUser = await tx.user.create({
+            data: {
+              id: userId,
+              name,
+              email: normalizedEmail,
+              phone: phone || null,
+            },
           });
-        }
-        // Nota: para tipo === 'profissional', NÃO criamos linha vazia em Professional aqui.
-        // A linha nasce exclusivamente em ativarProfissionalAction (upsert) com perfil completo.
-      });
+
+          if (tipo === 'cliente') {
+            await tx.client.create({
+              data: { userId: newUser.id },
+            });
+          }
+          // Nota: para tipo === 'profissional', NÃO criamos linha vazia em Professional aqui.
+          // A linha nasce exclusivamente em ativarProfissionalAction (upsert) com perfil completo.
+        });
+      }
     }
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('[supabaseSignUp sync error]', err);
-    // Mesmo se falhar na sincronização do Prisma, o usuário foi criado no Supabase Auth
+    const prismaError = err as { code?: string; message?: string };
+    if (prismaError?.code === 'P2002') {
+      return {
+        success: false,
+        error: 'Este e-mail já está cadastrado. Faça login para continuar.',
+      };
+    }
+    return {
+      success: false,
+      error: 'Erro ao registrar usuário no banco de dados. Tente novamente.',
+    };
   }
 
   return {
@@ -114,9 +142,10 @@ export async function supabaseSignIn({
   password,
 }: SignInInput): Promise<SupabaseAuthResult> {
   const supabase = await createServerClient();
+  const normalizedEmail = email.trim().toLowerCase();
 
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
+    email: normalizedEmail,
     password,
   });
 
@@ -138,6 +167,27 @@ export async function supabaseSignIn({
         professional: { select: { id: true } },
       },
     });
+
+    // Se o usuário não foi localizado pelo ID mas existe pelo e-mail,
+    // sincroniza o ID no banco público com CASCADE.
+    if (!profile && data.user.email) {
+      const existingByEmail = await prisma.user.findUnique({
+        where: { email: data.user.email.toLowerCase() },
+      });
+      if (existingByEmail) {
+        await prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: { id: data.user.id },
+        });
+        profile = await prisma.user.findUnique({
+          where: { id: data.user.id },
+          include: {
+            client: { select: { id: true } },
+            professional: { select: { id: true } },
+          },
+        });
+      }
+    }
   } catch (e) {
     console.error('[supabaseSignIn profile fetch error]', e);
   }
@@ -178,7 +228,7 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
       return null;
     }
 
-    const dbUser = await prisma.user.findUnique({
+    let dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: {
         id: true,
@@ -191,6 +241,50 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
         professional: { select: { id: true } },
       },
     });
+
+    // Se não encontrou pelo ID do Supabase Auth, tenta auto-reconciliação pelo e-mail
+    if (!dbUser && user.email) {
+      const normalizedEmail = user.email.toLowerCase();
+      const existingByEmail = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (existingByEmail) {
+        await prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: { id: user.id },
+        });
+      } else {
+        const metadata = (user.user_metadata || {}) as Record<string, string | undefined>;
+        await prisma.user.create({
+          data: {
+            id: user.id,
+            name: metadata.name || user.email.split('@')[0],
+            email: normalizedEmail,
+            phone: metadata.phone || null,
+          },
+        });
+        if (metadata.tipo === 'cliente') {
+          await prisma.client.create({
+            data: { userId: user.id },
+          }).catch(() => {});
+        }
+      }
+
+      dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatarUrl: true,
+          isActive: true,
+          client: { select: { id: true } },
+          professional: { select: { id: true } },
+        },
+      });
+    }
 
     if (!dbUser || !dbUser.isActive) {
       return null;
@@ -205,7 +299,8 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
       hasClient: !!dbUser.client,
       hasProfessional: !!dbUser.professional,
     };
-  } catch {
+  } catch (err) {
+    console.error('[getSupabaseUser error]', err);
     return null;
   }
 }

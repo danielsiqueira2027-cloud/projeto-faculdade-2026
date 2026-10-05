@@ -131,9 +131,11 @@ export async function getProfessionalDetails(id: string) {
       id: prof.id,
       userId: prof.userId,
       name: prof.user.name,
-      avatar: prof.user.avatarUrl || '/imgs/who/lucas.jpg',
+      avatar: prof.user.avatarUrl || null,
+      avatarUrl: prof.user.avatarUrl || null,
       specialty: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
-      description: prof.bio || 'Sem descrição detalhada disponível.',
+      description: prof.bio || '',
+      bio: prof.bio || null,
       rating: Number(prof.rating) || 5.0,
       reviewCount: prof.reviewCount || 0,
       yearsOfExperience: 5, // Fallback padrão

@@ -136,7 +136,15 @@ function ClienteForm() {
                   required
                 />
                 {state?.fieldErrors?.email && (
-                  <p className="text-[11px] text-red-500 font-bold ml-1">{state.fieldErrors.email}</p>
+                  <div className="flex flex-wrap items-center gap-1.5 ml-1 mt-1 text-red-500 font-bold text-[11px]">
+                    <span>{state.fieldErrors.email}</span>
+                    <Link
+                      href={loginHref}
+                      className="text-[#103569] underline hover:text-[#f7941d] transition-colors"
+                    >
+                      Fazer login
+                    </Link>
+                  </div>
                 )}
               </div>
 

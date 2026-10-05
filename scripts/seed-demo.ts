@@ -32,144 +32,8 @@ interface DemoPro {
   }[];
 }
 
-const DEMO_PROFESSIONALS: DemoPro[] = [
-  {
-    name: 'Carlos Mendes',
-    email: 'carlos.mendes.demo@clickservico.com.br',
-    phone: '(19) 98765-4321',
-    specialty: 'Eletricista Residencial e Predial',
-    categorySlug: 'eletricista',
-    bio: 'Mais de 10 anos de experiência em instalações elétricas, quadros de distribuição, padrão CPFL e automação residencial com segurança e laudo técnico.',
-    rating: 4.9,
-    reviewCount: 18,
-    location: 'Campinas - SP',
-    addressStreet: 'Av. Francisco Glicério',
-    addressNumber: '1240',
-    addressNeighborhood: 'Centro',
-    addressCity: 'Campinas',
-    addressState: 'SP',
-    addressCep: '13012-100',
-    cpf: '111.222.333-44',
-    avatarUrl: '/imgs/profissionais/trabalhadores.png',
-    services: [
-      {
-        title: 'Troca e Manutenção de Quadro de Distribuição',
-        priceText: 'A partir de R$ 350',
-        priceValue: 350.00,
-        duration: '3 horas',
-        description: 'Revisão completa de disjuntores, barramentos, DPS e IDR contra choques elétricos.',
-      },
-      {
-        title: 'Instalação de Luminárias, Spots e Fitas LED',
-        priceText: 'A partir de R$ 90',
-        priceValue: 90.00,
-        duration: '1 hora',
-        description: 'Instalação segura com acabamento impecável em gesso ou alvenaria.',
-      }
-    ]
-  },
-  {
-    name: 'Rodrigo Silveira',
-    email: 'rodrigo.silveira.demo@clickservico.com.br',
-    phone: '(19) 98123-4567',
-    specialty: 'Encanador e Caça-Vazamentos',
-    categorySlug: 'encanador',
-    bio: 'Técnico em sistemas hidráulicos, caça-vazamentos não destrutivo com geofone digital, reparos em canos de PVC, PPR, cobre e válvulas.',
-    rating: 4.8,
-    reviewCount: 14,
-    location: "Santa Bárbara d'Oeste - SP",
-    addressStreet: 'Rua Dona Margarida',
-    addressNumber: '350',
-    addressNeighborhood: 'Vila Linópolis',
-    addressCity: "Santa Bárbara d'Oeste",
-    addressState: 'SP',
-    addressCep: '13450-025',
-    cpf: '222.333.444-55',
-    avatarUrl: '/imgs/profissionais/trabalhadores.png',
-    services: [
-      {
-        title: 'Localização de Vazamentos Ocultos (Geofone)',
-        priceText: 'A partir de R$ 250',
-        priceValue: 250.00,
-        duration: '2 horas',
-        description: 'Detecção de infiltrações em pisos e paredes sem quebrar nada antes do diagnóstico exato.',
-      },
-      {
-        title: 'Troca de Válvula Hydra e Registros Gerais',
-        priceText: 'R$ 130 fixo',
-        priceValue: 130.00,
-        duration: '1 hora',
-        description: 'Reparo ou substituição de reparos internos com peças originais e garantia.',
-      }
-    ]
-  },
-  {
-    name: 'Marcos Antônio Lima',
-    email: 'marcos.pintor.demo@clickservico.com.br',
-    phone: '(19) 99234-5678',
-    specialty: 'Pintor Profissional e Efeitos Decorativos',
-    categorySlug: 'pintor',
-    bio: 'Pintura residencial e comercial de alto padrão. Aplicação de cimento queimado, marmorato, grafiato e textura projetada. Cuidado total com pisos e móveis.',
-    rating: 5.0,
-    reviewCount: 22,
-    location: 'Americana - SP',
-    addressStreet: 'Rua Rui Barbosa',
-    addressNumber: '580',
-    addressNeighborhood: 'Santa Catarina',
-    addressCity: 'Americana',
-    addressState: 'SP',
-    addressCep: '13466-300',
-    cpf: '333.444.555-66',
-    avatarUrl: '/imgs/profissionais/trabalhadores.png',
-    services: [
-      {
-        title: 'Pintura Residencial Interna (por m²)',
-        priceText: 'R$ 28/m²',
-        priceValue: 28.00,
-        duration: 'Sob consulta',
-        description: 'Lixamento com aspirador, aplicação de fundo preparador e 2 demãos de tinta acrílica premium.',
-      }
-    ]
-  },
-  {
-    name: 'Juliana Freitas',
-    email: 'juliana.marcenaria.demo@clickservico.com.br',
-    phone: '(19) 97345-6789',
-    specialty: 'Carpinteira e Restauração de Madeira',
-    categorySlug: 'carpinteiro',
-    bio: 'Especialista em coberturas de madeira, decks de piscina, pergolados e restauração de portas e móveis maciços. Acabamentos em verniz marítimo e stain.',
-    rating: 4.9,
-    reviewCount: 11,
-    location: 'Piracicaba - SP',
-    addressStreet: 'Av. Independência',
-    addressNumber: '890',
-    addressNeighborhood: 'São Judas',
-    addressCity: 'Piracicaba',
-    addressState: 'SP',
-    addressCep: '13416-240',
-    cpf: '444.555.666-77',
-    avatarUrl: '/imgs/profissionais/trabalhadores.png',
-  },
-  {
-    name: 'Felipe Albuquerque',
-    email: 'felipe.pedreiro.demo@clickservico.com.br',
-    phone: '(19) 99456-7890',
-    specialty: 'Mestre de Obras e Assentamento de Porcelanato',
-    categorySlug: 'pedreiro',
-    bio: 'Construção civil do alicerce à entrega das chaves. Especialista em reformas de banheiros, cozinhas, alvenaria estrutural e pisos em grandes formatos.',
-    rating: 4.7,
-    reviewCount: 29,
-    location: 'Sumaré - SP',
-    addressStreet: 'Rua Dom Barreto',
-    addressNumber: '410',
-    addressNeighborhood: 'Centro',
-    addressCity: 'Sumaré',
-    addressState: 'SP',
-    addressCep: '13170-011',
-    cpf: '555.666.777-88',
-    avatarUrl: '/imgs/profissionais/trabalhadores.png',
-  },
-];
+const DEMO_PROFESSIONALS: DemoPro[] = [];
+
 
 async function seedDemo() {
   console.log('🌱 Iniciando Seed Demo do ClickServiço...');
@@ -314,61 +178,63 @@ async function seedDemo() {
       console.log(`✅ Profissional configurado: ${pro.name} (${pro.specialty})`);
     }
 
-    // 4. Criar as 2 Ordens de Teste (Idempotente)
-    console.log('\n📦 Verificando/Criando 2 ordens de serviço para testes...');
-    
-    // Ordem 1: Concluída (com Carlos Mendes)
-    const pro1 = createdProIds[0];
-    const existingOrder1 = await client.query(`
-      SELECT id FROM orders 
-      WHERE client_id = $1 AND professional_id = $2 AND status = 'CONCLUIDO';
-    `, [client1.client_id, pro1.proId]);
+    // 4. Criar as 2 Ordens de Teste (Idempotente) - Somente se houver profissionais cadastrados
+    if (createdProIds.length >= 2) {
+      console.log('\n📦 Verificando/Criando 2 ordens de serviço para testes...');
+      
+      // Ordem 1: Concluída (com Carlos Mendes)
+      const pro1 = createdProIds[0];
+      const existingOrder1 = await client.query(`
+        SELECT id FROM orders 
+        WHERE client_id = $1 AND professional_id = $2 AND status = 'CONCLUIDO';
+      `, [client1.client_id, pro1.proId]);
 
-    if (existingOrder1.rows.length === 0) {
-      await client.query(`
-        INSERT INTO orders (
-          id, client_id, professional_id, service_id, category_id, status,
-          service_type, description, location_cep, address, urgency,
-          period, agreed_price, scheduled_at, created_at, updated_at
-        )
-        VALUES (
-          gen_random_uuid(), $1, $2, $3, $4, 'CONCLUIDO',
-          'Instalação de Tomadas e Manutenção Elétrica',
-          'Revisão geral do quadro e instalação de 6 luminárias de embutir na sala e cozinha.',
-          '13450-000', 'Rua das Flores, 120 - Centro, Santa Bárbara d''Oeste - SP', 'Sem pressa',
-          'Manhã', 450.00, NOW() - INTERVAL '5 days', NOW() - INTERVAL '7 days', NOW() - INTERVAL '4 days'
-        );
-      `, [client1.client_id, pro1.proId, pro1.serviceId || null, pro1.catId]);
-      console.log('✅ Ordem 1 (CONCLUIDO) criada com sucesso.');
-    } else {
-      console.log('ℹ️ Ordem 1 (CONCLUIDO) já existe.');
-    }
+      if (existingOrder1.rows.length === 0) {
+        await client.query(`
+          INSERT INTO orders (
+            id, client_id, professional_id, service_id, category_id, status,
+            service_type, description, location_cep, address, urgency,
+            period, agreed_price, scheduled_at, created_at, updated_at
+          )
+          VALUES (
+            gen_random_uuid(), $1, $2, $3, $4, 'CONCLUIDO',
+            'Instalação de Tomadas e Manutenção Elétrica',
+            'Revisão geral do quadro e instalação de 6 luminárias de embutir na sala e cozinha.',
+            '13450-000', 'Rua das Flores, 120 - Centro, Santa Bárbara d''Oeste - SP', 'Sem pressa',
+            'Manhã', 450.00, NOW() - INTERVAL '5 days', NOW() - INTERVAL '7 days', NOW() - INTERVAL '4 days'
+          );
+        `, [client1.client_id, pro1.proId, pro1.serviceId || null, pro1.catId]);
+        console.log('✅ Ordem 1 (CONCLUIDO) criada com sucesso.');
+      } else {
+        console.log('ℹ️ Ordem 1 (CONCLUIDO) já existe.');
+      }
 
-    // Ordem 2: Em Andamento (com Rodrigo Silveira)
-    const pro2 = createdProIds[1];
-    const existingOrder2 = await client.query(`
-      SELECT id FROM orders 
-      WHERE client_id = $1 AND professional_id = $2 AND status = 'EM_ANDAMENTO';
-    `, [client2.client_id, pro2.proId]);
+      // Ordem 2: Em Andamento (com Rodrigo Silveira)
+      const pro2 = createdProIds[1];
+      const existingOrder2 = await client.query(`
+        SELECT id FROM orders 
+        WHERE client_id = $1 AND professional_id = $2 AND status = 'EM_ANDAMENTO';
+      `, [client2.client_id, pro2.proId]);
 
-    if (existingOrder2.rows.length === 0) {
-      await client.query(`
-        INSERT INTO orders (
-          id, client_id, professional_id, service_id, category_id, status,
-          service_type, description, location_cep, address, urgency,
-          period, agreed_price, scheduled_at, created_at, updated_at
-        )
-        VALUES (
-          gen_random_uuid(), $1, $2, $3, $4, 'EM_ANDAMENTO',
-          'Localização de Vazamento Oculto',
-          'Infiltração na parede do banheiro principal, piso apresentando umidade constante no rodapé.',
-          '13466-000', 'Av. Brasil, 450, Apto 32 - Americana - SP', 'Urgente',
-          'Tarde', 280.00, NOW() + INTERVAL '1 day', NOW() - INTERVAL '1 day', NOW()
-        );
-      `, [client2.client_id, pro2.proId, pro2.serviceId || null, pro2.catId]);
-      console.log('✅ Ordem 2 (EM_ANDAMENTO) criada com sucesso.');
-    } else {
-      console.log('ℹ️ Ordem 2 (EM_ANDAMENTO) já existe.');
+      if (existingOrder2.rows.length === 0) {
+        await client.query(`
+          INSERT INTO orders (
+            id, client_id, professional_id, service_id, category_id, status,
+            service_type, description, location_cep, address, urgency,
+            period, agreed_price, scheduled_at, created_at, updated_at
+          )
+          VALUES (
+            gen_random_uuid(), $1, $2, $3, $4, 'EM_ANDAMENTO',
+            'Localização de Vazamento Oculto',
+            'Infiltração na parede do banheiro principal, piso apresentando umidade constante no rodapé.',
+            '13466-000', 'Av. Brasil, 450, Apto 32 - Americana - SP', 'Urgente',
+            'Tarde', 280.00, NOW() + INTERVAL '1 day', NOW() - INTERVAL '1 day', NOW()
+          );
+        `, [client2.client_id, pro2.proId, pro2.serviceId || null, pro2.catId]);
+        console.log('✅ Ordem 2 (EM_ANDAMENTO) criada com sucesso.');
+      } else {
+        console.log('ℹ️ Ordem 2 (EM_ANDAMENTO) já existe.');
+      }
     }
 
     console.log('\n🎉 Seed de Demonstração concluído com sucesso!');
