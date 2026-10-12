@@ -10,6 +10,9 @@ export async function searchProfessionals(query?: string, categorySlug?: string)
   try {
     const where: any = {
       isAvailable: true,
+      user: {
+        isActive: true,
+      },
     };
 
     if (categorySlug) {
@@ -174,6 +177,9 @@ export async function getTopProfessionals(limit: number = 4) {
     const professionals = await prisma.professional.findMany({
       where: {
         isAvailable: true,
+        user: {
+          isActive: true,
+        },
       },
       orderBy: [
         { rating: 'desc' },
