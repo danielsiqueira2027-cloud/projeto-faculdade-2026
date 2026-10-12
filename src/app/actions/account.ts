@@ -8,14 +8,24 @@ import { deleteFromStorage } from '@/lib/supabase/storage';
 import { revalidatePath } from 'next/cache';
 
 /**
- * Extrai o caminho relativo dentro do bucket "uploads" a partir de uma URL pública.
+ * Extrai o bucket e o caminho relativo dentro do Supabase Storage a partir de uma URL pública ou caminho.
  */
-function extractStoragePath(url: string | null | undefined): string | null {
-  if (!url || typeof url !== 'string') return null;
-  const marker = '/storage/v1/object/public/uploads/';
-  const idx = url.indexOf(marker);
+function extractStorageInfo(urlOrPath: string | null | undefined, defaultBucket = 'uploads'): { bucket: string; path: string } | null {
+  if (!urlOrPath || typeof urlOrPath !== 'string') return null;
+  const marker = '/storage/v1/object/public/';
+  const idx = urlOrPath.indexOf(marker);
   if (idx !== -1) {
-    return decodeURIComponent(url.substring(idx + marker.length));
+    const afterMarker = urlOrPath.substring(idx + marker.length);
+    const slashIdx = afterMarker.indexOf('/');
+    if (slashIdx !== -1) {
+      const bucket = afterMarker.substring(0, slashIdx);
+      const path = decodeURIComponent(afterMarker.substring(slashIdx + 1));
+      return { bucket, path };
+    }
+  }
+  // Se for caminho relativo direto (ex: salvo na tabela service_images)
+  if (!urlOrPath.startsWith('http')) {
+    return { bucket: defaultBucket, path: urlOrPath };
   }
   return null;
 }
@@ -85,11 +95,17 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
     }
 
     // ── 3. Coleta de arquivos no Supabase Storage para posterior exclusão ──────
-    const filesToDelete = new Set<string>();
+    // Agrupados por bucket para permitir deleção correta em cada bucket
+    const filesByBucket = new Map<string, Set<string>>();
+    const addFile = (urlOrPath: string | null | undefined, defaultBucket?: string) => {
+      const info = extractStorageInfo(urlOrPath, defaultBucket);
+      if (!info) return;
+      if (!filesByBucket.has(info.bucket)) filesByBucket.set(info.bucket, new Set());
+      filesByBucket.get(info.bucket)!.add(info.path);
+    };
 
-    // 3.1. Avatar do usuário
-    const userAvatarPath = extractStoragePath(userDb.avatarUrl);
-    if (userAvatarPath) filesToDelete.add(userAvatarPath);
+    // 3.1. Avatar do usuário (bucket uploads ou profile-photos)
+    addFile(userDb.avatarUrl, 'uploads');
 
     // 3.2. Fotos de portfólio e serviços do profissional
     if (professional) {
@@ -97,10 +113,7 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
         where: { professionalId: professional.id },
         select: { imageUrl: true },
       });
-      portfolioItems.forEach((item) => {
-        const path = extractStoragePath(item.imageUrl);
-        if (path) filesToDelete.add(path);
-      });
+      portfolioItems.forEach((item) => addFile(item.imageUrl, 'uploads'));
 
       const services = await prisma.service.findMany({
         where: { professionalId: professional.id },
@@ -109,11 +122,20 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
       services.forEach((s) => {
         if (Array.isArray(s.imageUrls)) {
           s.imageUrls.forEach((url: unknown) => {
-            if (typeof url === 'string') {
-              const path = extractStoragePath(url);
-              if (path) filesToDelete.add(path);
-            }
+            if (typeof url === 'string') addFile(url, 'service-images');
           });
+        }
+      });
+
+      // 3.2.1. Imagens individuais em service_images (storagePath é caminho relativo no bucket service-images)
+      const serviceImages = await prisma.serviceImage.findMany({
+        where: { serviceId: { in: (await prisma.service.findMany({ where: { professionalId: professional.id }, select: { id: true } })).map(s => s.id) } },
+        select: { storagePath: true },
+      });
+      serviceImages.forEach((img) => {
+        if (img.storagePath) {
+          if (!filesByBucket.has('service-images')) filesByBucket.set('service-images', new Set());
+          filesByBucket.get('service-images')!.add(img.storagePath);
         }
       });
     }
@@ -126,10 +148,7 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
       },
       select: { content: true },
     });
-    chatImages.forEach((msg) => {
-      const path = extractStoragePath(msg.content);
-      if (path) filesToDelete.add(path);
-    });
+    chatImages.forEach((msg) => addFile(msg.content, 'uploads'));
 
     // ── 4. Exclusão no Banco de Dados em Transação ($transaction) ──────────────
     await prisma.$transaction(async (tx) => {
@@ -150,10 +169,7 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
       relatedOrders.forEach((o) => {
         if (Array.isArray(o.attachments)) {
           o.attachments.forEach((att: unknown) => {
-            if (typeof att === 'string') {
-              const path = extractStoragePath(att);
-              if (path) filesToDelete.add(path);
-            }
+            if (typeof att === 'string') addFile(att, 'uploads');
           });
         }
       });
@@ -213,14 +229,20 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
       });
     });
 
-    // ── 5. Limpeza de arquivos no Supabase Storage ────────────────────────────
-    if (filesToDelete.size > 0) {
-      try {
-        const paths = Array.from(filesToDelete);
-        console.log(`[deleteAccount] Removendo ${paths.length} arquivo(s) do Supabase Storage...`);
-        await deleteFromStorage(paths, 'uploads');
-      } catch (storageErr: unknown) {
-        console.warn('[deleteAccount] Aviso ao limpar arquivos do Storage (não bloqueia exclusão):', storageErr instanceof Error ? storageErr.message : String(storageErr));
+    // ── 5. Limpeza de arquivos no Supabase Storage (por bucket) ─────────────────
+    if (filesByBucket.size > 0) {
+      for (const [bucket, pathSet] of filesByBucket.entries()) {
+        const paths = Array.from(pathSet);
+        if (paths.length === 0) continue;
+        try {
+          console.log(`[deleteAccount] Removendo ${paths.length} arquivo(s) do bucket '${bucket}'...`);
+          await deleteFromStorage(paths, bucket);
+        } catch (storageErr: unknown) {
+          console.warn(
+            `[deleteAccount] Aviso ao limpar ${paths.length} arquivo(s) do bucket '${bucket}' (não bloqueia exclusão):`,
+            storageErr instanceof Error ? storageErr.message : String(storageErr)
+          );
+        }
       }
     }
 
