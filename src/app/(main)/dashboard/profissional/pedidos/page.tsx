@@ -44,6 +44,7 @@ interface OrderItem {
   createdAt: string;
   avatar: string;
   period: string;
+  images?: string[];
 }
 
 export default function ProfessionalOrdersPage() {
@@ -343,6 +344,24 @@ export default function ProfessionalOrdersPage() {
                     <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest">Descrição detalhada</span>
                     <p className="text-slate-600 text-sm font-medium leading-relaxed mt-1">{order.description}</p>
                   </div>
+                  {/* Fotos do serviço enviadas pelo cliente */}
+                  {order.images && order.images.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest">Fotos do Serviço</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {order.images.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" aria-label={`Ver imagem ${i + 1}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={url}
+                              alt={`Foto ${i + 1}`}
+                              className="w-20 h-20 object-cover rounded-xl border border-slate-100 shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-8">

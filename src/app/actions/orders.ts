@@ -4,6 +4,13 @@ import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
 import { OrderStatus, type Prisma } from '@/generated/prisma';
 import { appEvents } from '@/lib/events';
+import { uploadToStorage, deleteFromStorage } from '@/lib/supabase/storage';
+import { revalidatePath } from 'next/cache';
+
+const ORDER_IMAGE_BUCKET = 'uploads';
+const MAX_ORDER_IMAGES = 2;
+const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export type ActionResponse = {
   success?: boolean;
@@ -112,6 +119,103 @@ export async function createOrderAction(data: {
 }
 
 /**
+ * Faz upload de até 2 imagens para um pedido já criado.
+ * Deve ser chamada logo após createOrderAction. Se o upload falhar,
+ * tenta remover os arquivos já enviados para evitar estado inconsistente.
+ */
+export async function uploadOrderImagesAction(
+  orderId: string,
+  formData: FormData
+): Promise<ActionResponse> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return { error: 'Não autorizado.' };
+
+    // Verifica que o pedido pertence ao cliente logado
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { client: { select: { userId: true } } },
+    });
+    if (!order) return { error: 'Pedido não encontrado.' };
+    if (order.client.userId !== currentUser.id) return { error: 'Não autorizado para este pedido.' };
+
+    const files = formData.getAll('images') as File[];
+    if (!files || files.length === 0) return { success: true }; // sem imagens é válido
+
+    // Validações no servidor
+    if (files.length > MAX_ORDER_IMAGES) {
+      return { error: `Máximo de ${MAX_ORDER_IMAGES} imagens permitidas.` };
+    }
+
+    for (const file of files) {
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        return { error: `Tipo de arquivo inválido: ${file.type}. Use JPG, PNG ou WEBP.` };
+      }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        return { error: `Arquivo "${file.name}" excede o tamanho máximo de 2 MB.` };
+      }
+    }
+
+    const uploadedPaths: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = file.type.split('/')[1].replace('jpeg', 'jpg');
+        const fileName = `${crypto.randomUUID()}.${ext}`;
+        // Caminho: {userId}/orders/{orderId}/{uuid}.{ext}
+        const path = `${currentUser.id}/orders/${orderId}/${fileName}`;
+
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        const result = await uploadToStorage({
+          bucket: ORDER_IMAGE_BUCKET,
+          path,
+          file: buffer,
+          contentType: file.type,
+          upsert: false,
+        });
+
+        uploadedPaths.push(result.path);
+
+        await prisma.orderImage.create({
+          data: {
+            id: crypto.randomUUID(),
+            orderId,
+            storagePath: result.path,
+            position: i,
+          },
+        });
+      }
+    } catch (uploadErr: unknown) {
+      // Rollback: remove arquivos já enviados do Storage
+      if (uploadedPaths.length > 0) {
+        try {
+          await deleteFromStorage(uploadedPaths, ORDER_IMAGE_BUCKET);
+        } catch (cleanErr) {
+          console.warn('[uploadOrderImagesAction] Falha ao limpar arquivos após erro:', cleanErr);
+        }
+      }
+      // Rollback: remove registros eventualmente criados no banco para este pedido
+      try {
+        await prisma.orderImage.deleteMany({ where: { orderId } });
+      } catch (cleanDbErr) {
+        console.warn('[uploadOrderImagesAction] Falha ao limpar registros de imagem no banco:', cleanDbErr);
+      }
+      const msg = uploadErr instanceof Error ? uploadErr.message : 'Erro no upload das imagens.';
+      console.error('[uploadOrderImagesAction] Erro:', msg);
+      return { error: `Falha no upload das imagens: ${msg}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('[uploadOrderImagesAction] Erro inesperado:', error);
+    return { error: 'Erro interno ao processar imagens.' };
+  }
+}
+
+/**
  * Busca todas as solicitações de orçamento/pedidos recebidos pelo profissional logado.
  */
 export async function getProfessionalOrders() {
@@ -140,17 +244,25 @@ export async function getProfessionalOrders() {
             },
           },
         },
+        images: {
+          orderBy: { position: 'asc' },
+          select: { id: true, storagePath: true, position: true },
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const toPublicUrl = (path: string) =>
+      `${supabaseUrl}/storage/v1/object/public/${ORDER_IMAGE_BUCKET}/${path}`;
+
     return orders.map((order) => ({
       id: order.id,
       clientName: order.client.user.name,
       clientEmail: order.client.user.email,
-      clientPhone: order.client.user.phone || order.client.user.phone || '',
+      clientPhone: order.client.user.phone || '',
       serviceType: order.serviceType || 'Serviço',
       description: order.description || '',
       locationCep: order.locationCep || '',
@@ -164,6 +276,7 @@ export async function getProfessionalOrders() {
       createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
       avatar: order.client.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
+      images: order.images.map((img) => toPublicUrl(img.storagePath)),
     }));
   } catch (error) {
     console.error('[getProfessionalOrders]', error);
@@ -200,11 +313,19 @@ export async function getClientOrders() {
             },
           },
         },
+        images: {
+          orderBy: { position: 'asc' },
+          select: { id: true, storagePath: true, position: true },
+        },
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const toPublicUrl = (path: string) =>
+      `${supabaseUrl}/storage/v1/object/public/${ORDER_IMAGE_BUCKET}/${path}`;
 
     return orders.map((order) => ({
       id: order.id,
@@ -226,6 +347,7 @@ export async function getClientOrders() {
       avatar: order.professional.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
       hasTestimonial: Boolean(order.notes && order.notes.includes('[AVALIAÇÃO:')),
+      images: order.images.map((img) => toPublicUrl(img.storagePath)),
     }));
   } catch (error) {
     console.error('[getClientOrders]', error);
@@ -397,3 +519,112 @@ export async function updateOrderPriceAction(
     return { error: 'Ocorreu um erro ao atualizar o valor do pedido.' };
   }
 }
+
+/**
+ * Exclui permanentemente um orçamento/pedido do cliente e todos os seus recursos vinculados.
+ * Apenas pedidos em status PENDENTE ou CANCELADO podem ser excluídos.
+ * Remove fotos do Storage e, em transação no banco: mensagens do chat, sala de chat,
+ * agendamentos, imagens do pedido e o próprio pedido.
+ */
+export async function deleteOrderAction(orderId: string): Promise<ActionResponse> {
+  try {
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return { error: 'Não autorizado. Faça login novamente.' };
+
+    const client = await prisma.client.findUnique({
+      where: { userId: currentUser.id },
+      select: { id: true },
+    });
+    if (!client) {
+      return { error: 'Apenas clientes podem excluir orçamentos.' };
+    }
+
+    // Busca o pedido garantindo que pertence ao cliente logado
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        professional: { select: { userId: true } },
+        images: { select: { storagePath: true } },
+      },
+    });
+
+    if (!order) {
+      return { error: 'Pedido não encontrado.' };
+    }
+
+    if (order.clientId !== client.id) {
+      return { error: 'Você não tem permissão para excluir este pedido.' };
+    }
+
+    // Regra de status: permitir excluir apenas pedidos ainda não concluídos (PENDENTE, CANCELADO)
+    // Status bloqueados: EM_ANDAMENTO, CONCLUIDO, DISPUTA
+    const ALLOWED_STATUSES: OrderStatus[] = [OrderStatus.PENDENTE, OrderStatus.CANCELADO];
+    if (!ALLOWED_STATUSES.includes(order.status)) {
+      return { error: 'Este pedido não pode ser excluído neste status.' };
+    }
+
+    // 1. Remover arquivos de fotos do Supabase Storage
+    const storagePaths = order.images
+      .map((img) => img.storagePath)
+      .filter((p): p is string => Boolean(p));
+
+    if (storagePaths.length > 0) {
+      try {
+        await deleteFromStorage(storagePaths, ORDER_IMAGE_BUCKET);
+      } catch (storageErr) {
+        console.error('[deleteOrderAction] Falha ao remover fotos do Storage:', storageErr);
+        return {
+          error: 'Falha ao remover fotos do pedido. O pedido não foi excluído para evitar arquivos órfãos.',
+        };
+      }
+    }
+
+    // 2. Transação atômica no banco de dados para limpar dependências
+    await prisma.$transaction(async (tx) => {
+      // (a) Chat: se houver chatRoom vinculado ao pedido, remover mensagens e a sala
+      const chatRoom = await tx.chatRoom.findUnique({
+        where: { orderId },
+        select: { id: true },
+      });
+
+      if (chatRoom) {
+        await tx.chatMessage.deleteMany({
+          where: { roomId: chatRoom.id },
+        });
+        await tx.chatRoom.delete({
+          where: { id: chatRoom.id },
+        });
+      }
+
+      // (b) Agendamentos (appointments) vinculados a este pedido
+      await tx.appointment.deleteMany({
+        where: { orderId },
+      });
+
+      // (c) Registros de imagens vinculadas
+      await tx.orderImage.deleteMany({
+        where: { orderId },
+      });
+
+      // (d) Exclui o próprio pedido
+      await tx.order.delete({
+        where: { id: orderId },
+      });
+    });
+
+    // 3. Notifica o profissional em tempo real via SSE
+    if (order.professional?.userId) {
+      appEvents.emit(`order:${order.professional.userId}`, { type: 'delete', orderId });
+    }
+
+    // 4. Revalidação das telas de pedidos do cliente e do profissional
+    revalidatePath('/cliente/pedidos');
+    revalidatePath('/dashboard/profissional/pedidos');
+
+    return { success: true };
+  } catch (error) {
+    console.error('[deleteOrderAction] Erro inesperado:', error);
+    return { error: 'Erro interno ao excluir pedido.' };
+  }
+}
+

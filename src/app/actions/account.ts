@@ -4,7 +4,7 @@ import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createServerClient } from '@/lib/supabase/server';
-import { deleteFromStorage } from '@/lib/supabase/storage';
+import { deleteFromStorage, getStorageClient } from '@/lib/supabase/storage';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -150,6 +150,35 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
     });
     chatImages.forEach((msg) => addFile(msg.content, 'uploads'));
 
+    // 3.4. Fotos de pedidos enviadas pelo usuário no bucket 'uploads' ({userId}/orders/...)
+    try {
+      const adminClient = createAdminClient();
+      const storageClient = adminClient || (await getStorageClient());
+      const { data: orderFolders } = await storageClient.storage
+        .from('uploads')
+        .list(`${userId}/orders`);
+
+      if (orderFolders && orderFolders.length > 0) {
+        for (const folder of orderFolders) {
+          const { data: filesInFolder } = await storageClient.storage
+            .from('uploads')
+            .list(`${userId}/orders/${folder.name}`);
+
+          if (filesInFolder && filesInFolder.length > 0) {
+            for (const f of filesInFolder) {
+              if (f.name) {
+                const fullPath = `${userId}/orders/${folder.name}/${f.name}`;
+                if (!filesByBucket.has('uploads')) filesByBucket.set('uploads', new Set());
+                filesByBucket.get('uploads')!.add(fullPath);
+              }
+            }
+          }
+        }
+      }
+    } catch (scanErr) {
+      console.warn('[deleteAccount] Falha não impeditiva ao listar {userId}/orders no storage:', scanErr);
+    }
+
     // ── 4. Exclusão no Banco de Dados em Transação ($transaction) ──────────────
     await prisma.$transaction(async (tx) => {
       // 4.1. Mapeia todos os pedidos vinculados (como cliente ou profissional)
@@ -173,6 +202,20 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
           });
         }
       });
+
+      // Adiciona fotos anexadas aos pedidos (order_images) à lista de exclusão do storage
+      if (orderIds.length > 0) {
+        const orderImages = await tx.orderImage.findMany({
+          where: { orderId: { in: orderIds } },
+          select: { storagePath: true },
+        });
+        orderImages.forEach((img) => {
+          if (img.storagePath) {
+            if (!filesByBucket.has('uploads')) filesByBucket.set('uploads', new Set());
+            filesByBucket.get('uploads')!.add(img.storagePath);
+          }
+        });
+      }
 
       // 4.2. Deleta agendamentos (appointments) vinculados às ordens, ao profissional ou ao cliente
       await tx.appointment.deleteMany({

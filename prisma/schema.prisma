@@ -220,8 +220,22 @@ model Order {
   category     Category?    @relation(fields: [categoryId], references: [id])
   appointments Appointment[]
   chatRoom     ChatRoom?
+  images       OrderImage[]
 
   @@map("orders")
+}
+
+model OrderImage {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  orderId     String   @map("order_id") @db.VarChar(36)
+  storagePath String   @map("storage_path") @db.Text
+  position    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, position])
+  @@map("order_images")
 }
 
 enum OrderStatus {

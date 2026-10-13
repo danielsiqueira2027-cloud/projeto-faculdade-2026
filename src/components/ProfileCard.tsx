@@ -16,10 +16,10 @@ export function ProfileCard({ professional }: ProfileCardProps) {
         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
       </div>
       
-      <div className="px-8 pb-8">
-        {/* Avatar row — only the avatar overlaps the cover */}
-        <div className="relative -mt-20 mb-4 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="relative w-fit">
+      <div className="px-5 sm:px-8 pb-8">
+        {/* Top row: Avatar (overlapping banner) & Action Button (in white area) */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pt-4 mb-6">
+          <div className="relative -mt-20 w-fit shrink-0">
             <ProfessionalAvatar 
               src={professional.avatar || professional.avatarUrl} 
               name={professional.name}
@@ -33,16 +33,14 @@ export function ProfileCard({ professional }: ProfileCardProps) {
             </div>
           </div>
 
-          {/* Action buttons — aligned to bottom of avatar on desktop */}
-          <div className="flex gap-4 pb-2">
-            <Link href={`/orcamento?profId=${professional.id}`}>
-              <Button size="lg" className="bg-bp-primary hover:bg-bp-primary/90 text-white rounded-2xl px-8 h-14 shadow-lg font-bold">
+          {/* Action button — fully inside the white card area */}
+          <div className="w-full md:w-auto shrink-0 pb-1">
+            <Link href={`/orcamento?profId=${professional.id}`} className="block w-full md:w-auto">
+              <Button 
+                size="lg" 
+                className="w-full md:w-auto min-h-[48px] md:h-14 bg-bp-primary hover:bg-bp-primary/90 active:bg-bp-primary/95 text-white rounded-2xl px-8 shadow-lg font-bold transition-all duration-200 focus-visible:ring-4 focus-visible:ring-bp-primary/20 focus-visible:outline-none"
+              >
                 Solicitar Orçamento
-              </Button>
-            </Link>
-            <Link href={`/orcamento?profId=${professional.id}`}>
-              <Button size="lg" variant="outline" className="border-2 border-bp-primary text-bp-primary rounded-2xl px-8 h-14 font-bold hover:bg-bp-primary/5">
-                Enviar Mensagem
               </Button>
             </Link>
           </div>
