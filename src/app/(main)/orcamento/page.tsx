@@ -14,8 +14,9 @@ import {
   Loader2,
 } from 'lucide-react';
 import { getProfessionalDetails } from '@/app/actions/professionals';
-import { createOrderAction } from '@/app/actions/orders';
+import { createOrderAction, uploadOrderImagesAction } from '@/app/actions/orders';
 import { getCurrentUserAction } from '@/app/actions/auth';
+import { OrderImageDropzone, type SelectedImage } from '@/components/OrderImageDropzone';
 
 interface Endereco {
   cep: string;
@@ -35,7 +36,7 @@ function OrcamentoForm() {
   const [professionalSpecialty, setProfessionalSpecialty] = useState<string>('');
   const [userLoading, setUserLoading] = useState(true);
   const [isLogged, setIsLogged] = useState(false);
-  const [hasClientRole, setHasClientRole] = useState(false);
+  const [isSelfProfile, setIsSelfProfile] = useState(false);
   const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
 
   // Form states
@@ -44,6 +45,7 @@ function OrcamentoForm() {
   const [urgency, setUrgency] = useState('Sem pressa');
   const [scheduledAt, setScheduledAt] = useState('');
   const [period, setPeriod] = useState('Manhã');
+  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [endereco, setEndereco] = useState<Endereco>({
     cep: '',
     logradouro: '',
@@ -66,7 +68,7 @@ function OrcamentoForm() {
       const user = await getCurrentUserAction();
       if (!user) {
         setIsLogged(false);
-        setHasClientRole(false);
+        setIsSelfProfile(false);
         // Start countdown to redirect
         let count = 4;
         setRedirectTimer(count);
@@ -83,19 +85,22 @@ function OrcamentoForm() {
       }
 
       setIsLogged(true);
-      if (!user.hasClient) {
-        setHasClientRole(false);
-        setUserLoading(false);
-        return;
-      }
-
-      setHasClientRole(true);
 
       if (profId) {
         const prof = await getProfessionalDetails(profId);
         if (prof) {
+          if (prof.userId === user.id) {
+            setIsSelfProfile(true);
+            setUserLoading(false);
+            return;
+          }
+
           setProfessionalName(prof.name);
-          setProfessionalSpecialty(prof.categories?.[0] || prof.specialty || 'Profissional');
+          const categoriesText =
+            prof.categories && prof.categories.length > 0
+              ? prof.categories.join(' • ')
+              : prof.specialty || 'Profissional';
+          setProfessionalSpecialty(categoriesText);
         }
       }
       setUserLoading(false);
@@ -139,8 +144,8 @@ function OrcamentoForm() {
     e.preventDefault();
 
     if (!isLogged) return;
-    if (!hasClientRole) {
-      setToast({ message: 'Apenas usuários com perfil de Cliente podem solicitar orçamentos.', type: 'error' });
+    if (isSelfProfile) {
+      setToast({ message: 'Você não pode solicitar orçamento para o seu próprio perfil.', type: 'error' });
       return;
     }
 
@@ -186,12 +191,52 @@ function OrcamentoForm() {
 
       if (res.error) {
         setToast({ message: res.error, type: 'error' });
-      } else {
-        setToast({ message: 'Orçamento solicitado com sucesso! Redirecionando para a tela de pedidos...', type: 'success' });
-        setTimeout(() => {
-          router.push('/cliente/pedidos');
-        }, 2000);
+        setSubmitLoading(false);
+        return;
       }
+
+      // Upload das imagens (opcional, não bloqueia sucesso do pedido)
+      if (selectedImages.length > 0 && res.orderId) {
+        try {
+          const formData = new FormData();
+          selectedImages.forEach((img) => formData.append('images', img.file));
+          const imgRes = await uploadOrderImagesAction(res.orderId, formData);
+          if (imgRes?.error) {
+            // Pedido criado, mas imagens falharam — avisa sem cancelar o fluxo
+            setToast({
+              message: `Pedido criado com sucesso! Mas as fotos não foram salvas: ${imgRes.error}`,
+              type: 'warning',
+            });
+            setTimeout(() => router.push('/cliente/pedidos'), 3500);
+            return;
+          }
+        } catch (imgErr: unknown) {
+          console.warn('[OrcamentoForm] Falha no upload das imagens:', imgErr);
+          const errMsg = imgErr instanceof Error ? imgErr.message : String(imgErr);
+          const isSizeLimit =
+            errMsg.includes('Body exceeded') ||
+            errMsg.includes('413') ||
+            errMsg.includes('limit');
+          const errorMsg = isSizeLimit
+            ? 'As fotos excederam o limite de tamanho permitido.'
+            : (imgErr instanceof Error ? imgErr.message : 'Falha ao enviar as fotos.');
+
+          setToast({
+            message: `Pedido criado com sucesso! Porém as fotos não puderam ser enviadas: ${errorMsg}`,
+            type: 'warning',
+          });
+          setTimeout(() => router.push('/cliente/pedidos'), 3500);
+          return;
+        }
+      }
+
+      // Libera previews de memória
+      selectedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+
+      setToast({ message: 'Orçamento solicitado com sucesso! Redirecionando para a tela de pedidos...', type: 'success' });
+      setTimeout(() => {
+        router.push('/cliente/pedidos');
+      }, 2000);
     } catch (err: any) {
       console.error('[OrcamentoForm] Erro inesperado:', err);
       setToast({ message: 'Ocorreu um erro interno ao processar a solicitação. Tente novamente mais tarde.', type: 'error' });
@@ -241,24 +286,32 @@ function OrcamentoForm() {
     );
   }
 
-  // Se estiver logado mas não for cliente (for profissional apenas)
-  if (!hasClientRole) {
+  // Se o profissional selecionado for o próprio usuário logado
+  if (isSelfProfile) {
     return (
       <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6">
         <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-orange-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto text-orange-500">
             <AlertTriangle size={32} />
           </div>
-          <h2 className="text-3xl font-black text-[#103569] leading-tight">Perfil Profissional</h2>
+          <h2 className="text-3xl font-black text-[#103569] leading-tight">Este é o seu perfil</h2>
           <p className="text-slate-600 font-semibold leading-relaxed">
-            Profissionais não podem solicitar orçamentos para outros profissionais no ClickServiço. Acesse a plataforma como <strong>Cliente</strong> para utilizar essa função.
+            Você não pode solicitar orçamento para si mesmo.
           </p>
-          <button
-            onClick={() => router.push('/')}
-            className="w-full bg-[#103569] hover:bg-[#103569]/90 text-white py-4 rounded-2xl font-black transition-all shadow-md"
-          >
-            Voltar para a Página Inicial
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              onClick={() => router.push('/buscas')}
+              className="flex-1 bg-[#103569] hover:bg-[#103569]/90 text-white py-4 rounded-2xl font-black transition-all shadow-md"
+            >
+              Ver outros profissionais
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-[#103569] py-4 rounded-2xl font-black transition-all"
+            >
+              Voltar para a Página Inicial
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -272,13 +325,20 @@ function OrcamentoForm() {
           <div className={`px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 font-bold border ${
             toast.type === 'success'
               ? 'bg-emerald-50 text-emerald-800 border-emerald-100'
+              : toast.type === 'warning'
+              ? 'bg-amber-50 text-amber-800 border-amber-100'
               : 'bg-red-50 text-red-800 border-red-100'
           }`}>
-            {toast.type === 'success' ? <CheckCircle2 className="text-emerald-600" /> : <AlertTriangle className="text-red-500" />}
+            {toast.type === 'success'
+              ? <CheckCircle2 className="text-emerald-600 shrink-0" />
+              : toast.type === 'warning'
+              ? <AlertTriangle className="text-amber-500 shrink-0" />
+              : <AlertTriangle className="text-red-500 shrink-0" />}
             <span>{toast.message}</span>
           </div>
         </div>
       )}
+
 
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
@@ -298,7 +358,7 @@ function OrcamentoForm() {
                 <div className="bg-white/80 backdrop-blur-md p-6 rounded-3xl border border-white shadow-sm mb-8">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Solicitando para:</p>
                   <p className="text-xl font-black text-[#103569] leading-none mb-1">{professionalName}</p>
-                  <p className="text-xs font-bold text-[#f7941d]">{professionalSpecialty}</p>
+                  <p className="text-xs font-bold text-[#f7941d] leading-relaxed break-words">{professionalSpecialty}</p>
                 </div>
               ) : (
                 <p className="text-lg text-[#103569]/60 leading-relaxed font-medium max-w-md">
@@ -462,7 +522,24 @@ function OrcamentoForm() {
                   </div>
                 </div>
 
-                {/* Section 3: Prazo */}
+                {/* Section 3: Fotos do serviço */}
+                <div className="space-y-8">
+                  <div className="flex gap-4 items-start">
+                    <div className="w-1.5 h-10 bg-[#f7941d] rounded-full" />
+                    <div>
+                      <h2 className="text-2xl font-black text-[#103569] tracking-tight">Fotos do Serviço</h2>
+                      <p className="text-xs text-[#103569]/40 font-bold uppercase tracking-widest mt-1">Opcional &mdash; até 2 imagens.</p>
+                    </div>
+                  </div>
+                  <OrderImageDropzone
+                    images={selectedImages}
+                    onChange={setSelectedImages}
+                    maxImages={2}
+                    maxFileSizeMB={2}
+                  />
+                </div>
+
+                {/* Section 4: Prazo */}
                 <div className="space-y-8">
                   <div className="flex gap-4 items-start">
                     <div className="w-1.5 h-10 bg-[#f7941d] rounded-full" />

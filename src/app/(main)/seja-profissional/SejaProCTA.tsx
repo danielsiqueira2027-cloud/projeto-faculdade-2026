@@ -11,11 +11,12 @@ interface CTAProps {
    */
   variant: 'hero' | 'card';
   destination?: string;
+  label?: string;
 }
 
 /* ── Componente ──────────────────────────────────────────── */
 
-export function SejaProCTA({ variant, destination = '/cadastro/profissional?next=/seja-profissional/ativar' }: CTAProps) {
+export function SejaProCTA({ variant, destination = '/cadastro/profissional?next=/seja-profissional/ativar', label }: CTAProps) {
   const router = useRouter();
   const isHero = variant === 'hero';
 
@@ -23,7 +24,8 @@ export function SejaProCTA({ variant, destination = '/cadastro/profissional?next
     router.push(destination);
   };
 
-  const label = isHero ? 'Quero me cadastrar agora' : 'Criar conta de profissional';
+  const defaultLabel = isHero ? 'Quero me cadastrar agora' : 'Criar conta de profissional';
+  const buttonLabel = label || defaultLabel;
 
   /* ── Estilos base compartilhados ─────────────── */
   const baseStyle: React.CSSProperties = {
@@ -70,7 +72,7 @@ export function SejaProCTA({ variant, destination = '/cadastro/profissional?next
         e.currentTarget.style.background = '#fddfa2';
       }}
     >
-      {label}
+      {buttonLabel}
     </button>
   );
 }

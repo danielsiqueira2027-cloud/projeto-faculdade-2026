@@ -10,6 +10,9 @@ export async function searchProfessionals(query?: string, categorySlug?: string)
   try {
     const where: any = {
       isAvailable: true,
+      user: {
+        isActive: true,
+      },
     };
 
     if (categorySlug) {
@@ -72,6 +75,7 @@ export async function searchProfessionals(query?: string, categorySlug?: string)
 
     return professionals.map((prof) => ({
       id: prof.id,
+      userId: prof.userId,
       name: prof.user.name,
       role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
       rating: Number(prof.rating) || 5.0,
@@ -158,6 +162,7 @@ export async function getProfessionalDetails(id: string) {
         rating: t.rating,
       })),
       categories: prof.categories.map((c) => c.category.name),
+      bannerUrl: prof.bannerUrl || null,
     };
   } catch (error) {
     console.error('[getProfessionalDetails] Erro ao obter detalhes do profissional:', error);
@@ -174,6 +179,9 @@ export async function getTopProfessionals(limit: number = 4) {
     const professionals = await prisma.professional.findMany({
       where: {
         isAvailable: true,
+        user: {
+          isActive: true,
+        },
       },
       orderBy: [
         { rating: 'desc' },
@@ -199,6 +207,7 @@ export async function getTopProfessionals(limit: number = 4) {
 
     return professionals.map((prof) => ({
       id: prof.id,
+      userId: prof.userId,
       name: prof.user.name,
       role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
       rating: prof.rating !== null ? Number(prof.rating) : 0,

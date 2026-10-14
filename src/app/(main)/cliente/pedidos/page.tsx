@@ -18,15 +18,18 @@ import {
   CircleDollarSign,
   Loader2,
   RefreshCw,
-  Star
+  Star,
+  Trash2,
+  CheckCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { getClientOrders } from '@/app/actions/orders';
+import { getClientOrders, deleteOrderAction } from '@/app/actions/orders';
 import { getOrCreateChatRoom } from '@/app/actions/chat';
 import { getCurrentUserAction } from '@/app/actions/auth';
 import { useRouter } from 'next/navigation';
 import { AvaliacaoModal } from '@/components/cliente/AvaliacaoModal';
+import { DeleteOrderModal } from '@/components/DeleteOrderModal';
 
 type OrderStatusType = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
 
@@ -47,6 +50,7 @@ interface OrderItem {
   createdAt: string;
   avatar: string;
   hasTestimonial?: boolean;
+  images?: string[];
 }
 
 export default function ClientOrdersPage() {
@@ -59,7 +63,37 @@ export default function ClientOrdersPage() {
   const [activeTab, setActiveTab] = useState<OrderStatusType>('PENDENTE');
   const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
   const [evaluatingOrder, setEvaluatingOrder] = useState<OrderItem | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<OrderItem | null>(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
+
+  const handleConfirmDelete = async () => {
+    if (!orderToDelete) return;
+    setIsDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      const res = await deleteOrderAction(orderToDelete.id);
+      if (res.error) {
+        setDeleteError(res.error);
+        setIsDeleteLoading(false);
+        return;
+      }
+
+      // Atualiza a lista local imediatamente
+      setOrders((prev) => prev.filter((o) => o.id !== orderToDelete.id));
+      setOrderToDelete(null);
+      setToast({ message: 'Orçamento excluído com sucesso.', type: 'success' });
+      setTimeout(() => setToast(null), 3500);
+    } catch (err: unknown) {
+      console.error('[handleConfirmDelete]', err);
+      setDeleteError(err instanceof Error ? err.message : 'Erro ao excluir orçamento.');
+    } finally {
+      setIsDeleteLoading(false);
+    }
+  };
 
   const handleStartChat = async (orderId: string) => {
     try {
@@ -87,12 +121,6 @@ export default function ClientOrdersPage() {
       }
 
       setIsLogged(true);
-      if (!user.hasClient) {
-        setHasClientRole(false);
-        setUserLoading(false);
-        return;
-      }
-
       setHasClientRole(true);
       setUserLoading(false);
     }
@@ -101,7 +129,7 @@ export default function ClientOrdersPage() {
 
   // Load orders from database
   const loadOrders = async () => {
-    if (!isLogged || !hasClientRole) return;
+    if (!isLogged) return;
     setLoading(true);
     const dbOrders = await getClientOrders();
     setOrders(dbOrders as any[]);
@@ -109,7 +137,7 @@ export default function ClientOrdersPage() {
   };
 
   useEffect(() => {
-    if (isLogged && hasClientRole) {
+    if (isLogged) {
       loadOrders();
 
       const eventSource = new EventSource('/api/sse');
@@ -121,7 +149,7 @@ export default function ClientOrdersPage() {
         eventSource.close();
       };
     }
-  }, [isLogged, hasClientRole]);
+  }, [isLogged]);
 
   // Helper for displaying status in Portuguese
   const getStatusLabel = (status: OrderStatusType) => {
@@ -157,7 +185,7 @@ export default function ClientOrdersPage() {
     );
   }
 
-  if (!isLogged || !hasClientRole) {
+  if (!isLogged) {
     return (
       <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6">
         <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-red-100 animate-in fade-in zoom-in duration-300">
@@ -166,7 +194,7 @@ export default function ClientOrdersPage() {
           </div>
           <h2 className="text-3xl font-black text-[#103569] leading-tight">Acesso Restrito</h2>
           <p className="text-slate-600 font-semibold leading-relaxed">
-            Você precisa estar logado com uma conta de <strong>Cliente</strong> para visualizar seus pedidos.
+            Você precisa estar logado para visualizar seus pedidos.
           </p>
           <button
             onClick={() => router.push('/login?callbackUrl=/cliente/pedidos')}
@@ -377,6 +405,24 @@ export default function ClientOrdersPage() {
                     <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest">Descrição detalhada</span>
                     <p className="text-slate-600 text-sm font-medium leading-relaxed mt-1">{order.description}</p>
                   </div>
+                  {/* Fotos do serviço */}
+                  {order.images && order.images.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest">Fotos do Serviço</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {order.images.map((url, i) => (
+                          <a key={i} href={url} target="_blank" rel="noopener noreferrer" aria-label={`Ver imagem ${i + 1}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={url}
+                              alt={`Foto ${i + 1}`}
+                              className="w-20 h-20 object-cover rounded-xl border border-slate-100 shadow-sm hover:opacity-90 transition-opacity cursor-pointer"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-8">
@@ -401,13 +447,13 @@ export default function ClientOrdersPage() {
 
               {/* Card Actions Footer */}
               <div className="p-4 md:px-8 bg-slate-50/50 border-t border-slate-50 flex flex-wrap gap-3 items-center justify-between">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
                   {(order.status === 'EM_ANDAMENTO' || order.status === 'CONCLUIDO') && (
                     <Button 
                       onClick={() => handleStartChat(order.id)}
                       disabled={chatLoadingId === order.id}
                       variant="outline" 
-                      className="h-10 rounded-xl font-bold border-slate-200 text-[#103569] text-xs flex items-center gap-2"
+                      className="h-10 min-h-[44px] rounded-xl font-bold border-slate-200 text-[#103569] text-xs flex items-center gap-2 cursor-pointer"
                     >
                       <MessageSquare size={14} className="text-blue-500" />
                       {chatLoadingId === order.id ? 'Carregando...' : 'Conversar no Chat'}
@@ -416,13 +462,29 @@ export default function ClientOrdersPage() {
                   <Button 
                     asChild
                     variant="outline" 
-                    className="h-10 rounded-xl font-bold border-slate-200 text-slate-500 text-xs"
+                    className="h-10 min-h-[44px] rounded-xl font-bold border-slate-200 text-slate-500 text-xs cursor-pointer"
                   >
                     <a href={`tel:${order.professionalPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
                       <Phone size={14} />
                       Ligar para Profissional
                     </a>
                   </Button>
+
+                  {/* Botão Excluir orçamento — apenas em status PENDENTE ou CANCELADO */}
+                  {(order.status === 'PENDENTE' || order.status === 'CANCELADO') && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setDeleteError(null);
+                        setOrderToDelete(order);
+                      }}
+                      className="h-10 min-h-[44px] px-3.5 rounded-xl font-bold border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Trash2 size={14} className="text-red-500 shrink-0" />
+                      <span>Excluir orçamento</span>
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">
@@ -496,6 +558,42 @@ export default function ClientOrdersPage() {
             loadOrders();
           }}
         />
+      )}
+
+      {/* Modal de Exclusão Definitiva de Orçamento */}
+      <DeleteOrderModal
+        isOpen={Boolean(orderToDelete)}
+        orderId={orderToDelete?.id || null}
+        serviceType={orderToDelete?.serviceType}
+        onClose={() => {
+          if (!isDeleteLoading) {
+            setOrderToDelete(null);
+            setDeleteError(null);
+          }
+        }}
+        onConfirm={handleConfirmDelete}
+        loading={isDeleteLoading}
+        error={deleteError}
+      />
+
+      {/* Toast de Feedback */}
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[250] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div
+            className={`px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 font-bold text-xs border ${
+              toast.type === 'success'
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : 'bg-red-50 text-red-800 border-red-200'
+            }`}
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle size={16} className="text-red-500 shrink-0" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+        </div>
       )}
     </div>
   );

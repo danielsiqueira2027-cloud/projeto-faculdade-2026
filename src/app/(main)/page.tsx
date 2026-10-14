@@ -1,3 +1,4 @@
+import { getCurrentUser } from '@/lib/auth';
 import { Carousel } from '@/components/home/Carousel';
 import { CategoriasGrid } from '@/components/home/CategoriasGrid';
 import { ComoFunciona } from '@/components/home/ComoFunciona';
@@ -6,7 +7,10 @@ import { ProntoSection } from '@/components/home/ProntoSection';
 import { AvaliacaoClientes } from '@/components/home/AvaliacaoClientes';
 import { SecaoProfissional } from '@/components/home/SecaoProfissional';
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+  const proStatus = user?.professionalStatus ?? 'none';
+
   return (
     <>
       {/* 1. Banner rotativo */}
@@ -31,7 +35,7 @@ export default function Home() {
       <AvaliacaoClientes />
 
       {/* 7. Seção para profissionais se cadastrarem */}
-      <SecaoProfissional />
+      <SecaoProfissional professionalStatus={proStatus} />
     </>
   );
 }

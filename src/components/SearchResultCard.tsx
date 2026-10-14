@@ -7,9 +7,10 @@ import { ProfessionalAvatar } from '@/components/ProfessionalAvatar';
 
 interface SearchResultCardProps {
   professional: Professional;
+  isSelf?: boolean;
 }
 
-export function SearchResultCard({ professional }: SearchResultCardProps) {
+export function SearchResultCard({ professional, isSelf = false }: SearchResultCardProps) {
   const router = useRouter();
 
   return (
@@ -35,7 +36,14 @@ export function SearchResultCard({ professional }: SearchResultCardProps) {
 
       {/* Info */}
       <div className="src-card__info">
-        <h3 className="src-card__name">{professional.name}</h3>
+        <div className="flex items-center justify-between gap-1">
+          <h3 className="src-card__name truncate">{professional.name}</h3>
+          {isSelf && (
+            <span className="text-[9px] font-black uppercase tracking-wider bg-[#f7941d]/15 text-[#f7941d] px-1.5 py-0.5 rounded-md shrink-0">
+              Você
+            </span>
+          )}
+        </div>
         <p className="src-card__role">{professional.role}</p>
 
         {/* Rating and Location */}

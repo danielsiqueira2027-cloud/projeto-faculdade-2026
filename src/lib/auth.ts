@@ -2,6 +2,9 @@ import 'server-only';
 import { cache } from 'react';
 import { getSupabaseUser } from '@/lib/supabase/auth';
 
+import type { ProfessionalStatus } from '@/lib/professional';
+export type { ProfessionalStatus } from '@/lib/professional';
+
 // Tipo retornado com os perfis incluídos
 export type SessionUser = {
   id: string;
@@ -11,6 +14,7 @@ export type SessionUser = {
   avatarUrl: string | null;
   hasClient: boolean;
   hasProfessional: boolean;
+  professionalStatus: ProfessionalStatus;
 };
 
 /**
