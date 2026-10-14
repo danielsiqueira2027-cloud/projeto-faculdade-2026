@@ -36,7 +36,7 @@ function OrcamentoForm() {
   const [professionalSpecialty, setProfessionalSpecialty] = useState<string>('');
   const [userLoading, setUserLoading] = useState(true);
   const [isLogged, setIsLogged] = useState(false);
-  const [hasClientRole, setHasClientRole] = useState(false);
+  const [isSelfProfile, setIsSelfProfile] = useState(false);
   const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
 
   // Form states
@@ -68,7 +68,7 @@ function OrcamentoForm() {
       const user = await getCurrentUserAction();
       if (!user) {
         setIsLogged(false);
-        setHasClientRole(false);
+        setIsSelfProfile(false);
         // Start countdown to redirect
         let count = 4;
         setRedirectTimer(count);
@@ -85,17 +85,16 @@ function OrcamentoForm() {
       }
 
       setIsLogged(true);
-      if (!user.hasClient) {
-        setHasClientRole(false);
-        setUserLoading(false);
-        return;
-      }
-
-      setHasClientRole(true);
 
       if (profId) {
         const prof = await getProfessionalDetails(profId);
         if (prof) {
+          if (prof.userId === user.id) {
+            setIsSelfProfile(true);
+            setUserLoading(false);
+            return;
+          }
+
           setProfessionalName(prof.name);
           const categoriesText =
             prof.categories && prof.categories.length > 0
@@ -145,8 +144,8 @@ function OrcamentoForm() {
     e.preventDefault();
 
     if (!isLogged) return;
-    if (!hasClientRole) {
-      setToast({ message: 'Apenas usuários com perfil de Cliente podem solicitar orçamentos.', type: 'error' });
+    if (isSelfProfile) {
+      setToast({ message: 'Você não pode solicitar orçamento para o seu próprio perfil.', type: 'error' });
       return;
     }
 
@@ -287,24 +286,32 @@ function OrcamentoForm() {
     );
   }
 
-  // Se estiver logado mas não for cliente (for profissional apenas)
-  if (!hasClientRole) {
+  // Se o profissional selecionado for o próprio usuário logado
+  if (isSelfProfile) {
     return (
       <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6">
         <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-orange-100 animate-in fade-in zoom-in duration-300">
           <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto text-orange-500">
             <AlertTriangle size={32} />
           </div>
-          <h2 className="text-3xl font-black text-[#103569] leading-tight">Perfil Profissional</h2>
+          <h2 className="text-3xl font-black text-[#103569] leading-tight">Este é o seu perfil</h2>
           <p className="text-slate-600 font-semibold leading-relaxed">
-            Profissionais não podem solicitar orçamentos para outros profissionais no ClickServiço. Acesse a plataforma como <strong>Cliente</strong> para utilizar essa função.
+            Você não pode solicitar orçamento para si mesmo.
           </p>
-          <button
-            onClick={() => router.push('/')}
-            className="w-full bg-[#103569] hover:bg-[#103569]/90 text-white py-4 rounded-2xl font-black transition-all shadow-md"
-          >
-            Voltar para a Página Inicial
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <button
+              onClick={() => router.push('/buscas')}
+              className="flex-1 bg-[#103569] hover:bg-[#103569]/90 text-white py-4 rounded-2xl font-black transition-all shadow-md"
+            >
+              Ver outros profissionais
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-[#103569] py-4 rounded-2xl font-black transition-all"
+            >
+              Voltar para a Página Inicial
+            </button>
+          </div>
         </div>
       </div>
     );

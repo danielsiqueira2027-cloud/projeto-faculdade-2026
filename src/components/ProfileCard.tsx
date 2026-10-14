@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Professional } from '@/types';
 import { Star, MapPin, Briefcase, Award, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,13 +8,26 @@ import { ProfessionalAvatar } from '@/components/ProfessionalAvatar';
 
 interface ProfileCardProps {
   professional: Professional;
+  isOwnProfile?: boolean;
 }
 
-export function ProfileCard({ professional }: ProfileCardProps) {
+export function ProfileCard({ professional, isOwnProfile = false }: ProfileCardProps) {
   return (
     <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-bp-primary/5 border border-bp-outline-variant overflow-hidden">
-      <div className="h-48 bg-bp-primary relative">
-        <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+      {/* Banner / Capa */}
+      <div className="h-48 bg-bp-primary relative overflow-hidden">
+        {professional.bannerUrl ? (
+          <Image
+            src={professional.bannerUrl}
+            alt="Capa do perfil"
+            fill
+            sizes="(max-width: 1024px) 100vw, 1024px"
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+        )}
       </div>
       
       <div className="px-5 sm:px-8 pb-8">
@@ -35,14 +49,25 @@ export function ProfileCard({ professional }: ProfileCardProps) {
 
           {/* Action button — fully inside the white card area */}
           <div className="w-full md:w-auto shrink-0 pb-1">
-            <Link href={`/orcamento?profId=${professional.id}`} className="block w-full md:w-auto">
-              <Button 
-                size="lg" 
-                className="w-full md:w-auto min-h-[48px] md:h-14 bg-bp-primary hover:bg-bp-primary/90 active:bg-bp-primary/95 text-white rounded-2xl px-8 shadow-lg font-bold transition-all duration-200 focus-visible:ring-4 focus-visible:ring-bp-primary/20 focus-visible:outline-none"
-              >
-                Solicitar Orçamento
-              </Button>
-            </Link>
+            {isOwnProfile ? (
+              <Link href="/dashboard/profissional/perfil" className="block w-full md:w-auto">
+                <Button 
+                  size="lg" 
+                  className="w-full md:w-auto min-h-[48px] md:h-14 bg-[#f7941d] hover:bg-[#f7941d]/90 active:bg-[#f7941d]/95 text-white rounded-2xl px-8 shadow-lg font-bold transition-all duration-200 focus-visible:ring-4 focus-visible:ring-[#f7941d]/20 focus-visible:outline-none"
+                >
+                  Editar meu perfil
+                </Button>
+              </Link>
+            ) : (
+              <Link href={`/orcamento?profId=${professional.id}`} className="block w-full md:w-auto">
+                <Button 
+                  size="lg" 
+                  className="w-full md:w-auto min-h-[48px] md:h-14 bg-bp-primary hover:bg-bp-primary/90 active:bg-bp-primary/95 text-white rounded-2xl px-8 shadow-lg font-bold transition-all duration-200 focus-visible:ring-4 focus-visible:ring-bp-primary/20 focus-visible:outline-none"
+                >
+                  Solicitar Orçamento
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 

@@ -194,3 +194,26 @@ export async function getServiceImagePublicUrl(path: string): Promise<string> {
   return data.publicUrl;
 }
 
+/**
+ * Helper específico para upload do banner / capa do perfil profissional.
+ * O caminho é montado no servidor: {userId}/banners/{uuid}.{ext}
+ * Limite: 2 MB, MIME: jpeg/png/webp (validado na rota; aqui apenas faz o upload).
+ */
+export async function uploadBanner(
+  userId: string,
+  file: File | Blob | Buffer | Uint8Array | ArrayBuffer,
+  fileExtension = 'jpg',
+  contentType = 'image/jpeg'
+): Promise<UploadResult> {
+  const { randomUUID } = await import('crypto');
+  const cleanExt = fileExtension.replace(/^\./, '');
+  const path = `${userId}/banners/${randomUUID()}.${cleanExt}`;
+  return uploadToStorage({
+    bucket: 'uploads',
+    path,
+    file,
+    contentType,
+    upsert: false,
+  });
+}
+

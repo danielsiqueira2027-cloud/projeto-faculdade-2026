@@ -4,6 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
+import { type ProfessionalStatus } from '@/lib/professional';
+
 interface Beneficio {
   icone: string;
   texto: string;
@@ -17,7 +19,24 @@ const beneficios: Beneficio[] = [
   { icone: '⭐', texto: 'Construa sua reputação com avaliações reais' },
 ];
 
-export function SecaoProfissional() {
+interface SecaoProfissionalProps {
+  professionalStatus?: ProfessionalStatus;
+}
+
+export function SecaoProfissional({ professionalStatus = 'none' }: SecaoProfissionalProps) {
+  const ctaHref =
+    professionalStatus === 'complete'
+      ? '/dashboard/profissional'
+      : professionalStatus === 'incomplete'
+      ? '/seja-profissional/ativar'
+      : '/seja-profissional';
+
+  const ctaLabel =
+    professionalStatus === 'complete'
+      ? 'Ir para meu painel →'
+      : professionalStatus === 'incomplete'
+      ? 'Concluir cadastro profissional →'
+      : 'Quero ser profissional →';
   return (
     <section className="w-full" style={{ padding: '70px 20px', backgroundColor: '#ebebeb' }}>
       <div
@@ -101,7 +120,7 @@ export function SecaoProfissional() {
           </ul>
 
           {/* CTA */}
-          <Link href="/seja-profissional">
+          <Link href={ctaHref}>
             <button
               className="cursor-pointer transition-all"
               style={{
@@ -122,7 +141,7 @@ export function SecaoProfissional() {
                 e.currentTarget.style.transform = 'scale(1)';
               }}
             >
-              Quero ser profissional →
+              {ctaLabel}
             </button>
           </Link>
         </div>

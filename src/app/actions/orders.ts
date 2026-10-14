@@ -37,14 +37,6 @@ export async function createOrderAction(data: {
       return { error: 'Você precisa estar logado para solicitar um orçamento.' };
     }
 
-    const client = await prisma.client.findUnique({
-      where: { userId: currentUser.id },
-    });
-
-    if (!client) {
-      return { error: 'Apenas usuários logados como Cliente podem solicitar orçamentos.' };
-    }
-
     // Validação básica
     if (!data.professionalId) return { error: 'Profissional não especificado.' };
     if (!data.description || !data.description.trim()) return { error: 'Por favor, insira uma descrição do serviço.' };
@@ -68,6 +60,18 @@ export async function createOrderAction(data: {
     if (!professional) {
       return { error: 'O profissional selecionado não foi encontrado ou está inativo.' };
     }
+
+    // Bloquear solicitação para o próprio perfil
+    if (professional.userId === currentUser.id) {
+      return { error: 'Você não pode solicitar orçamento para o seu próprio perfil.' };
+    }
+
+    // Garante que o usuário logado possui registro como cliente de forma idempotente
+    const client = await prisma.client.upsert({
+      where: { userId: currentUser.id },
+      create: { userId: currentUser.id },
+      update: {},
+    });
 
     // Validar data agendada
     let parsedDate: Date | null = null;

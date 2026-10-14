@@ -4,6 +4,7 @@ import React, { useState, useMemo, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchResultCard } from '@/components/SearchResultCard';
 import { searchProfessionals } from '@/app/actions/professionals';
+import { getCurrentUserAction } from '@/app/actions/auth';
 
 // ─── Inner component (needs useSearchParams inside Suspense) ───────────────────
 function SearchResults() {
@@ -15,6 +16,16 @@ function SearchResults() {
   const [dbResults, setDbResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'name'>('distance');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Carrega usuário atual para identificar card próprio
+  useEffect(() => {
+    async function loadUser() {
+      const u = await getCurrentUserAction();
+      if (u) setCurrentUserId(u.id);
+    }
+    loadUser();
+  }, []);
 
   // Update search state when URL changes
   useEffect(() => {
@@ -105,7 +116,11 @@ function SearchResults() {
           ) : results.length > 0 ? (
             <div className="busca-grid">
               {results.map(prof => (
-                <SearchResultCard key={prof.id} professional={prof} />
+                <SearchResultCard
+                  key={prof.id}
+                  professional={prof}
+                  isSelf={Boolean(currentUserId && prof.userId === currentUserId)}
+                />
               ))}
             </div>
           ) : (

@@ -40,7 +40,23 @@ const requisitos = [
 
 export default async function SejaProPage() {
   const user = await getCurrentUser();
-  const destination = user ? '/seja-profissional/ativar' : '/cadastro/profissional?next=/seja-profissional/ativar';
+  const proStatus = user?.professionalStatus ?? 'none';
+
+  let destination = '/cadastro/profissional?next=/seja-profissional/ativar';
+  let labelHero: string | undefined = undefined;
+  let labelCard: string | undefined = undefined;
+
+  if (proStatus === 'complete') {
+    destination = '/dashboard/profissional';
+    labelHero = 'Ir para meu painel';
+    labelCard = 'Ir para meu painel';
+  } else if (proStatus === 'incomplete') {
+    destination = '/seja-profissional/ativar';
+    labelHero = 'Concluir cadastro';
+    labelCard = 'Concluir cadastro';
+  } else if (user) {
+    destination = '/seja-profissional/ativar';
+  }
 
   return (
     <div
@@ -125,7 +141,7 @@ export default async function SejaProPage() {
           na sua região — sem taxa de cadastro.
         </p>
 
-        <SejaProCTA variant="hero" destination={destination} />
+        <SejaProCTA variant="hero" destination={destination} label={labelHero} />
       </section>
 
       {/* ── BENEFÍCIOS ────────────────────────────────────── */}
@@ -326,13 +342,22 @@ export default async function SejaProPage() {
               Cadastre-se agora e comece a receber pedidos de clientes
               próximos a você em minutos.
             </p>
-            <SejaProCTA variant="card" destination={destination} />
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
-              Já tem conta?{' '}
-              <a href="/login?next=/seja-profissional/ativar" style={{ color: '#fddfa2', fontWeight: 600, textDecoration: 'underline' }}>
-                Faça login aqui
-              </a>
-            </p>
+            <SejaProCTA variant="card" destination={destination} label={labelCard} />
+            {proStatus === 'complete' ? (
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
+                Você já possui cadastro profissional completo.{' '}
+                <a href="/dashboard/profissional" style={{ color: '#fddfa2', fontWeight: 600, textDecoration: 'underline' }}>
+                  Acessar painel
+                </a>
+              </p>
+            ) : (
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                Já tem conta?{' '}
+                <a href="/login?next=/seja-profissional/ativar" style={{ color: '#fddfa2', fontWeight: 600, textDecoration: 'underline' }}>
+                  Faça login aqui
+                </a>
+              </p>
+            )}
           </div>
         </div>
       </section>

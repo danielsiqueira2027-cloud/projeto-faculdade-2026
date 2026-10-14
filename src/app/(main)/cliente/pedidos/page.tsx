@@ -121,12 +121,6 @@ export default function ClientOrdersPage() {
       }
 
       setIsLogged(true);
-      if (!user.hasClient) {
-        setHasClientRole(false);
-        setUserLoading(false);
-        return;
-      }
-
       setHasClientRole(true);
       setUserLoading(false);
     }
@@ -135,7 +129,7 @@ export default function ClientOrdersPage() {
 
   // Load orders from database
   const loadOrders = async () => {
-    if (!isLogged || !hasClientRole) return;
+    if (!isLogged) return;
     setLoading(true);
     const dbOrders = await getClientOrders();
     setOrders(dbOrders as any[]);
@@ -143,7 +137,7 @@ export default function ClientOrdersPage() {
   };
 
   useEffect(() => {
-    if (isLogged && hasClientRole) {
+    if (isLogged) {
       loadOrders();
 
       const eventSource = new EventSource('/api/sse');
@@ -155,7 +149,7 @@ export default function ClientOrdersPage() {
         eventSource.close();
       };
     }
-  }, [isLogged, hasClientRole]);
+  }, [isLogged]);
 
   // Helper for displaying status in Portuguese
   const getStatusLabel = (status: OrderStatusType) => {
@@ -191,7 +185,7 @@ export default function ClientOrdersPage() {
     );
   }
 
-  if (!isLogged || !hasClientRole) {
+  if (!isLogged) {
     return (
       <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6">
         <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-red-100 animate-in fade-in zoom-in duration-300">
@@ -200,7 +194,7 @@ export default function ClientOrdersPage() {
           </div>
           <h2 className="text-3xl font-black text-[#103569] leading-tight">Acesso Restrito</h2>
           <p className="text-slate-600 font-semibold leading-relaxed">
-            Você precisa estar logado com uma conta de <strong>Cliente</strong> para visualizar seus pedidos.
+            Você precisa estar logado para visualizar seus pedidos.
           </p>
           <button
             onClick={() => router.push('/login?callbackUrl=/cliente/pedidos')}

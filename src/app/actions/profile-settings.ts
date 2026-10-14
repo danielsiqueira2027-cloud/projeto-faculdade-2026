@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { createServerClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cifrarCPF, decifrarCPF, hashCPF } from '@/lib/crypto';
+import { validarTelefoneBR, normalizarTelefone } from '@/lib/validators';
 
 export async function getClientProfile() {
   const currentUser = await getCurrentUser();
@@ -121,6 +122,7 @@ export async function getProfessionalProfile() {
     avatarUrl:     prof.user.avatarUrl  ?? null,
     specialty:     prof.specialty       ?? null,
     bio:           prof.bio             ?? null,
+    bannerUrl:     prof.bannerUrl       ?? null,
     location:      prof.location        ?? null,
     addressStreet: prof.addressStreet   ?? null,
     addressNumber: prof.addressNumber   ?? null,
@@ -160,6 +162,25 @@ export async function saveProfessionalProfile(data: {
 }) {
   const currentUser = await getCurrentUser();
   if (!currentUser) return { error: 'Não autorizado' };
+
+  // ── Validação de bio ─────────────────────────────────────────────────────
+  if (data.bio && data.bio.trim().length > 0) {
+    const bioLen = data.bio.trim().length;
+    if (bioLen < 20) {
+      return { error: 'A biografia deve ter no mínimo 20 caracteres.' };
+    }
+    if (bioLen > 1000) {
+      return { error: 'A biografia deve ter no máximo 1000 caracteres.' };
+    }
+  }
+
+  // ── Validação de telefone ─────────────────────────────────────────────────
+  if (data.phone && data.phone.trim().length > 0) {
+    const phoneNorm = normalizarTelefone(data.phone);
+    if (!validarTelefoneBR(phoneNorm)) {
+      return { error: 'Telefone inválido. Informe um número brasileiro com DDD (ex: (11) 99999-9999).' };
+    }
+  }
 
   try {
     const existing = await prisma.user.findFirst({
@@ -223,7 +244,7 @@ export async function saveProfessionalProfile(data: {
       data: {
         specialty: data.specialty?.trim() || null,
         bio: data.bio?.trim() || null,
-        phone: data.phone?.trim() || null,
+        phone: data.phone?.trim() ? normalizarTelefone(data.phone) : null,
         location: data.location?.trim() || null,
         addressStreet: data.addressStreet?.trim() || null,
         addressNumber: data.addressNumber?.trim() || null,

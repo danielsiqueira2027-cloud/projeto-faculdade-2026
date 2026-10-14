@@ -1,8 +1,10 @@
 export interface Professional {
   id: string;
+  userId?: string;
   name: string;
   avatar?: string | null;
   avatarUrl?: string | null;
+  bannerUrl?: string | null;
   specialty: string;
   description: string;
   bio?: string | null;

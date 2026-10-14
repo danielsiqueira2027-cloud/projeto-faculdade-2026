@@ -13,6 +13,7 @@ export interface Service {
 
 export interface Professional {
   id: string;
+  userId?: string;
   name: string;
   role: string;
   rating: number;

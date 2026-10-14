@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 import type { SessionUser } from '@/lib/auth';
+import { getProfessionalStatus } from '@/lib/professional';
 import { getNotifications, markNotificationAsRead, deleteNotification } from '@/app/actions/notifications';
 
 interface NavbarClientProps {
@@ -28,6 +29,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
   const menuRef = React.useRef<HTMLDivElement>(null);
   const guestMenuRef = React.useRef<HTMLDivElement>(null);
   const notifRef = React.useRef<HTMLDivElement>(null);
+  const proStatus = getProfessionalStatus(user);
 
   React.useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -241,17 +243,29 @@ export default function NavbarClient({ user }: NavbarClientProps) {
               </div>
             )}
 
-            {/* Botão Seja um Profissional / Acesso Pro (Desktop) */}
+            {/* Botão Seja um Profissional / Acesso Pro / Concluir cadastro (Desktop) */}
             <Link
-              href={user?.hasProfessional ? '/dashboard/profissional' : (user ? '/seja-profissional/ativar' : '/seja-profissional')}
+              href={
+                proStatus === 'complete'
+                  ? '/dashboard/profissional'
+                  : proStatus === 'incomplete'
+                  ? '/seja-profissional/ativar'
+                  : '/seja-profissional'
+              }
               className={`text-[10px] font-black px-4 py-2 rounded-xl shadow-lg transition-all active:scale-95 uppercase tracking-widest hidden md:flex items-center gap-1.5 no-underline shrink-0 ${
-                user?.hasProfessional
+                proStatus === 'complete'
                   ? 'bg-[#f7941d] text-white hover:bg-[#f7941d]/90'
+                  : proStatus === 'incomplete'
+                  ? 'bg-amber-600 text-white hover:bg-amber-700'
                   : 'bg-[#0b2545] text-white hover:bg-[#103569]'
               }`}
             >
               <Briefcase size={13} />
-              {user?.hasProfessional ? 'Acesso Pro' : 'Seja um profissional'}
+              {proStatus === 'complete'
+                ? 'Acesso Pro'
+                : proStatus === 'incomplete'
+                ? 'Concluir cadastro'
+                : 'Seja um profissional'}
             </Link>
 
             {user ? (
@@ -317,14 +331,24 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                           Conversas
                         </Link>
                         <Link
-                          href={user?.hasProfessional ? '/dashboard/profissional' : '/seja-profissional'}
+                          href={
+                            proStatus === 'complete'
+                              ? '/dashboard/profissional'
+                              : proStatus === 'incomplete'
+                              ? '/seja-profissional/ativar'
+                              : '/seja-profissional'
+                          }
                           className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline min-h-[44px]"
                           onClick={() => setMenuOpen(false)}
                         >
                           <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center text-[#f7941d]">
                             <Briefcase size={16} />
                           </div>
-                          {user?.hasProfessional ? 'Acesso Pro' : 'Seja um profissional'}
+                          {proStatus === 'complete'
+                            ? 'Acesso Pro'
+                            : proStatus === 'incomplete'
+                            ? 'Concluir cadastro'
+                            : 'Seja um profissional'}
                         </Link>
                         <div className="mx-5 h-px bg-[#103569]/5 my-1.5" />
                       </div>
@@ -378,6 +402,18 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                           <div className="px-5 py-1.5">
                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Painel do Profissional</p>
                           </div>
+                          {proStatus === 'incomplete' && (
+                            <Link
+                              href="/seja-profissional/ativar"
+                              className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors no-underline min-h-[44px]"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <div className="w-7 h-7 rounded-lg bg-amber-200 flex items-center justify-center text-amber-800">
+                                <Briefcase size={16} />
+                              </div>
+                              Concluir cadastro profissional
+                            </Link>
+                          )}
                           <Link
                             href="/dashboard/profissional"
                             className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-[#103569] hover:bg-[#103569]/5 transition-colors no-underline min-h-[44px]"

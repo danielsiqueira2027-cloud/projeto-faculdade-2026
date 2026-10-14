@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { ProfileCard } from '@/components/ProfileCard';
 import { PortfolioGrid } from '@/components/PortfolioGrid';
 import { getProfessionalDetails } from '@/app/actions/professionals';
+import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/database';
 
 interface PageProps {
@@ -24,7 +25,12 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
     }
   }
 
-  const professional = profId ? await getProfessionalDetails(profId) : null;
+  const [professional, currentUser] = await Promise.all([
+    profId ? getProfessionalDetails(profId) : Promise.resolve(null),
+    getCurrentUser(),
+  ]);
+
+  const isOwnProfile = Boolean(currentUser && professional && currentUser.id === professional.userId);
 
   if (!professional) {
     return (
@@ -67,7 +73,7 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-3">
-          <ProfileCard professional={professional} />
+          <ProfileCard professional={professional} isOwnProfile={isOwnProfile} />
         </div>
 
         {/* Seção Bio / Sobre o profissional — aparece somente quando preenchida */}

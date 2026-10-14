@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { getTopProfessionals } from '@/app/actions/professionals';
+import { getCurrentUser } from '@/lib/auth';
 
 /* ── Subcomponente: StarRating ───────────────────────────── */
 
@@ -22,6 +23,7 @@ function StarRating({ nota }: { nota: number }) {
 
 interface DestaqueProfessional {
   id: string;
+  userId?: string;
   name: string;
   role: string;
   rating: number;
@@ -30,7 +32,7 @@ interface DestaqueProfessional {
   avatarUrl?: string | null;
 }
 
-function ProfissionalCard({ pro }: { pro: DestaqueProfessional }) {
+function ProfissionalCard({ pro, isSelf = false }: { pro: DestaqueProfessional; isSelf?: boolean }) {
   return (
     <Link
       href={`/perfil-profissional?id=${pro.id}`}
@@ -72,18 +74,25 @@ function ProfissionalCard({ pro }: { pro: DestaqueProfessional }) {
             {pro.name.charAt(0)}
           </div>
 
-          <div style={{ overflow: 'hidden' }}>
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: '0.95rem',
-                color: '#0A1A2F',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {pro.name}
+          <div style={{ overflow: 'hidden', flex: 1 }}>
+            <div className="flex items-center justify-between gap-1">
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  color: '#0A1A2F',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {pro.name}
+              </div>
+              {isSelf && (
+                <span className="text-[9px] font-black uppercase tracking-wider bg-[#f7941d]/15 text-[#f7941d] px-1.5 py-0.5 rounded-md shrink-0">
+                  Você
+                </span>
+              )}
             </div>
             <div
               style={{
@@ -131,7 +140,10 @@ function ProfissionalCard({ pro }: { pro: DestaqueProfessional }) {
 /* ── Componente principal ────────────────────────────────── */
 
 export async function ProfissionaisDestaque() {
-  const destaques = await getTopProfessionals(4);
+  const [destaques, currentUser] = await Promise.all([
+    getTopProfessionals(4),
+    getCurrentUser(),
+  ]);
 
   return (
     <section className="w-full" style={{ padding: '70px 20px', backgroundColor: '#ebebeb' }}>
@@ -188,7 +200,11 @@ export async function ProfissionaisDestaque() {
           }}
         >
           {destaques.map((pro) => (
-            <ProfissionalCard key={pro.id} pro={pro} />
+            <ProfissionalCard
+              key={pro.id}
+              pro={pro}
+              isSelf={Boolean(currentUser && pro.userId === currentUser.id)}
+            />
           ))}
         </div>
       </div>

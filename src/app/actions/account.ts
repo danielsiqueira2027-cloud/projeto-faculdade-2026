@@ -179,6 +179,27 @@ export async function executeDeleteAccount(userId: string): Promise<DeleteAccoun
       console.warn('[deleteAccount] Falha não impeditiva ao listar {userId}/orders no storage:', scanErr);
     }
 
+    // 3.5. Banners do profissional ({userId}/banners/)
+    try {
+      const adminClient = createAdminClient();
+      const storageClient = adminClient || (await getStorageClient());
+      const { data: bannerFiles } = await storageClient.storage
+        .from('uploads')
+        .list(`${userId}/banners`);
+
+      if (bannerFiles && bannerFiles.length > 0) {
+        for (const f of bannerFiles) {
+          if (f.name) {
+            const fullPath = `${userId}/banners/${f.name}`;
+            if (!filesByBucket.has('uploads')) filesByBucket.set('uploads', new Set());
+            filesByBucket.get('uploads')!.add(fullPath);
+          }
+        }
+      }
+    } catch (scanErr) {
+      console.warn('[deleteAccount] Falha não impeditiva ao listar {userId}/banners no storage:', scanErr);
+    }
+
     // ── 4. Exclusão no Banco de Dados em Transação ($transaction) ──────────────
     await prisma.$transaction(async (tx) => {
       // 4.1. Mapeia todos os pedidos vinculados (como cliente ou profissional)

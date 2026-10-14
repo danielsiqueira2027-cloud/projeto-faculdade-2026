@@ -238,7 +238,13 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
         avatarUrl: true,
         isActive: true,
         client: { select: { id: true } },
-        professional: { select: { id: true } },
+        professional: {
+          select: {
+            id: true,
+            cpfEncrypted: true,
+            categories: { select: { categoryId: true }, take: 1 },
+          },
+        },
       },
     });
 
@@ -281,7 +287,13 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
           avatarUrl: true,
           isActive: true,
           client: { select: { id: true } },
-          professional: { select: { id: true } },
+          professional: {
+            select: {
+              id: true,
+              cpfEncrypted: true,
+              categories: { select: { categoryId: true }, take: 1 },
+            },
+          },
         },
       });
     }
@@ -290,14 +302,28 @@ export async function getSupabaseUser(): Promise<SessionUser | null> {
       return null;
     }
 
+    const hasClient = !!dbUser.client;
+    const hasProfessional = !!dbUser.professional;
+    let professionalStatus: 'none' | 'incomplete' | 'complete' = 'none';
+
+    if (dbUser.professional) {
+      const isComplete = Boolean(
+        dbUser.professional.cpfEncrypted &&
+        dbUser.professional.categories &&
+        dbUser.professional.categories.length > 0
+      );
+      professionalStatus = isComplete ? 'complete' : 'incomplete';
+    }
+
     return {
       id: dbUser.id,
       name: dbUser.name,
       email: dbUser.email,
       phone: dbUser.phone,
       avatarUrl: dbUser.avatarUrl,
-      hasClient: !!dbUser.client,
-      hasProfessional: !!dbUser.professional,
+      hasClient,
+      hasProfessional,
+      professionalStatus,
     };
   } catch (err) {
     console.error('[getSupabaseUser error]', err);
