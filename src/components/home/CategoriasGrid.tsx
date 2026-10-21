@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Wrench } from 'lucide-react';
 
 const categorias = [
   { nome: 'Encanador',   slug: 'encanador',   img: '/imgs/categorias/encanador.png' },
@@ -13,6 +14,7 @@ const categorias = [
   { nome: 'Vidraceiro',  slug: 'vidraceiro',  img: '/imgs/categorias/vidraceiro.png' },
   { nome: 'Gesseiro',    slug: 'gesseiro',    img: '/imgs/categorias/gesseiro.png' },
   { nome: 'Serralheiro', slug: 'serralheiro', img: '/imgs/categorias/serralheiro.png' },
+  { nome: 'Azulejista',  slug: 'azulejista',  img: '/imgs/categorias/azulejista.png' },
 ];
 
 interface CategoryItem {
@@ -23,6 +25,41 @@ interface CategoryItem {
 
 interface CategoriasGridProps {
   initialCategories?: CategoryItem[];
+}
+
+function CategoryIconItem({ cat }: { cat: { nome: string; slug: string; img: string } }) {
+  const [hasError, setHasError] = useState(false);
+
+  return (
+    <Link
+      href={`/buscas?categoria=${encodeURIComponent(cat.slug)}`}
+      className="flex flex-col items-center text-center rounded-xl no-underline transition-all hover:scale-105"
+      style={{ padding: '10px 6px', gap: 8, minWidth: '90px' }}
+    >
+      <div className="relative" style={{ width: 78, height: 78 }}>
+        {hasError ? (
+          <div
+            className="w-full h-full flex items-center justify-center bg-[#103569] text-white"
+            style={{ borderRadius: 39, boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }}
+          >
+            <Wrench size={32} className="text-white" />
+          </div>
+        ) : (
+          <Image
+            src={cat.img}
+            alt={cat.nome}
+            fill
+            className="object-cover"
+            style={{ borderRadius: 39, boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }}
+            onError={() => setHasError(true)}
+          />
+        )}
+      </div>
+      <span className="font-semibold" style={{ fontSize: '0.78rem', color: '#111', lineHeight: 1.2 }}>
+        {cat.nome}
+      </span>
+    </Link>
+  );
 }
 
 export function CategoriasGrid({ initialCategories }: CategoriasGridProps) {
@@ -41,31 +78,13 @@ export function CategoriasGrid({ initialCategories }: CategoriasGridProps) {
           CATEGORIAS
         </h2>
 
-        {/* Grid de 9 categorias — clique vai direto para busca */}
+        {/* Grid de categorias — clique vai direto para busca */}
         {/* Flex layout centralizado e flexível para qualquer número de categorias */}
         <div
           className="w-full flex flex-wrap justify-center gap-x-8 gap-y-6"
         >
           {displayCategories.map((cat) => (
-            <Link
-              key={cat.slug}
-              href={`/buscas?categoria=${encodeURIComponent(cat.slug)}`}
-              className="flex flex-col items-center text-center rounded-xl no-underline transition-all hover:scale-105"
-              style={{ padding: '10px 6px', gap: 8, minWidth: '90px' }}
-            >
-              <div className="relative" style={{ width: 78, height: 78 }}>
-                <Image
-                  src={cat.img}
-                  alt={cat.nome}
-                  fill
-                  className="object-cover"
-                  style={{ borderRadius: 39, boxShadow: '0 2px 8px rgba(0,0,0,0.18)' }}
-                />
-              </div>
-              <span className="font-semibold" style={{ fontSize: '0.78rem', color: '#111', lineHeight: 1.2 }}>
-                {cat.nome}
-              </span>
-            </Link>
+            <CategoryIconItem key={cat.slug} cat={cat} />
           ))}
         </div>
       </div>
