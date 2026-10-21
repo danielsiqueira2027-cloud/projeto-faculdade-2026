@@ -15,7 +15,25 @@ const categorias = [
   { nome: 'Serralheiro', slug: 'serralheiro', img: '/imgs/categorias/serralheiro.png' },
 ];
 
-export function CategoriasGrid() {
+interface CategoryItem {
+  nome: string;
+  slug: string;
+  img?: string;
+}
+
+interface CategoriasGridProps {
+  initialCategories?: CategoryItem[];
+}
+
+export function CategoriasGrid({ initialCategories }: CategoriasGridProps) {
+  const displayCategories = initialCategories && initialCategories.length > 0
+    ? initialCategories.map(c => ({
+        nome: c.nome,
+        slug: c.slug,
+        img: c.img || `/imgs/categorias/${c.slug}.png`,
+      }))
+    : categorias;
+
   return (
     <section className="w-full py-8 flex flex-col items-center" style={{ backgroundColor: '#ebebeb' }}>
       <div className="flex flex-col items-center w-full" style={{ maxWidth: 1200, width: '92%' }}>
@@ -28,7 +46,7 @@ export function CategoriasGrid() {
         <div
           className="w-full flex flex-wrap justify-center gap-x-8 gap-y-6"
         >
-          {categorias.map((cat) => (
+          {displayCategories.map((cat) => (
             <Link
               key={cat.slug}
               href={`/buscas?categoria=${encodeURIComponent(cat.slug)}`}

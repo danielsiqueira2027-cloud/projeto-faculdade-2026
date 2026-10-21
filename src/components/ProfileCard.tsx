@@ -42,9 +42,11 @@ export function ProfileCard({ professional, isOwnProfile = false }: ProfileCardP
               className="border-8 border-white shadow-xl bg-white"
               priority
             />
-            <div className="absolute -bottom-2 -right-2 bg-bp-secondary-container p-2 rounded-xl border-4 border-white shadow-lg text-bp-on-secondary-container">
-              <CheckCircle2 size={22} />
-            </div>
+            {professional.isVerified && (
+              <div className="absolute -bottom-2 -right-2 bg-bp-secondary-container p-2 rounded-xl border-4 border-white shadow-lg text-bp-on-secondary-container" title="Profissional verificado">
+                <CheckCircle2 size={22} />
+              </div>
+            )}
           </div>
 
           {/* Action button — fully inside the white card area */}

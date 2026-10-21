@@ -7,9 +7,22 @@ import { ProntoSection } from '@/components/home/ProntoSection';
 import { AvaliacaoClientes } from '@/components/home/AvaliacaoClientes';
 import { SecaoProfissional } from '@/components/home/SecaoProfissional';
 
+import { prisma } from '@/lib/database';
+
 export default async function Home() {
-  const user = await getCurrentUser();
+  const [user, dbCategories] = await Promise.all([
+    getCurrentUser(),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' },
+      select: { name: true, slug: true },
+    }),
+  ]);
   const proStatus = user?.professionalStatus ?? 'none';
+  const homeCategories = dbCategories.map((c) => ({
+    nome: c.name.charAt(0).toUpperCase() + c.name.slice(1).toLowerCase(),
+    slug: c.slug,
+  }));
 
   return (
     <>
@@ -20,7 +33,7 @@ export default async function Home() {
       <div style={{ height: 80, background: 'linear-gradient(to bottom, #fddfa2 0%, #ebebeb 100%)' }} />
 
       {/* 2. Categorias com subcategorias expandíveis */}
-      <CategoriasGrid />
+      <CategoriasGrid initialCategories={homeCategories} />
 
       {/* 3. Como funciona — passo a passo */}
       <ComoFunciona />

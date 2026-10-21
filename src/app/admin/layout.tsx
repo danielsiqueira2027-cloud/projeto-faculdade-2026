@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, Users, Wrench, DollarSign, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, Wrench, DollarSign, Settings, LogOut } from "lucide-react";
 import { ReactNode } from "react";
 import { adminAuth } from "@/lib/auth-admin";
 import { logoutAdminAction } from "@/app/actions/auth-admin";
@@ -17,17 +17,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   }
 
   const navItems = [
-    { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-    { name: "Usuários", href: "/admin/usuarios", icon: Users },
-    { name: "Serviços", href: "/admin/servicos", icon: Wrench },
-    { name: "Financeiro", href: "/admin/financeiro", icon: DollarSign },
-    { name: "Configurações", href: "/admin/configuracoes", icon: Settings },
+    { name: "Dashboard",     href: "/admin",              icon: LayoutDashboard },
+    { name: "Usuários",      href: "/admin/usuarios",     icon: Users },
+    { name: "Profissionais", href: "/admin/profissionais",icon: ShieldCheck },
+    { name: "Serviços",      href: "/admin/servicos",     icon: Wrench },
+    { name: "Financeiro",    href: "/admin/financeiro",   icon: DollarSign },
+    { name: "Configurações", href: "/admin/configuracoes",icon: Settings },
   ];
 
   return (
     <div className="flex h-screen bg-gray-50 text-slate-800">
       {/* Mobile navigation overlay */}
-      <AdminMobileNav user={session.user} navItems={navItems} />
+      <AdminMobileNav user={session.user} />
 
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r flex-col justify-between hidden md:flex">

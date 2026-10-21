@@ -59,8 +59,9 @@ function LoginForm() {
               <div className="relative w-48 h-16">
                 <Image 
                   src="/logo.png" 
-                  alt="ClickServiços Logo" 
+                  alt="ClickServiço" 
                   fill 
+                  sizes="192px"
                   className="object-contain drop-shadow-sm" 
                   priority
                 />

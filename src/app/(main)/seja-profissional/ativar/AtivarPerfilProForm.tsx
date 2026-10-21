@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useActionState, useEffect, useRef, startTransition } from 'react';
+import React, { useState, useActionState, useEffect, useRef, startTransition, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +26,32 @@ const CATEGORIES = [
   { id: 'serralheiro', label: 'Serralheiro',  icon: <Briefcase size={16} /> },
 ];
 
+function getCategoryIcon(slug: string, iconName?: string | null) {
+  const name = iconName?.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (name === 'droplets' || name === 'anchor') return <Anchor size={16} />;
+  if (name === 'paintbrush') return <Paintbrush size={16} />;
+  if (name === 'zap') return <Zap size={16} />;
+  if (name === 'hammer') return <Hammer size={16} />;
+  if (name === 'wrench') return <Wrench size={16} />;
+  if (name === 'grid2x2' || name === 'appwindow') return <Grid2x2 size={16} />;
+  if (name === 'layers') return <Layers size={16} />;
+  if (name === 'scissors') return <Scissors size={16} />;
+  if (name === 'briefcase') return <Briefcase size={16} />;
+
+  const s = slug.toLowerCase();
+  if (s === 'encanador') return <Anchor size={16} />;
+  if (s === 'pintor') return <Paintbrush size={16} />;
+  if (s === 'eletricista') return <Zap size={16} />;
+  if (s === 'pedreiro') return <Hammer size={16} />;
+  if (s === 'carpinteiro') return <Wrench size={16} />;
+  if (s === 'vidraceiro') return <Grid2x2 size={16} />;
+  if (s === 'gesseiro') return <Layers size={16} />;
+  if (s === 'azulejista') return <Scissors size={16} />;
+  if (s === 'serralheiro') return <Briefcase size={16} />;
+
+  return <Wrench size={16} />;
+}
+
 interface Endereco {
   cep: string;
   logradouro: string;
@@ -35,8 +61,15 @@ interface Endereco {
   estado: string;
 }
 
+export interface ProCategoryOption {
+  id: string;
+  label: string;
+  iconName?: string | null;
+}
+
 interface AtivarPerfilProFormProps {
   initialPhone?: string;
+  categories?: ProCategoryOption[];
 }
 
 // Ordem visual dos campos para scroll e foco após validação
@@ -54,7 +87,18 @@ const FIELD_ORDER = [
   'estado',
 ];
 
-export default function AtivarPerfilProForm({ initialPhone = '' }: AtivarPerfilProFormProps) {
+export default function AtivarPerfilProForm({ initialPhone = '', categories }: AtivarPerfilProFormProps) {
+  const categoriesList = useMemo(() => {
+    if (categories && categories.length > 0) {
+      return categories.map((c) => ({
+        id: c.id,
+        label: c.label,
+        icon: getCategoryIcon(c.id, c.iconName),
+      }));
+    }
+    return CATEGORIES;
+  }, [categories]);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [fields, setFields] = useState({ cpf: '', phone: initialPhone, bio: '', experiencia: '' });
   const { cpf, phone, bio, experiencia } = fields;
@@ -317,7 +361,7 @@ export default function AtivarPerfilProForm({ initialPhone = '' }: AtivarPerfilP
             <CardContent className="p-10 space-y-8">
 
               <div id="field-categories" className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-                {CATEGORIES.map((cat) => (
+                {categoriesList.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"

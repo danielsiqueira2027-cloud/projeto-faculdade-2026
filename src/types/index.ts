@@ -18,6 +18,7 @@ export interface Professional {
   phone?: string;
   email?: string;
   location?: string;
+  isVerified?: boolean;
 }
 
 export interface PortfolioItem {

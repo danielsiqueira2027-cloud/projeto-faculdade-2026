@@ -115,10 +115,54 @@ const DEFAULT_CONFIG: CategoryStyleConfig = {
   badgeBg: '#f8fafc',
 };
 
+const ICON_NAME_MAP: Record<string, LucideIcon> = {
+  droplets: Droplets,
+  paintbrush: Paintbrush,
+  zap: Zap,
+  hammer: Hammer,
+  axe: Axe,
+  appwindow: AppWindow,
+  layers: Layers,
+  grid2x2: Grid2x2,
+  settings: Settings,
+  wrench: Wrench,
+};
+
+function resolveCategoryIcon(category: Category): LucideIcon {
+  if (category.icon) {
+    const clean = category.icon.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (ICON_NAME_MAP[clean]) {
+      return ICON_NAME_MAP[clean];
+    }
+  }
+  const config = CATEGORY_CONFIG[category.slug?.toLowerCase()] || DEFAULT_CONFIG;
+  return config.icon;
+}
+
+function CategoryCardIcon({
+  category,
+  size,
+  strokeWidth,
+  style,
+  className,
+}: {
+  category: Category;
+  size: number;
+  strokeWidth: number;
+  style: React.CSSProperties;
+  className?: string;
+}) {
+  return React.createElement(resolveCategoryIcon(category), {
+    size,
+    strokeWidth,
+    style,
+    className,
+  });
+}
+
 export function CategoryCard({ category }: CategoryCardProps) {
   const router = useRouter();
   const config = CATEGORY_CONFIG[category.slug.toLowerCase()] || DEFAULT_CONFIG;
-  const IconComponent = config.icon;
 
   const handleNavigate = () => {
     router.push(`/buscas?categoria=${encodeURIComponent(category.slug)}`);
@@ -147,7 +191,8 @@ export function CategoryCard({ category }: CategoryCardProps) {
           boxShadow: `0 8px 16px ${config.shadowColor}`,
         }}
       >
-        <IconComponent
+        <CategoryCardIcon
+          category={category}
           size={38}
           strokeWidth={2}
           style={{ color: config.color }}
