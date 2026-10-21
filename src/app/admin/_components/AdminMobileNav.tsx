@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, type ComponentType } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, Users, ShieldCheck, Wrench, DollarSign, Settings } from 'lucide-react';
 import { logoutAdminAction } from '@/app/actions/auth-admin';
 
 interface NavItem {
@@ -12,12 +12,20 @@ interface NavItem {
   icon: ComponentType<{ className?: string }>;
 }
 
+const navItems: NavItem[] = [
+  { name: "Dashboard",     href: "/admin",              icon: LayoutDashboard },
+  { name: "Usuários",      href: "/admin/usuarios",     icon: Users },
+  { name: "Profissionais", href: "/admin/profissionais",icon: ShieldCheck },
+  { name: "Serviços",      href: "/admin/servicos",     icon: Wrench },
+  { name: "Financeiro",    href: "/admin/financeiro",   icon: DollarSign },
+  { name: "Configurações", href: "/admin/configuracoes",icon: Settings },
+];
+
 interface AdminMobileNavProps {
   user: { name?: string | null; email?: string | null };
-  navItems: NavItem[];
 }
 
-export function AdminMobileNav({ user, navItems }: AdminMobileNavProps) {
+export function AdminMobileNav({ user }: AdminMobileNavProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -33,10 +41,6 @@ export function AdminMobileNav({ user, navItems }: AdminMobileNavProps) {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
 
   return (
     <>
@@ -62,7 +66,7 @@ export function AdminMobileNav({ user, navItems }: AdminMobileNavProps) {
             {/* Header */}
             <div className="p-6 border-b border-slate-100">
               <div className="flex items-center justify-between mb-4">
-                <Link href="/admin">
+                <Link href="/admin" onClick={() => setOpen(false)}>
                   <h1 className="text-2xl font-bold text-blue-600">
                     Click<span className="text-slate-800">Admin</span>
                   </h1>
@@ -95,6 +99,7 @@ export function AdminMobileNav({ user, navItems }: AdminMobileNavProps) {
                   <Link
                     key={item.name}
                     href={item.href}
+                    onClick={() => setOpen(false)}
                     className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive
                         ? 'bg-blue-50 text-blue-600'

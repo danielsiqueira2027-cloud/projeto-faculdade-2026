@@ -163,6 +163,7 @@ export async function getProfessionalDetails(id: string) {
       })),
       categories: prof.categories.map((c) => c.category.name),
       bannerUrl: prof.bannerUrl || null,
+      isVerified: prof.isVerified,
     };
   } catch (error) {
     console.error('[getProfessionalDetails] Erro ao obter detalhes do profissional:', error);

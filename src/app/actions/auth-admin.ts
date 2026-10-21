@@ -1,6 +1,6 @@
 "use server";
 
-import { adminSignIn } from "@/lib/auth-admin";
+import { adminSignIn, adminSignOut } from "@/lib/auth-admin";
 import { AuthError } from "next-auth";
 
 export type AdminAuthState = {
@@ -13,7 +13,10 @@ export async function adminLoginAction(
 ): Promise<AdminAuthState> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const callbackUrl = (formData.get("callbackUrl") as string) || "/admin";
+  const rawCallback = formData.get("callbackUrl") as string;
+  const callbackUrl = (rawCallback && rawCallback.startsWith("/") && !rawCallback.startsWith("//"))
+    ? rawCallback
+    : "/admin";
 
   if (!email || !password) {
     return { error: "Preencha e-mail e senha." };
@@ -43,6 +46,5 @@ export async function adminLoginAction(
 }
 
 export async function logoutAdminAction(): Promise<void> {
-  const { adminSignOut } = await import("@/lib/auth-admin");
   await adminSignOut({ redirectTo: "/auth/login" });
 }
