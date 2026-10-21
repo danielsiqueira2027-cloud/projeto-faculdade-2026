@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 export default async function CategoriasPage() {
   const dbCategories = await prisma.category.findMany({
+    where: { isActive: true },
     orderBy: { name: 'asc' },
   });
 
@@ -19,8 +20,9 @@ export default async function CategoriasPage() {
         id: dbCat.id,
         name: dbCat.name,
         slug: dbCat.slug,
-        icon: '',
+        icon: dbCat.icon || '',
         description: dbCat.description || undefined,
+        isActive: dbCat.isActive,
       }))
     : CATEGORIES_MOCK;
 

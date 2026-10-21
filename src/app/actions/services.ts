@@ -43,8 +43,9 @@ const MIME_TO_EXT: Record<string, string> = {
 export async function getCategoriesAction() {
   try {
     return await prisma.category.findMany({
+      where: { isActive: true },
       orderBy: { name: 'asc' },
-      select: { id: true, name: true },
+      select: { id: true, name: true, slug: true, icon: true },
     });
   } catch (error) {
     console.error('[getCategoriesAction]', error);

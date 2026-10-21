@@ -18,6 +18,9 @@ export interface Category {
   
   /** Slug para navegação na URL */
   slug: string;
+
+  /** Status de ativação no sistema */
+  isActive?: boolean;
 }
 
 /**
