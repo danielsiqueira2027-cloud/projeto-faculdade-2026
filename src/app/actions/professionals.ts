@@ -137,12 +137,11 @@ export async function getProfessionalDetails(id: string) {
       name: prof.user.name,
       avatar: prof.user.avatarUrl || null,
       avatarUrl: prof.user.avatarUrl || null,
-      specialty: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
+      specialty: prof.specialty || null,
       description: prof.bio || '',
       bio: prof.bio || null,
       rating: Number(prof.rating) || 5.0,
       reviewCount: prof.reviewCount || 0,
-      yearsOfExperience: 5, // Fallback padrão
       phone: prof.phone || prof.user.phone || '',
       email: prof.user.email,
       location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,

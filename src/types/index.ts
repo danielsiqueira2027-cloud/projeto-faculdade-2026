@@ -5,12 +5,12 @@ export interface Professional {
   avatar?: string | null;
   avatarUrl?: string | null;
   bannerUrl?: string | null;
-  specialty: string;
+  specialty?: string | null;
   description: string;
   bio?: string | null;
   rating: number;
   reviewCount: number;
-  yearsOfExperience: number;
+  yearsOfExperience?: number;
   certifications: string[];
   portfolio: PortfolioItem[];
   testimonials: Testimonial[];

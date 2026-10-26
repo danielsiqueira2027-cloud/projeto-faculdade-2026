@@ -97,9 +97,10 @@ export function ProfileCard({ professional, isOwnProfile = false }: ProfileCardP
           )}
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-bp-on-surface/60 font-semibold">
-            <span className="flex items-center gap-1.5"><Briefcase size={18} className="text-bp-primary" /> {professional.specialty}</span>
-            <span className="flex items-center gap-1.5"><MapPin size={18} className="text-bp-primary" /> Grande São Paulo</span>
-            <span className="flex items-center gap-1.5"><Award size={18} className="text-bp-primary" /> {professional.yearsOfExperience} anos exp.</span>
+            {professional.specialty && (
+              <span className="flex items-center gap-1.5"><Briefcase size={18} className="text-bp-primary" /> {professional.specialty}</span>
+            )}
+            <span className="flex items-center gap-1.5"><MapPin size={18} className="text-bp-primary" /> {professional.location || 'Grande São Paulo'}</span>
           </div>
         </div>
 
