@@ -78,7 +78,7 @@ export async function searchProfessionals(query?: string, categorySlug?: string)
       userId: prof.userId,
       name: prof.user.name,
       role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
-      rating: Number(prof.rating) || 5.0,
+      rating: Number(prof.rating) || 0,
       distance: 1.5, // Fallback visual
       location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
       avatarUrl: prof.user.avatarUrl || null,
@@ -140,7 +140,7 @@ export async function getProfessionalDetails(id: string) {
       specialty: prof.specialty || null,
       description: prof.bio || '',
       bio: prof.bio || null,
-      rating: Number(prof.rating) || 5.0,
+      rating: Number(prof.rating) || 0,
       reviewCount: prof.reviewCount || 0,
       phone: prof.phone || prof.user.phone || '',
       email: prof.user.email,

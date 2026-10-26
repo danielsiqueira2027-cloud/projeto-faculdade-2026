@@ -3,7 +3,13 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ProfileCard } from '@/components/ProfileCard';
 import { PortfolioGrid } from '@/components/PortfolioGrid';
+import { ReviewsSection } from '@/components/ReviewsSection';
 import { getProfessionalDetails } from '@/app/actions/professionals';
+import {
+  checkReviewEligibility,
+  getProfessionalReviews,
+  ReviewEligibilityResult,
+} from '@/app/actions/reviews';
 import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/database';
 
@@ -25,9 +31,11 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
     }
   }
 
-  const [professional, currentUser] = await Promise.all([
+  const [professional, currentUser, eligibility, reviews] = await Promise.all([
     profId ? getProfessionalDetails(profId) : Promise.resolve(null),
     getCurrentUser(),
+    profId ? checkReviewEligibility(profId) : Promise.resolve<ReviewEligibilityResult>({ eligible: false }),
+    profId ? getProfessionalReviews(profId) : Promise.resolve([]),
   ]);
 
   const isOwnProfile = Boolean(currentUser && professional && currentUser.id === professional.userId);
@@ -73,7 +81,12 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-3">
-          <ProfileCard professional={professional} isOwnProfile={isOwnProfile} />
+          <ProfileCard
+            professional={professional}
+            isOwnProfile={isOwnProfile}
+            canReview={eligibility.eligible}
+            hasExistingReview={Boolean(eligibility.existingReview)}
+          />
         </div>
 
         {/* Seção Bio / Sobre o profissional — aparece somente quando preenchida */}
@@ -95,6 +108,19 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
             <PortfolioGrid items={professional.portfolio} />
           </div>
         )}
+
+        {/* Seção de Avaliações */}
+        <div className="lg:col-span-3">
+          <ReviewsSection
+            professionalId={professional.id}
+            professionalName={professional.name}
+            rating={professional.rating}
+            reviewCount={professional.reviewCount}
+            isOwnProfile={isOwnProfile}
+            eligibility={eligibility}
+            reviews={reviews}
+          />
+        </div>
       </div>
     </div>
   );

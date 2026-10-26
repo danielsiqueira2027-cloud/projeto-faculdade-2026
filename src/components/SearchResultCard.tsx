@@ -48,7 +48,9 @@ export function SearchResultCard({ professional, isSelf = false }: SearchResultC
 
         {/* Rating and Location */}
         <div className="src-card__footer">
-          <span className="src-card__rating">★ {professional.rating.toFixed(1)}</span>
+          <span className="src-card__rating">
+            {professional.rating > 0 ? `★ ${professional.rating.toFixed(1)}` : '★ Novo'}
+          </span>
           <span className="src-card__location-text">{professional.location}</span>
         </div>
       </div>

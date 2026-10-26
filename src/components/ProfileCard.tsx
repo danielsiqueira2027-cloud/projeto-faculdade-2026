@@ -9,9 +9,16 @@ import { ProfessionalAvatar } from '@/components/ProfessionalAvatar';
 interface ProfileCardProps {
   professional: Professional;
   isOwnProfile?: boolean;
+  canReview?: boolean;
+  hasExistingReview?: boolean;
 }
 
-export function ProfileCard({ professional, isOwnProfile = false }: ProfileCardProps) {
+export function ProfileCard({
+  professional,
+  isOwnProfile = false,
+  canReview = false,
+  hasExistingReview = false,
+}: ProfileCardProps) {
   return (
     <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-bp-primary/5 border border-bp-outline-variant overflow-hidden">
       {/* Banner / Capa */}
@@ -61,14 +68,29 @@ export function ProfileCard({ professional, isOwnProfile = false }: ProfileCardP
                 </Button>
               </Link>
             ) : (
-              <Link href={`/orcamento?profId=${professional.id}`} className="block w-full md:w-auto">
-                <Button 
-                  size="lg" 
-                  className="w-full md:w-auto min-h-[48px] md:h-14 bg-bp-primary hover:bg-bp-primary/90 active:bg-bp-primary/95 text-white rounded-2xl px-8 shadow-lg font-bold transition-all duration-200 focus-visible:ring-4 focus-visible:ring-bp-primary/20 focus-visible:outline-none"
-                >
-                  Solicitar Orçamento
-                </Button>
-              </Link>
+              <div className="flex flex-wrap items-center gap-3">
+                {canReview && (
+                  <a href="#avaliacoes" className="block w-full sm:w-auto no-underline">
+                    <Button 
+                      type="button"
+                      size="lg" 
+                      variant="outline"
+                      className="w-full sm:w-auto min-h-[48px] md:h-14 border-2 border-[#f7941d] text-[#f7941d] hover:bg-[#f7941d]/10 active:bg-[#f7941d]/20 rounded-2xl px-6 font-bold transition-all duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Star size={18} className="fill-[#f7941d]" />
+                      {hasExistingReview ? 'Editar avaliação' : 'Avaliar'}
+                    </Button>
+                  </a>
+                )}
+                <Link href={`/orcamento?profId=${professional.id}`} className="block w-full sm:w-auto">
+                  <Button 
+                    size="lg" 
+                    className="w-full sm:w-auto min-h-[48px] md:h-14 bg-bp-primary hover:bg-bp-primary/90 active:bg-bp-primary/95 text-white rounded-2xl px-8 shadow-lg font-bold transition-all duration-200 focus-visible:ring-4 focus-visible:ring-bp-primary/20 focus-visible:outline-none"
+                  >
+                    Solicitar Orçamento
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -79,7 +101,14 @@ export function ProfileCard({ professional, isOwnProfile = false }: ProfileCardP
             <h1 className="text-4xl font-black text-bp-primary tracking-tight leading-tight">{professional.name}</h1>
             <div className="flex items-center gap-1 bg-yellow-400/10 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold shrink-0">
               <Star size={16} className="fill-yellow-400" />
-              {professional.rating} ({professional.reviewCount} avaliações)
+              {professional.reviewCount === 0 ? (
+                <span>Novo</span>
+              ) : (
+                <span>
+                  {professional.rating.toFixed(1)} ({professional.reviewCount}{' '}
+                  {professional.reviewCount === 1 ? 'avaliação' : 'avaliações'})
+                </span>
+              )}
             </div>
           </div>
           
