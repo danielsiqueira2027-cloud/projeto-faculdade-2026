@@ -17,6 +17,7 @@ export interface ReviewEligibilityResult {
 
 export interface SaveReviewInput {
   professionalId: string;
+  orderId?: string;
   rating: number;
   comment?: string | null;
 }
@@ -36,13 +37,66 @@ export interface ReviewItem {
 }
 
 /**
+ * Verifica se um cliente possui contato prévio válido para avaliar o profissional.
+ * Regra única de elegibilidade centralizada:
+ * 1) Pelo menos 1 pedido (Order) com status 'CONCLUIDO', OU
+ * 2) Conversa bidirecional no chat (>= 1 mensagem enviada pelo cliente E >= 1 resposta do profissional).
+ * Pedido em andamento ou pendente sem conversa bidirecional NÃO libera.
+ */
+export async function hasValidContactForReview(
+  clientId: string,
+  professionalId: string,
+  clientUserId: string,
+  professionalUserId: string
+): Promise<boolean> {
+  // 1. Pedido concluído
+  const concludedOrder = await prisma.order.findFirst({
+    where: {
+      clientId,
+      professionalId,
+      status: 'CONCLUIDO',
+    },
+    select: { id: true },
+  });
+
+  if (concludedOrder) {
+    return true;
+  }
+
+  // 2. Conversa bidirecional (1 msg cliente + 1 msg profissional)
+  const chatRooms = await prisma.chatRoom.findMany({
+    where: {
+      order: {
+        clientId,
+        professionalId,
+      },
+    },
+    include: {
+      messages: {
+        select: { senderId: true, type: true },
+      },
+    },
+  });
+
+  return chatRooms.some((room) => {
+    const hasClientMsg = room.messages.some(
+      (m) => m.senderId === clientUserId && m.type !== 'sistema'
+    );
+    const hasProMsg = room.messages.some(
+      (m) => m.senderId === professionalUserId && m.type !== 'sistema'
+    );
+    return hasClientMsg && hasProMsg;
+  });
+}
+
+/**
  * Verifica a elegibilidade do usuário logado para avaliar o profissional.
- * Regra:
+ * Regra centralizada:
  * - Deve estar autenticado.
  * - Não pode avaliar a si mesmo (profissional visualizando o próprio perfil).
  * - Deve haver contato real prévio:
- *   1) Pedido de serviço/orçamento entre o cliente e o profissional, OU
- *   2) Conversa com pelo menos 1 mensagem enviada pelo cliente E 1 resposta do profissional.
+ *   1) Pedido (Order) com status CONCLUIDO, OU
+ *   2) Conversa bidirecional (>= 1 msg do cliente E >= 1 resposta do profissional).
  */
 export async function checkReviewEligibility(
   professionalId: string
@@ -75,43 +129,12 @@ export async function checkReviewEligibility(
       return { eligible: false, reason: 'no_contact' };
     }
 
-    // 1. Checa se existe pedido entre cliente e profissional
-    const order = await prisma.order.findFirst({
-      where: {
-        clientId: client.id,
-        professionalId: professional.id,
-      },
-      select: { id: true },
-    });
-
-    let hasContact = Boolean(order);
-
-    // 2. Se não houver pedido, checa conversa bidirecional (1 msg cliente + 1 msg profissional)
-    if (!hasContact) {
-      const chatRooms = await prisma.chatRoom.findMany({
-        where: {
-          order: {
-            clientId: client.id,
-            professionalId: professional.id,
-          },
-        },
-        include: {
-          messages: {
-            select: { senderId: true, type: true },
-          },
-        },
-      });
-
-      hasContact = chatRooms.some((room) => {
-        const hasClientMsg = room.messages.some(
-          (m) => m.senderId === currentUser.id && m.type !== 'sistema'
-        );
-        const hasProMsg = room.messages.some(
-          (m) => m.senderId === professional.userId && m.type !== 'sistema'
-        );
-        return hasClientMsg && hasProMsg;
-      });
-    }
+    const hasContact = await hasValidContactForReview(
+      client.id,
+      professional.id,
+      currentUser.id,
+      professional.userId
+    );
 
     if (!hasContact) {
       return { eligible: false, reason: 'no_contact' };
@@ -153,7 +176,7 @@ export async function checkReviewEligibility(
  * Garante que:
  * - O usuário esteja autenticado.
  * - Não avalie a si mesmo.
- * - Haja contato real prévio (pedido ou conversa bidirecional).
+ * - Haja contato real prévio: pedido CONCLUIDO ou conversa bidirecional.
  * - A nota seja um inteiro entre 1 e 5.
  * - Recalcula de forma atômica média e total de avaliações do profissional via agregação.
  */
@@ -206,54 +229,25 @@ export async function saveReviewAction(
       update: {},
     });
 
-    // Validação estrita de contato prévio no servidor
-    const order = await prisma.order.findFirst({
-      where: {
-        clientId: client.id,
-        professionalId: professional.id,
-      },
-      select: { id: true },
-    });
-
-    let hasContact = Boolean(order);
-
-    if (!hasContact) {
-      const chatRooms = await prisma.chatRoom.findMany({
-        where: {
-          order: {
-            clientId: client.id,
-            professionalId: professional.id,
-          },
-        },
-        include: {
-          messages: {
-            select: { senderId: true, type: true },
-          },
-        },
-      });
-
-      hasContact = chatRooms.some((room) => {
-        const hasClientMsg = room.messages.some(
-          (m) => m.senderId === currentUser.id && m.type !== 'sistema'
-        );
-        const hasProMsg = room.messages.some(
-          (m) => m.senderId === professional.userId && m.type !== 'sistema'
-        );
-        return hasClientMsg && hasProMsg;
-      });
-    }
+    // Validação estrita de contato prévio centralizada no servidor
+    const hasContact = await hasValidContactForReview(
+      client.id,
+      professional.id,
+      currentUser.id,
+      professional.userId
+    );
 
     if (!hasContact) {
       return {
         success: false,
         error:
-          'Você precisa ter entrado em contato ou solicitado um orçamento com este profissional para avaliá-lo.',
+          'Para avaliar este profissional, você precisa ter um serviço concluído ou ter conversado com ele.',
       };
     }
 
     // Upsert atômico e recálculo das métricas em transação
     await prisma.$transaction(async (tx) => {
-      await tx.review.upsert({
+      const review = await tx.review.upsert({
         where: {
           clientId_professionalId: {
             clientId: client.id,
@@ -271,6 +265,30 @@ export async function saveReviewAction(
           comment: comment?.trim() || null,
         },
       });
+
+      // Se um orderId foi informado, anexa o marcador da avaliação para rastreabilidade
+      if (data.orderId) {
+        const order = await tx.order.findUnique({
+          where: { id: data.orderId },
+          select: { id: true, notes: true, clientId: true, professionalId: true },
+        });
+        if (
+          order &&
+          order.clientId === client.id &&
+          order.professionalId === professional.id
+        ) {
+          const marker = `[AVALIAÇÃO:${review.id}]`;
+          if (!order.notes || !order.notes.includes('[AVALIAÇÃO:')) {
+            const updatedNotes = order.notes
+              ? `${order.notes}\n${marker}`
+              : marker;
+            await tx.order.update({
+              where: { id: order.id },
+              data: { notes: updatedNotes },
+            });
+          }
+        }
+      }
 
       // Recalcular métricas do profissional via agregação
       const agg = await tx.review.aggregate({

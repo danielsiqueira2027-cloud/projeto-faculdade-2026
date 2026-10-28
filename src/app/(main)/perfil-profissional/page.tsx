@@ -86,6 +86,8 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
             isOwnProfile={isOwnProfile}
             canReview={eligibility.eligible}
             hasExistingReview={Boolean(eligibility.existingReview)}
+            isUnauthenticated={eligibility.reason === 'unauthenticated'}
+            existingReview={eligibility.existingReview}
           />
         </div>
 

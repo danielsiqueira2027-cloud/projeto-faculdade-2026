@@ -30,6 +30,9 @@ BEGIN
     END IF;
 END $$;
 
+-- Habilitar RLS na tabela reviews
+ALTER TABLE "reviews" ENABLE ROW LEVEL SECURITY;
+
 -- RLS: Política de leitura pública para reviews
 DO $$
 BEGIN

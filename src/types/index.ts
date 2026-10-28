@@ -13,7 +13,7 @@ export interface Professional {
   yearsOfExperience?: number;
   certifications: string[];
   portfolio: PortfolioItem[];
-  testimonials: Testimonial[];
+  testimonials?: Testimonial[];
   categories?: string[];
   phone?: string;
   email?: string;

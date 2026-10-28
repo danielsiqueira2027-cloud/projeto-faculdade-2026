@@ -39,6 +39,7 @@ type ProfileState = {
   specialty: string;
   bio: string;
   phone: string;
+  hasWhatsapp: boolean;
   location: string;
   addressStreet: string;
   addressNumber: string;
@@ -58,6 +59,7 @@ const EMPTY_PROFILE: ProfileState = {
   specialty: '',
   bio: '',
   phone: '',
+  hasWhatsapp: false,
   location: '',
   addressStreet: '',
   addressNumber: '',
@@ -109,6 +111,7 @@ export default function EditProfilePage() {
             specialty: data.specialty || '',
             bio: data.bio || '',
             phone: data.phone || '',
+            hasWhatsapp: Boolean(data.hasWhatsapp),
             location: data.location || '',
             addressStreet: data.addressStreet || '',
             addressNumber: data.addressNumber || '',
@@ -453,6 +456,18 @@ export default function EditProfilePage() {
                     inputMode="tel"
                     className="h-12 rounded-xl border-slate-100 focus:ring-[#f7941d] font-bold text-[#103569]"
                   />
+                  <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={profile.hasWhatsapp}
+                      onChange={(e) => setProfile({ ...profile, hasWhatsapp: e.target.checked })}
+                      className="w-4 h-4 rounded text-[#f7941d] focus:ring-[#f7941d] border-gray-300"
+                    />
+                    <span className="text-xs text-slate-600 font-bold">Este número tem WhatsApp</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 font-medium mt-1 leading-normal">
+                    🔒 Seu número é compartilhado com o outro participante durante o serviço em andamento.
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Alterar Senha (Opcional)</label>

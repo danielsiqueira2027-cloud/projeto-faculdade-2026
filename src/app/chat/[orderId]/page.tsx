@@ -8,6 +8,7 @@ import {
   Send, 
   Image as ImageIcon, 
   Phone, 
+  MessageCircle,
   Calendar, 
   CircleDollarSign, 
   TrendingUp, 
@@ -38,6 +39,8 @@ interface InterlocutorDetails {
   name: string;
   role: string;
   phone: string;
+  hasWhatsapp: boolean;
+  contactReleased: boolean;
   email: string;
   avatar: string;
 }
@@ -417,7 +420,8 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
           </div>
 
           {/* Quick Order Info Tags */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto border-t sm:border-t-0 border-white/10 pt-3 sm:pt-0">
+          <div className="flex flex-col items-start sm:items-end gap-1.5 w-full sm:w-auto border-t sm:border-t-0 border-white/10 pt-3 sm:pt-0">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full sm:w-auto">
             {details.status === 'EM_ANDAMENTO' ? (
               <span className="flex items-center gap-1 text-[10px] font-black text-blue-200 bg-blue-900/40 px-3 py-1.5 rounded-xl border border-blue-700/50 uppercase tracking-widest shrink-0">
                 <TrendingUp size={10} /> Em Andamento
@@ -446,13 +450,70 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
               <CircleDollarSign size={11} /> {details.agreedPrice}
             </span>
 
-            <a 
-              href={`tel:${details.interlocutor.phone.replace(/\D/g, '')}`}
-              className="flex items-center gap-1 text-[10px] font-black text-white hover:text-[#f7941d] bg-white/5 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/10 no-underline transition-colors shrink-0 uppercase tracking-wider ml-auto sm:ml-0"
-              title="Ligar"
-            >
-              <Phone size={10} /> Ligar
-            </a>
+            {/* Contato do interlocutor (estilo Airbnb + WhatsApp) */}
+            {!details.interlocutor.contactReleased ? (
+              <span 
+                className="flex items-center gap-1.5 text-[10px] font-bold text-white/70 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 tracking-wide shrink-0 ml-auto sm:ml-0"
+                title="Contato liberado quando o serviço estiver em andamento"
+              >
+                <Lock size={10} className="text-white/60" />
+                <span className="hidden sm:inline">Contato liberado quando o serviço estiver em andamento</span>
+                <span className="sm:hidden">Contato liberado em andamento</span>
+              </span>
+            ) : (() => {
+              const rawDigits = details.interlocutor.phone ? details.interlocutor.phone.replace(/\D/g, '') : '';
+              const isValidPhone = rawDigits.length === 10 || rawDigits.length === 11;
+
+              if (!isValidPhone) {
+                return (
+                  <span className="text-[10px] font-bold text-white/60 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 shrink-0 ml-auto sm:ml-0">
+                    Telefone não informado
+                  </span>
+                );
+              }
+
+              const formattedPhone = rawDigits.length === 11
+                ? `(${rawDigits.slice(0, 2)}) ${rawDigits.slice(2, 7)}-${rawDigits.slice(7)}`
+                : `(${rawDigits.slice(0, 2)}) ${rawDigits.slice(2, 6)}-${rawDigits.slice(6)}`;
+
+              if (details.interlocutor.hasWhatsapp && rawDigits.length === 11) {
+                return (
+                  <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+                    <span className="text-[10px] font-black text-[#fddfa2] bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10 tracking-wide">
+                      {formattedPhone}
+                    </span>
+                    <a
+                      href={`https://wa.me/55${rawDigits}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[10px] font-black text-white bg-[#25D366] hover:bg-[#20ba59] px-3 py-1.5 rounded-xl border border-[#25D366]/40 no-underline transition-colors shrink-0 uppercase tracking-wider shadow-sm"
+                      title="Conversar no WhatsApp"
+                    >
+                      <MessageCircle size={11} className="fill-white/20" /> WhatsApp
+                    </a>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0">
+                  <span className="text-[10px] font-black text-[#fddfa2] bg-white/5 px-2.5 py-1.5 rounded-xl border border-white/10 tracking-wide">
+                    {formattedPhone}
+                  </span>
+                  <a
+                    href={`tel:+55${rawDigits}`}
+                    className="flex items-center gap-1 text-[10px] font-black text-white hover:text-[#f7941d] bg-white/5 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/10 no-underline transition-colors shrink-0 uppercase tracking-wider"
+                    title="Ligar"
+                  >
+                    <Phone size={10} /> Ligar
+                  </a>
+                </div>
+              );
+            })()}
+            </div>
+            <p className="text-[9px] text-white/50 font-medium">
+              🔒 Seu número é compartilhado com o outro participante durante o serviço em andamento.
+            </p>
           </div>
         </div>
       </div>

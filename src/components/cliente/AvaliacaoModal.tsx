@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import { X, Star, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { createTestimonialAction } from '@/app/actions/testimonials';
+import { saveReviewAction } from '@/app/actions/reviews';
 
 interface AvaliacaoModalProps {
   orderId: string;
+  professionalId: string;
   professionalName: string;
   serviceType: string;
   onClose: () => void;
@@ -23,6 +24,7 @@ const RATING_LABELS: Record<number, string> = {
 
 export function AvaliacaoModal({
   orderId,
+  professionalId,
   professionalName,
   serviceType,
   onClose,
@@ -39,24 +41,20 @@ export function AvaliacaoModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!comment.trim()) {
-      setError('Por favor, escreva um breve comentário sobre o atendimento recebido.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
-    const result = await createTestimonialAction({
+    const result = await saveReviewAction({
+      professionalId,
       orderId,
       rating,
-      content: comment.trim(),
+      comment: comment.trim() || null,
     });
 
     setLoading(false);
 
-    if (result.error) {
-      setError(result.error);
+    if (!result.success) {
+      setError(result.error || 'Erro ao registrar avaliação.');
       return;
     }
 
@@ -150,9 +148,14 @@ export function AvaliacaoModal({
 
               {/* Comment Textarea */}
               <div className="space-y-2">
-                <label className="text-xs font-black text-[#103569]/70 uppercase tracking-widest">
-                  Seu depoimento
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-[#103569]/70 uppercase tracking-widest">
+                    Seu depoimento
+                  </label>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    Opcional
+                  </span>
+                </div>
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}

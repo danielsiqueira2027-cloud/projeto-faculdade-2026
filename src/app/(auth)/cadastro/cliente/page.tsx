@@ -18,6 +18,7 @@ function ClienteForm() {
 
   const [state, action, pending] = useActionState(registerAction, null);
   const [phone, setPhone] = useState(state?.fields?.phone || '');
+  const [hasWhatsapp, setHasWhatsapp] = useState(false);
 
   // Sincroniza o telefone com o estado retornado pelo servidor em caso de erro
   useEffect(() => {
@@ -168,6 +169,19 @@ function ClienteForm() {
                 {state?.fieldErrors?.phone && (
                   <p className="text-[11px] text-red-500 font-bold ml-1">{state.fieldErrors.phone}</p>
                 )}
+                <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    name="hasWhatsapp"
+                    checked={hasWhatsapp}
+                    onChange={(e) => setHasWhatsapp(e.target.checked)}
+                    className="w-4 h-4 rounded text-[#103569] focus:ring-[#103569] border-gray-300"
+                  />
+                  <span className="text-xs text-slate-600 font-bold">Este número tem WhatsApp</span>
+                </label>
+                <p className="text-[11px] text-slate-500 font-medium mt-1 ml-1 leading-normal">
+                  🔒 Seu número é compartilhado com o outro participante durante o serviço em andamento.
+                </p>
               </div>
 
               {/* Senhas */}

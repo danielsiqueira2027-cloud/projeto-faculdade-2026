@@ -122,6 +122,8 @@ export async function registerAction(
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const emailRedirectTo = siteUrl ? `${siteUrl}/auth/callback?next=${encodeURIComponent(targetRedirect)}` : undefined;
   const sanitizedPhone = rawPhone ? normalizarTelefone(rawPhone).slice(0, 20) : null;
+  const rawHasWhatsapp = formData.get('hasWhatsapp');
+  const hasWhatsapp = rawHasWhatsapp === 'on' || rawHasWhatsapp === 'true' || rawHasWhatsapp === '1';
 
   // Força tipo='cliente' no servidor (ignora qualquer valor do form)
   const result = await supabaseSignUp({
@@ -129,6 +131,7 @@ export async function registerAction(
     email,
     password,
     phone: sanitizedPhone,
+    hasWhatsapp,
     tipo: 'cliente',
     emailRedirectTo,
   });
@@ -220,6 +223,8 @@ export async function registerProfissionalAction(
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL || '';
   const emailRedirectTo = siteUrl ? `${siteUrl}/auth/callback?next=${encodeURIComponent(targetRedirect)}` : undefined;
   const sanitizedPhone = normalizarTelefone(rawPhone).slice(0, 20);
+  const rawHasWhatsapp = formData.get('hasWhatsapp');
+  const hasWhatsapp = rawHasWhatsapp === 'on' || rawHasWhatsapp === 'true' || rawHasWhatsapp === '1';
 
   // Cadastro de profissional: cria User no Supabase Auth e no Prisma,
   // mas NÃO cria linha em professionals (nascerá em ativarProfissionalAction).
@@ -228,6 +233,7 @@ export async function registerProfissionalAction(
     email,
     password,
     phone: sanitizedPhone,
+    hasWhatsapp,
     tipo: 'profissional',
     emailRedirectTo,
   });
@@ -403,8 +409,19 @@ export async function ativarProfissionalAction(
     }
   }
 
+  const rawHasWhatsapp = formData.get('hasWhatsapp');
+  const hasWhatsapp = rawHasWhatsapp === 'on' || rawHasWhatsapp === 'true' || rawHasWhatsapp === '1';
+
   try {
     await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: currentUser.id },
+        data: {
+          phone: sanitizedPhone,
+          hasWhatsapp,
+        },
+      });
+
       // Upsert: pode já existir o Professional (criado no cadastro)
       const prof = await tx.professional.upsert({
         where: { userId: currentUser.id },

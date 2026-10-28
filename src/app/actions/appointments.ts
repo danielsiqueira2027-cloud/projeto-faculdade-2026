@@ -227,18 +227,21 @@ export async function getProfessionalAppointments() {
       },
     });
 
-    return appointments.map((a) => ({
-      id: a.id,
-      orderId: a.orderId ?? '',
-      clientName: a.order?.client.user.name ?? 'Cliente',
-      clientPhone: a.order?.client.user.phone ?? '',
-      clientAvatar: a.order?.client.user.avatarUrl ?? null,
-      serviceName: a.serviceName ?? a.order?.serviceType ?? 'Serviço',
-      scheduledAt: a.scheduledAt,
-      status: a.status,
-      address: a.address ?? a.order?.address ?? '',
-      notes: a.notes ?? '',
-    }));
+    return appointments.map((a) => {
+      const isOrderInProgress = a.order?.status === 'EM_ANDAMENTO';
+      return {
+        id: a.id,
+        orderId: a.orderId ?? '',
+        clientName: a.order?.client.user.name ?? 'Cliente',
+        clientPhone: isOrderInProgress ? (a.order?.client.user.phone ?? '') : '',
+        clientAvatar: a.order?.client.user.avatarUrl ?? null,
+        serviceName: a.serviceName ?? a.order?.serviceType ?? 'Serviço',
+        scheduledAt: a.scheduledAt,
+        status: a.status,
+        address: a.address ?? a.order?.address ?? '',
+        notes: a.notes ?? '',
+      };
+    });
   } catch (error) {
     console.error('[getProfessionalAppointments]', error);
     return [];

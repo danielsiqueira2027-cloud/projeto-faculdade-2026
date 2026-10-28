@@ -262,11 +262,13 @@ export async function getProfessionalOrders() {
     const toPublicUrl = (path: string) =>
       `${supabaseUrl}/storage/v1/object/public/${ORDER_IMAGE_BUCKET}/${path}`;
 
-    return orders.map((order) => ({
-      id: order.id,
-      clientName: order.client.user.name,
-      clientEmail: order.client.user.email,
-      clientPhone: order.client.user.phone || '',
+    return orders.map((order) => {
+      const contactReleased = order.status === 'EM_ANDAMENTO';
+      return {
+        id: order.id,
+        clientName: order.client.user.name,
+        clientEmail: order.client.user.email,
+        clientPhone: contactReleased ? (order.client.user.phone || '') : '',
       serviceType: order.serviceType || 'Serviço',
       description: order.description || '',
       locationCep: order.locationCep || '',
@@ -281,7 +283,8 @@ export async function getProfessionalOrders() {
       avatar: order.client.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
       images: order.images.map((img) => toPublicUrl(img.storagePath)),
-    }));
+    };
+  });
   } catch (error) {
     console.error('[getProfessionalOrders]', error);
     return [];
@@ -302,41 +305,53 @@ export async function getClientOrders() {
 
     if (!client) return [];
 
-    const orders = await prisma.order.findMany({
-      where: { clientId: client.id },
-      include: {
-        professional: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                email: true,
-                phone: true,
-                avatarUrl: true,
+    const [orders, reviews] = await Promise.all([
+      prisma.order.findMany({
+        where: { clientId: client.id },
+        include: {
+          professional: {
+            include: {
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                  phone: true,
+                  avatarUrl: true,
+                },
               },
             },
           },
+          images: {
+            orderBy: { position: 'asc' },
+            select: { id: true, storagePath: true, position: true },
+          },
         },
-        images: {
-          orderBy: { position: 'asc' },
-          select: { id: true, storagePath: true, position: true },
+        orderBy: {
+          createdAt: 'desc',
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+      }),
+      prisma.review.findMany({
+        where: { clientId: client.id },
+        select: { professionalId: true },
+      }),
+    ]);
+
+    const reviewedProfIds = new Set(reviews.map((r) => r.professionalId));
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const toPublicUrl = (path: string) =>
       `${supabaseUrl}/storage/v1/object/public/${ORDER_IMAGE_BUCKET}/${path}`;
 
-    return orders.map((order) => ({
-      id: order.id,
-      professionalId: order.professional.id,
-      professionalName: order.professional.user.name,
-      professionalEmail: order.professional.user.email,
-      professionalPhone: order.professional.phone || order.professional.user.phone || '',
+    return orders.map((order) => {
+      const contactReleased = order.status === 'EM_ANDAMENTO';
+      return {
+        id: order.id,
+        professionalId: order.professional.id,
+        professionalName: order.professional.user.name,
+        professionalEmail: order.professional.user.email,
+        professionalPhone: contactReleased
+          ? (order.professional.phone || order.professional.user.phone || '')
+          : '',
       serviceType: order.serviceType || 'Serviço',
       description: order.description || '',
       locationCep: order.locationCep || '',
@@ -350,9 +365,13 @@ export async function getClientOrders() {
       createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
       avatar: order.professional.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
-      hasTestimonial: Boolean(order.notes && order.notes.includes('[AVALIAÇÃO:')),
+      hasTestimonial: Boolean(
+        (order.notes && order.notes.includes('[AVALIAÇÃO:')) ||
+        reviewedProfIds.has(order.professional.id)
+      ),
       images: order.images.map((img) => toPublicUrl(img.storagePath)),
-    }));
+    };
+  });
   } catch (error) {
     console.error('[getClientOrders]', error);
     return [];

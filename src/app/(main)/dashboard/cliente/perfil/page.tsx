@@ -19,6 +19,7 @@ export default function ClientProfilePage() {
     name: '',
     email: '',
     phone: '',
+    hasWhatsapp: false,
     avatarUrl: '',
   });
   const [password, setPassword] = useState('');
@@ -40,6 +41,7 @@ export default function ClientProfilePage() {
           name: data?.name || '',
           email: data?.email || '',
           phone: data?.phone || '',
+          hasWhatsapp: Boolean(data?.hasWhatsapp),
           avatarUrl: data?.avatarUrl || '',
         });
       } catch (err) {
@@ -80,6 +82,7 @@ export default function ClientProfilePage() {
         name: profile.name,
         email: profile.email,
         phone: profile.phone,
+        hasWhatsapp: profile.hasWhatsapp,
         password: password || null,
         avatarUrl: profile.avatarUrl,
       });
@@ -238,6 +241,18 @@ export default function ClientProfilePage() {
                       className={`${fieldClass} pl-12`}
                     />
                   </div>
+                  <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={profile.hasWhatsapp}
+                      onChange={(e) => setProfile({ ...profile, hasWhatsapp: e.target.checked })}
+                      className="w-4 h-4 rounded text-[#103569] focus:ring-[#103569] border-gray-300"
+                    />
+                    <span className="text-xs text-slate-600 font-bold">Este número tem WhatsApp</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 font-medium mt-1 leading-normal">
+                    🔒 Seu número é compartilhado com o outro participante durante o serviço em andamento.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

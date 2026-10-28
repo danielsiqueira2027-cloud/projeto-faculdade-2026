@@ -1,16 +1,26 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Professional } from '@/types';
-import { Star, MapPin, Briefcase, Award, CheckCircle2 } from 'lucide-react';
+import { Star, MapPin, Briefcase, Award, CheckCircle2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ProfessionalAvatar } from '@/components/ProfessionalAvatar';
+import { ReviewModal } from '@/components/ReviewModal';
 
 interface ProfileCardProps {
   professional: Professional;
   isOwnProfile?: boolean;
   canReview?: boolean;
   hasExistingReview?: boolean;
+  isUnauthenticated?: boolean;
+  existingReview?: {
+    id: string;
+    rating: number;
+    comment: string | null;
+  } | null;
 }
 
 export function ProfileCard({
@@ -18,7 +28,11 @@ export function ProfileCard({
   isOwnProfile = false,
   canReview = false,
   hasExistingReview = false,
+  isUnauthenticated = false,
+  existingReview = null,
 }: ProfileCardProps) {
+  const router = useRouter();
+  const [modalOpen, setModalOpen] = useState(false);
   return (
     <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-bp-primary/5 border border-bp-outline-variant overflow-hidden">
       {/* Banner / Capa */}
@@ -69,18 +83,33 @@ export function ProfileCard({
               </Link>
             ) : (
               <div className="flex flex-wrap items-center gap-3">
-                {canReview && (
-                  <a href="#avaliacoes" className="block w-full sm:w-auto no-underline">
+                {isUnauthenticated && (
+                  <Link
+                    href={`/login?callbackUrl=/perfil-profissional?id=${professional.id}`}
+                    className="block w-full sm:w-auto no-underline"
+                  >
                     <Button 
                       type="button"
                       size="lg" 
                       variant="outline"
-                      className="w-full sm:w-auto min-h-[48px] md:h-14 border-2 border-[#f7941d] text-[#f7941d] hover:bg-[#f7941d]/10 active:bg-[#f7941d]/20 rounded-2xl px-6 font-bold transition-all duration-200 flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto min-h-[48px] md:h-14 border-2 border-slate-300 text-[#103569] hover:bg-slate-50 active:bg-slate-100 rounded-2xl px-6 font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      <Star size={18} className="fill-[#f7941d]" />
-                      {hasExistingReview ? 'Editar avaliação' : 'Avaliar'}
+                      <LogIn size={18} className="text-[#103569]" />
+                      Entre para avaliar
                     </Button>
-                  </a>
+                  </Link>
+                )}
+                {canReview && (
+                  <Button 
+                    type="button"
+                    size="lg" 
+                    variant="outline"
+                    onClick={() => setModalOpen(true)}
+                    className="w-full sm:w-auto min-h-[48px] md:h-14 border-2 border-[#f7941d] text-[#f7941d] hover:bg-[#f7941d]/10 active:bg-[#f7941d]/20 rounded-2xl px-6 font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Star size={18} className="fill-[#f7941d]" />
+                    {hasExistingReview ? 'Editar avaliação' : 'Avaliar'}
+                  </Button>
                 )}
                 <Link href={`/orcamento?profId=${professional.id}`} className="block w-full sm:w-auto">
                   <Button 
@@ -144,6 +173,22 @@ export function ProfileCard({
           ))}
         </div>
       </div>
+
+      {/* Modal aberto diretamente pelo botão do cabeçalho */}
+      {canReview && (
+        <ReviewModal
+          isOpen={modalOpen}
+          professionalId={professional.id}
+          professionalName={professional.name}
+          initialRating={existingReview?.rating || 5}
+          initialComment={existingReview?.comment || ''}
+          isEditing={Boolean(hasExistingReview)}
+          onClose={() => setModalOpen(false)}
+          onSuccess={() => {
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

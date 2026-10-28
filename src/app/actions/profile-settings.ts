@@ -18,6 +18,7 @@ export async function getClientProfile() {
       name: true,
       email: true,
       phone: true,
+      hasWhatsapp: true,
       avatarUrl: true,
     },
   });
@@ -29,6 +30,7 @@ export async function saveClientProfile(data: {
   name: string;
   email: string;
   phone?: string | null;
+  hasWhatsapp?: boolean;
   password?: string | null;
   avatarUrl?: string | null;
 }) {
@@ -59,14 +61,23 @@ export async function saveClientProfile(data: {
       return { error: 'A nova senha deve possuir pelo menos 6 caracteres.' };
     }
 
+    const normalizedPhone = data.phone?.trim() ? normalizarTelefone(data.phone) : null;
+
     await prisma.user.update({
       where: { id: currentUser.id },
       data: {
         name: data.name.trim(),
         email: data.email.trim().toLowerCase(),
-        phone: data.phone?.trim() || null,
+        phone: normalizedPhone,
+        hasWhatsapp: Boolean(data.hasWhatsapp),
         avatarUrl: data.avatarUrl || null,
       },
+    });
+
+    // Se o usuário também tiver registro em professionals, sincroniza o telefone
+    await prisma.professional.updateMany({
+      where: { userId: currentUser.id },
+      data: { phone: normalizedPhone },
     });
 
     revalidatePath('/', 'layout');
@@ -89,6 +100,7 @@ export async function getProfessionalProfile() {
           name: true,
           email: true,
           phone: true,
+          hasWhatsapp: true,
           avatarUrl: true,
         },
       },
@@ -119,6 +131,7 @@ export async function getProfessionalProfile() {
     name:          prof.user.name,
     email:         prof.user.email,
     phone:         prof.user.phone      ?? null,
+    hasWhatsapp:   prof.user.hasWhatsapp ?? false,
     avatarUrl:     prof.user.avatarUrl  ?? null,
     specialty:     prof.specialty       ?? null,
     bio:           prof.bio             ?? null,
@@ -150,6 +163,7 @@ export async function saveProfessionalProfile(data: {
   specialty?: string | null;
   bio?: string | null;
   phone?: string | null;
+  hasWhatsapp?: boolean;
   location?: string | null;
   addressStreet?: string | null;
   addressNumber?: string | null;
@@ -230,12 +244,16 @@ export async function saveProfessionalProfile(data: {
       return { error: 'A nova senha deve possuir pelo menos 6 caracteres.' };
     }
 
+    const normalizedPhone = data.phone?.trim() ? normalizarTelefone(data.phone) : null;
+
     await prisma.user.update({
       where: { id: currentUser.id },
       data: {
         name: data.name.trim(),
         email: data.email.trim().toLowerCase(),
         avatarUrl: data.avatarUrl || null,
+        phone: normalizedPhone,
+        hasWhatsapp: Boolean(data.hasWhatsapp),
       },
     });
 
@@ -244,7 +262,7 @@ export async function saveProfessionalProfile(data: {
       data: {
         specialty: data.specialty?.trim() || null,
         bio: data.bio?.trim() || null,
-        phone: data.phone?.trim() ? normalizarTelefone(data.phone) : null,
+        phone: normalizedPhone,
         location: data.location?.trim() || null,
         addressStreet: data.addressStreet?.trim() || null,
         addressNumber: data.addressNumber?.trim() || null,

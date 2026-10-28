@@ -377,7 +377,9 @@ export default function ClientOrdersPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-400 font-bold">
                       <span className="flex items-center gap-1"><Mail size={12} /> {order.professionalEmail}</span>
-                      <span className="flex items-center gap-1"><Phone size={12} /> {order.professionalPhone}</span>
+                      {order.professionalPhone && (
+                        <span className="flex items-center gap-1"><Phone size={12} /> {order.professionalPhone}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -459,16 +461,18 @@ export default function ClientOrdersPage() {
                       {chatLoadingId === order.id ? 'Carregando...' : 'Conversar no Chat'}
                     </Button>
                   )}
-                  <Button 
-                    asChild
-                    variant="outline" 
-                    className="h-10 min-h-[44px] rounded-xl font-bold border-slate-200 text-slate-500 text-xs cursor-pointer"
-                  >
-                    <a href={`tel:${order.professionalPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
-                      <Phone size={14} />
-                      Ligar para Profissional
-                    </a>
-                  </Button>
+                  {order.professionalPhone && (
+                    <Button 
+                      asChild
+                      variant="outline" 
+                      className="h-10 min-h-[44px] rounded-xl font-bold border-slate-200 text-slate-500 text-xs cursor-pointer"
+                    >
+                      <a href={`tel:+55${order.professionalPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
+                        <Phone size={14} />
+                        Ligar para Profissional
+                      </a>
+                    </Button>
+                  )}
 
                   {/* Botão Excluir orçamento — apenas em status PENDENTE ou CANCELADO */}
                   {(order.status === 'PENDENTE' || order.status === 'CANCELADO') && (
@@ -551,6 +555,7 @@ export default function ClientOrdersPage() {
       {evaluatingOrder && (
         <AvaliacaoModal
           orderId={evaluatingOrder.id}
+          professionalId={evaluatingOrder.professionalId}
           professionalName={evaluatingOrder.professionalName}
           serviceType={evaluatingOrder.serviceType}
           onClose={() => setEvaluatingOrder(null)}

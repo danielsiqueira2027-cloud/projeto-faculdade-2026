@@ -316,7 +316,9 @@ export default function ProfessionalOrdersPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-400 font-bold">
                       <span className="flex items-center gap-1"><Mail size={12} /> {order.clientEmail}</span>
-                      <span className="flex items-center gap-1"><Phone size={12} /> {order.clientPhone}</span>
+                      {order.clientPhone && (
+                        <span className="flex items-center gap-1"><Phone size={12} /> {order.clientPhone}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -401,16 +403,18 @@ export default function ProfessionalOrdersPage() {
                       {chatLoadingId === order.id ? 'Carregando...' : 'Conversar no Chat'}
                     </Button>
                   )}
-                  <Button 
-                    asChild
-                    variant="outline" 
-                    className="h-10 rounded-xl font-bold border-slate-200 text-slate-500 text-xs"
-                  >
-                    <a href={`tel:${order.clientPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
-                      <Phone size={14} />
-                      Ligar
-                    </a>
-                  </Button>
+                  {order.clientPhone && (
+                    <Button 
+                      asChild
+                      variant="outline" 
+                      className="h-10 rounded-xl font-bold border-slate-200 text-slate-500 text-xs"
+                    >
+                      <a href={`tel:+55${order.clientPhone.replace(/\D/g, '')}`} className="flex items-center gap-2">
+                        <Phone size={14} />
+                        Ligar
+                      </a>
+                    </Button>
+                  )}
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">

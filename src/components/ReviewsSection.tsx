@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Star, MessageSquare, Info, ShieldCheck } from 'lucide-react';
+import { Star, MessageSquare, Info, ShieldCheck, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ReviewModal } from '@/components/ReviewModal';
 import { ReviewEligibilityResult, ReviewItem } from '@/app/actions/reviews';
@@ -77,7 +78,51 @@ export function ReviewsSection({
             {eligibility.existingReview ? 'Editar minha avaliação' : 'Avaliar profissional'}
           </Button>
         )}
+
+        {/* Botão de Entre para avaliar para visitantes não autenticados */}
+        {!isOwnProfile && !eligibility.eligible && eligibility.reason === 'unauthenticated' && (
+          <Link
+            href={`/login?callbackUrl=/perfil-profissional?id=${professionalId}`}
+            className="no-underline"
+          >
+            <Button
+              type="button"
+              variant="outline"
+              className="h-12 px-6 rounded-2xl border-2 border-[#103569] text-[#103569] hover:bg-[#103569]/10 font-bold transition-all flex items-center gap-2 shrink-0 cursor-pointer"
+            >
+              <LogIn size={18} className="text-[#103569]" />
+              Entre para avaliar
+            </Button>
+          </Link>
+        )}
       </div>
+
+      {/* Box de aviso para visitante não autenticado */}
+      {!isOwnProfile && !eligibility.eligible && eligibility.reason === 'unauthenticated' && (
+        <div className="bg-blue-50/70 border border-blue-200/60 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-blue-900 text-sm font-medium">
+          <div className="flex items-start gap-3">
+            <Info size={20} className="text-[#103569] shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-[#103569]">Já contratou ou conversou com este profissional?</p>
+              <p className="text-blue-900/80 mt-0.5">
+                Faça login na sua conta para avaliar o atendimento recebido e ajudar outros clientes.
+              </p>
+            </div>
+          </div>
+          <Link
+            href={`/login?callbackUrl=/perfil-profissional?id=${professionalId}`}
+            className="shrink-0 no-underline"
+          >
+            <Button
+              type="button"
+              size="sm"
+              className="bg-[#103569] hover:bg-[#103569]/90 text-white font-bold rounded-xl px-4 py-2 border-none shadow-sm cursor-pointer"
+            >
+              Fazer login &rarr;
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {/* Box de aviso para quem não tem contato prévio */}
       {!isOwnProfile && !eligibility.eligible && eligibility.reason === 'no_contact' && (

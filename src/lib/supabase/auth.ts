@@ -9,6 +9,7 @@ export interface SignUpInput {
   email: string;
   password: string;
   phone?: string | null;
+  hasWhatsapp?: boolean;
   tipo?: 'cliente' | 'profissional';
   emailRedirectTo?: string;
 }
@@ -34,6 +35,7 @@ export async function supabaseSignUp({
   email,
   password,
   phone,
+  hasWhatsapp = false,
   tipo = 'cliente',
   emailRedirectTo,
 }: SignUpInput): Promise<SupabaseAuthResult> {
@@ -48,6 +50,7 @@ export async function supabaseSignUp({
       data: {
         name,
         phone: phone || null,
+        hasWhatsapp: Boolean(hasWhatsapp),
         tipo,
       },
     },
@@ -89,6 +92,7 @@ export async function supabaseSignUp({
             id: userId,
             name: name || existingByEmail.name,
             phone: phone || existingByEmail.phone,
+            hasWhatsapp: hasWhatsapp !== undefined ? Boolean(hasWhatsapp) : existingByEmail.hasWhatsapp,
           },
         });
       } else {
@@ -99,6 +103,7 @@ export async function supabaseSignUp({
               name,
               email: normalizedEmail,
               phone: phone || null,
+              hasWhatsapp: Boolean(hasWhatsapp),
             },
           });
 
