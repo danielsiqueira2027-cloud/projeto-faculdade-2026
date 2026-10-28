@@ -78,7 +78,7 @@ export async function searchProfessionals(query?: string, categorySlug?: string)
       userId: prof.userId,
       name: prof.user.name,
       role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
-      rating: Number(prof.rating) || 5.0,
+      rating: Number(prof.rating) || 0,
       distance: 1.5, // Fallback visual
       location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
       avatarUrl: prof.user.avatarUrl || null,
@@ -112,18 +112,6 @@ export async function getProfessionalDetails(id: string) {
           },
         },
         portfolio: true,
-        testimonials: {
-          include: {
-            author: {
-              select: {
-                name: true,
-              },
-            },
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
-        },
         certifications: true,
       },
     });
@@ -137,13 +125,12 @@ export async function getProfessionalDetails(id: string) {
       name: prof.user.name,
       avatar: prof.user.avatarUrl || null,
       avatarUrl: prof.user.avatarUrl || null,
-      specialty: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
+      specialty: prof.specialty || null,
       description: prof.bio || '',
       bio: prof.bio || null,
-      rating: Number(prof.rating) || 5.0,
+      rating: Number(prof.rating) || 0,
       reviewCount: prof.reviewCount || 0,
-      yearsOfExperience: 5, // Fallback padrão
-      phone: prof.phone || prof.user.phone || '',
+      phone: '', // Segurança: telefone não é exposto no perfil público
       email: prof.user.email,
       location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
       certifications: prof.certifications.map((c) => c.name) || [],
@@ -154,13 +141,7 @@ export async function getProfessionalDetails(id: string) {
         imageUrl: item.imageUrl || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop',
         year: item.year || 2026,
       })),
-      testimonials: prof.testimonials.map((t) => ({
-        id: t.id,
-        author: t.author?.name || t.authorName || 'Cliente',
-        role: t.authorRole || 'Cliente',
-        content: t.content,
-        rating: t.rating,
-      })),
+      testimonials: [],
       categories: prof.categories.map((c) => c.category.name),
       bannerUrl: prof.bannerUrl || null,
       isVerified: prof.isVerified,

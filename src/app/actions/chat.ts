@@ -280,6 +280,7 @@ export async function getChatRoomDetails(orderId: string) {
               name: true,
               email: true,
               phone: true,
+              hasWhatsapp: true,
               avatarUrl: true,
             },
           },
@@ -292,6 +293,7 @@ export async function getChatRoomDetails(orderId: string) {
               name: true,
               email: true,
               phone: true,
+              hasWhatsapp: true,
               avatarUrl: true,
             },
           },
@@ -310,18 +312,29 @@ export async function getChatRoomDetails(orderId: string) {
     throw new Error('Não autorizado');
   }
 
+  // Regra estilo Airbnb: o contato telefônico só é liberado em status EM_ANDAMENTO
+  const contactReleased = order.status === 'EM_ANDAMENTO';
+
   const interlocutor = isClient
     ? {
         name: order.professional.user.name,
         role: 'Profissional',
-        phone: order.professional.phone || order.professional.user.phone || '',
+        phone: contactReleased
+          ? (order.professional.phone || order.professional.user.phone || '')
+          : '',
+        hasWhatsapp: contactReleased ? Boolean(order.professional.user.hasWhatsapp) : false,
+        contactReleased,
         email: order.professional.user.email,
         avatar: order.professional.user.avatarUrl || '',
       }
     : {
         name: order.client.user.name,
         role: 'Cliente',
-        phone: order.client.user.phone || '',
+        phone: contactReleased
+          ? (order.client.user.phone || '')
+          : '',
+        hasWhatsapp: contactReleased ? Boolean(order.client.user.hasWhatsapp) : false,
+        contactReleased,
         email: order.client.user.email,
         avatar: order.client.user.avatarUrl || '',
       };

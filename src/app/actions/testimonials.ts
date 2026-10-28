@@ -110,26 +110,8 @@ export async function createTestimonialAction(
         data: { notes: updatedNotes },
       });
 
-      // Recalcula a média (rating) e o total de avaliações (reviewCount) do profissional.
-      // Leitura e escrita dentro da mesma transação garantem consistência.
-      const allReviews = await tx.testimonial.findMany({
-        where: { professionalId: order.professionalId },
-        select: { rating: true },
-      });
-
-      const totalReviews = allReviews.length;
-      const sumRatings = allReviews.reduce((sum, item) => sum + item.rating, 0);
-      const avgRating = totalReviews > 0
-        ? Number((sumRatings / totalReviews).toFixed(2))
-        : 0;
-
-      await tx.professional.update({
-        where: { id: order.professionalId },
-        data: {
-          rating: avgRating,
-          reviewCount: totalReviews,
-        },
-      });
+      // NOTA: O recálculo de rating e reviewCount a partir de testimonials foi removido.
+      // O sistema foi unificado na tabela `reviews` via `saveReviewAction` (reviews.ts).
     });
 
     // Revalida caches de páginas pertinentes (fora da transação — side effect)

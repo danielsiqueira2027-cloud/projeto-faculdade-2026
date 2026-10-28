@@ -6,6 +6,14 @@ import { getCurrentUser } from '@/lib/auth';
 /* ── Subcomponente: StarRating ───────────────────────────── */
 
 function StarRating({ nota }: { nota: number }) {
+  if (nota === 0) {
+    return (
+      <div className="flex items-center" style={{ gap: 4 }}>
+        <span style={{ fontSize: '0.85rem', color: '#f59e0b' }}>★</span>
+        <span style={{ fontSize: '0.8rem', color: '#666', fontWeight: 600 }}>Novo</span>
+      </div>
+    );
+  }
   const cheias = Math.floor(nota);
   return (
     <div className="flex items-center" style={{ gap: 2 }}>

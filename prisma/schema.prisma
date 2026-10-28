@@ -19,6 +19,7 @@ model User {
   name      String   @db.VarChar(150)
   email     String   @unique @db.VarChar(191)
   phone     String?  @db.VarChar(20)
+  hasWhatsapp Boolean  @default(false) @map("has_whatsapp")
   avatarUrl String?  @db.Text         @map("avatar_url")
   isActive  Boolean  @default(true)   @map("is_active")
   createdAt DateTime @default(now())  @map("created_at")
@@ -45,8 +46,9 @@ model Client {
   userId String @unique @map("user_id") @db.VarChar(36)
   createdAt DateTime @default(now()) @map("created_at")
 
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders Order[]
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders  Order[]
+  reviews Review[]
 
   @@map("clients")
 }
@@ -99,6 +101,7 @@ model Professional {
   testimonials   Testimonial[]
   appointments   Appointment[]
   certifications Certification[]
+  reviews        Review[]
 
   @@map("professionals")
 }
@@ -358,4 +361,21 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+// ─── REVIEWS (avaliações cliente -> profissional) ────────────────────────────
+model Review {
+  id             String       @id @default(uuid()) @db.VarChar(36)
+  clientId       String       @map("client_id") @db.VarChar(36)
+  professionalId String       @map("professional_id") @db.VarChar(36)
+  rating         Int          // 1 a 5
+  comment        String?      @db.Text
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, professionalId])
+  @@map("reviews")
 }
