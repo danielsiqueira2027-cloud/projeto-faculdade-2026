@@ -82,6 +82,7 @@ export async function registerAction(
   const rawPhone = (formData.get('phone') as string)?.trim() || '';
   const password = formData.get('password') as string;
   const confirm  = formData.get('confirm') as string;
+  const termos   = formData.get('termos');
   const rawNext  = (formData.get('next') as string) || '';
 
   // Validações no servidor
@@ -101,12 +102,16 @@ export async function registerAction(
   if (password !== confirm) {
     fieldErrors.confirm = 'As senhas não coincidem.';
   }
+  if (termos !== 'on' && termos !== 'true') {
+    fieldErrors.termos = 'Você deve concordar com os Termos de Uso e a Política de Privacidade e declarar ter 18 anos ou mais para continuar.';
+  }
 
   const currentFields: Record<string, string> = {
     name: name || '',
     email: email || '',
     phone: rawPhone,
     next: rawNext,
+    termos: termos === 'on' || termos === 'true' ? 'on' : '',
   };
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -200,7 +205,7 @@ export async function registerProfissionalAction(
     fieldErrors.confirm = 'As senhas não coincidem.';
   }
   if (termos !== 'on' && termos !== 'true') {
-    fieldErrors.termos = 'Você deve concordar com os termos de uso para continuar.';
+    fieldErrors.termos = 'Você deve concordar com os Termos de Uso e a Política de Privacidade e declarar ter 18 anos ou mais para continuar.';
   }
 
   const currentFields: Record<string, string> = {
@@ -208,6 +213,7 @@ export async function registerProfissionalAction(
     email: email || '',
     phone: rawPhone,
     next: rawNext,
+    termos: termos === 'on' || termos === 'true' ? 'on' : '',
   };
 
   if (Object.keys(fieldErrors).length > 0) {

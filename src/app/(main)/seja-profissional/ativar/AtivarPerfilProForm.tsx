@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useActionState, useEffect, useRef, startTransition, useMemo } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -682,8 +683,26 @@ export default function AtivarPerfilProForm({ initialPhone = '', categories }: A
               )}
             </Button>
 
-            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] text-center">
-              Ao ativar, você concorda com os termos de uso do prestador de serviço.
+            <p className="text-xs text-slate-500 font-medium text-center leading-relaxed">
+              Ao ativar seu perfil, você confirma que leu e concorda com os{' '}
+              <Link
+                href="/termos-de-uso"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#103569] font-bold underline hover:text-[#f7941d] transition-colors"
+              >
+                Termos de Uso
+              </Link>{' '}
+              e a{' '}
+              <Link
+                href="/politica-de-privacidade"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#103569] font-bold underline hover:text-[#f7941d] transition-colors"
+              >
+                Política de Privacidade
+              </Link>
+              .
             </p>
           </div>
         </form>

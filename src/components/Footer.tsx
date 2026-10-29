@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { CONTROLLER } from '@/lib/legal-config';
 
 // Estilo base dos links do footer com animação de escala no hover
 const footerLinkStyle: React.CSSProperties = {
@@ -46,11 +47,17 @@ export function Footer() {
             <FooterLink href="/missao">Missão</FooterLink>
           </div>
 
+          {/* Legal */}
+          <div className="flex flex-col min-w-[160px]">
+            <h3 className="font-semibold uppercase mb-4" style={{ fontSize: '1.15rem' }}>Legal</h3>
+            <FooterLink href="/termos-de-uso">Termos de Uso</FooterLink>
+            <FooterLink href="/politica-de-privacidade">Privacidade (LGPD)</FooterLink>
+          </div>
+
           {/* Contato */}
           <div className="flex flex-col min-w-[200px]">
             <h3 className="font-semibold uppercase mb-4" style={{ fontSize: '1.15rem' }}>Contato</h3>
-            <FooterLink href="tel:+551940028922">📞 (19) 4002-8922</FooterLink>
-            <FooterLink href="mailto:contato@cs.com">📧 contato@cs.com</FooterLink>
+            <FooterLink href={`mailto:${CONTROLLER.contactEmail}`}>📧 {CONTROLLER.contactEmail}</FooterLink>
             <FooterLink href="#">Atendimento</FooterLink>
           </div>
 
@@ -118,7 +125,7 @@ export function Footer() {
 
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 16, textAlign: 'center' }}>
           <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
-            © {new Date().getFullYear()} ClickServiço — Conectando profissionais e clientes.
+            © {new Date().getFullYear()} {CONTROLLER.projectName} — Projeto acadêmico sem fins lucrativos.
           </p>
         </div>
       </div>
