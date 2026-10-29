@@ -110,15 +110,27 @@ export function MunicipioCombobox({
     };
   }, [inputValue, municipios, disabled]);
 
+  const handleSelect = useCallback(
+    (cidadeNome: string) => {
+      setInputValue(cidadeNome);
+      setIsOpen(false);
+      setActiveIndex(-1);
+      onSelect(cidadeNome);
+    },
+    [onSelect]
+  );
+
   // Fecha o dropdown ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setActiveIndex(-1);
-        // Se o usuário digitou sem selecionar nenhuma sugestão, restaura o valor confirmado
-        if (inputValue !== value) {
-          setInputValue(value);
+        const trimmed = inputValue.trim();
+        if (trimmed && trimmed !== value) {
+          handleSelect(trimmed);
+        } else if (!trimmed && value) {
+          handleSelect('');
         }
       }
     }
@@ -129,7 +141,7 @@ export function MunicipioCombobox({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [inputValue, value]);
+  }, [inputValue, value, handleSelect]);
 
   // Rola o item ativo para a visão ao navegar com teclado
   useEffect(() => {
@@ -148,16 +160,6 @@ export function MunicipioCombobox({
     // Só abre se houver pelo menos 1 caractere digitado
     setIsOpen(val.trim().length > 0);
   };
-
-  const handleSelect = useCallback(
-    (cidadeNome: string) => {
-      setInputValue(cidadeNome);
-      setIsOpen(false);
-      setActiveIndex(-1);
-      onSelect(cidadeNome);
-    },
-    [onSelect]
-  );
 
   const handleClear = () => {
     setInputValue('');
@@ -191,6 +193,9 @@ export function MunicipioCombobox({
       } else if (isOpen && visibleSuggestions.length === 1) {
         // Se houver exatamente uma sugestão, seleciona ela
         handleSelect(visibleSuggestions[0].nome);
+      } else if (inputValue.trim()) {
+        // Confirma o município digitado mesmo sem seleção prévia
+        handleSelect(inputValue.trim());
       }
     } else if (e.key === 'Escape') {
       e.preventDefault();
@@ -265,7 +270,12 @@ export function MunicipioCombobox({
           className="busca-combobox-dropdown absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100"
           style={{ minWidth: '100%' }}
         >
-          {visibleSuggestions.length > 0 ? (
+          {loading ? (
+            <div className="p-3 text-xs text-slate-500 text-center font-medium flex items-center justify-center gap-2">
+              <Loader2 size={13} className="animate-spin text-slate-400" />
+              Carregando municípios...
+            </div>
+          ) : visibleSuggestions.length > 0 ? (
             <>
               <ul
                 ref={listboxRef}
@@ -316,8 +326,17 @@ export function MunicipioCombobox({
               )}
             </>
           ) : (
-            <div className="p-3 text-xs text-slate-500 text-center font-medium">
-              Nenhum município encontrado
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={() => handleSelect(inputValue.trim())}
+                className="w-full text-left px-3 py-2.5 text-xs font-semibold text-[#103569] hover:bg-blue-50 rounded-lg transition-colors flex items-center justify-between"
+              >
+                <span className="truncate">Buscar em &quot;{inputValue.trim()}&quot;</span>
+                <span className="text-[10px] bg-blue-100 text-[#103569] px-1.5 py-0.5 rounded shrink-0 ml-1">
+                  Enter ↵
+                </span>
+              </button>
             </div>
           )}
         </div>

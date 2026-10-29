@@ -50,3 +50,76 @@ export const ESTADOS_BRASIL: IbgeEstado[] = [
   { id: 17, sigla: 'TO', nome: 'Tocantins' },
 ];
 
+/**
+ * Principais municípios de referência por UF.
+ * Garante sugestões imediatas caso a API do IBGE esteja instável ou fora do ar.
+ */
+export const PRINCIPAIS_MUNICIPIOS_POR_UF: Record<string, string[]> = {
+  SP: [
+    'São Paulo', 'Campinas', 'Guarulhos', 'São Bernardo do Campo', 'Santo André',
+    'Osasco', 'Sorocaba', 'Ribeirão Preto', 'São José dos Campos', 'Santos',
+    'Sumaré', "Santa Bárbara d'Oeste", 'Americana', 'Piracicaba', 'Limeira',
+    'Hortolândia', 'Nova Odessa', 'Indaiatuba', 'Valinhos', 'Vinhedo',
+    'Jundiaí', 'Barueri', 'Bauru', 'Franca', 'São Carlos', 'Taubaté',
+    'Praia Grande', 'São Vicente', 'Mogi das Cruzes', 'Diadema', 'Mauá',
+    'Carapicuíba', 'Itaquaquecetuba', 'Suzano', 'Taboão da Serra', 'Embu das Artes',
+    'Marília', 'Presidente Prudente', 'Araraquara', 'Jacareí', 'Cotia', 'Itu'
+  ],
+  RJ: [
+    'Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói',
+    'Belford Roxo', 'Campos dos Goytacazes', 'São João de Meriti', 'Petrópolis',
+    'Volta Redonda', 'Macaé', 'Magé', 'Itaboraí', 'Cabo Frio', 'Angra dos Reis',
+    'Nova Friburgo', 'Barra Mansa', 'Mesquita', 'Teresópolis', 'Araruama'
+  ],
+  MG: [
+    'Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim',
+    'Montes Claros', 'Ribeirão das Neves', 'Uberaba', 'Governador Valadares',
+    'Ipatinga', 'Sete Lagoas', 'Divinópolis', 'Santa Luzia', 'Ibirité', 'Poços de Caldas'
+  ],
+  PR: [
+    'Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'São José dos Pinhais',
+    'Foz do Iguaçu', 'Colombo', 'Guarapuava', 'Paranaguá', 'Araucária', 'Toledo'
+  ],
+  RS: [
+    'Porto Alegre', 'Caxias do Sul', 'Canoas', 'Pelotas', 'Santa Maria', 'Gravataí',
+    'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande', 'Alvorada', 'Passo Fundo'
+  ],
+  SC: [
+    'Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Criciúma', 'Chapecó',
+    'Itajaí', 'Jaraguá do Sul', 'Palhoça', 'Lages', 'Balneário Camboriú', 'Brusque'
+  ],
+  BA: [
+    'Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Juazeiro',
+    'Itabuna', 'Lauro de Freitas', 'Ilhéus', 'Jequié', 'Teixeira de Freitas', 'Barreiras'
+  ],
+  PE: [
+    'Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina',
+    'Paulista', 'Cabo de Santo Agostinho', 'Camaragibe', 'Garanhuns', 'Vitória de Santo Antão'
+  ],
+  CE: [
+    'Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral',
+    'Crato', 'Itapipoca', 'Maranguape', 'Iguatu', 'Quixadá'
+  ],
+  GO: [
+    'Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde', 'Águas Lindas de Goiás',
+    'Luziânia', 'Valparaíso de Goiás', 'Trindade', 'Formosa', 'Senador Canedo', 'Itumbiara'
+  ],
+  DF: ['Brasília', 'Ceilândia', 'Taguatinga', 'Samambaia', 'Plano Piloto', 'Águas Claras', 'Guará'],
+  ES: ['Vitória', 'Vila Velha', 'Serra', 'Cariacica', 'Cachoeiro de Itapemirim', 'Linhares', 'Colatina'],
+  MT: ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop', 'Tangará da Serra', 'Sorriso'],
+  MS: ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã'],
+  AM: ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru', 'Coari'],
+  PA: ['Belém', 'Ananindeua', 'Santarém', 'Marabá', 'Parauapebas', 'Castanhal'],
+  RN: ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante', 'Macaíba'],
+  PB: ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos', 'Bayeux'],
+  AL: ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios'],
+  MA: ['São Luís', 'Imperatriz', 'São José de Ribamar', 'Timon', 'Caxias'],
+  PI: ['Teresina', 'Parnaíba', 'Picos', 'Piripiri'],
+  SE: ['Aracaju', 'Nossa Senhora do Socorro', 'Lagarto', 'Itabaiana'],
+  RO: ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Vilhena', 'Cacoal'],
+  TO: ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional'],
+  AC: ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira'],
+  AP: ['Macapá', 'Santana', 'Laranjal do Jari'],
+  RR: ['Boa Vista', 'Rorainópolis', 'Caracaraí'],
+};
+
