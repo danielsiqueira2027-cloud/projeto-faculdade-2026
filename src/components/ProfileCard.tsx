@@ -158,7 +158,7 @@ export function ProfileCard({
             {professional.specialty && (
               <span className="flex items-center gap-1.5"><Briefcase size={18} className="text-bp-primary" /> {professional.specialty}</span>
             )}
-            <span className="flex items-center gap-1.5"><MapPin size={18} className="text-bp-primary" /> {professional.location || 'Grande São Paulo'}</span>
+            <span className="flex items-center gap-1.5"><MapPin size={18} className="text-bp-primary" /> {professional.location}</span>
           </div>
         </div>
 

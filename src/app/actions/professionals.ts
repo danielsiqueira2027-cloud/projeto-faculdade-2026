@@ -1,19 +1,81 @@
 'use server';
 
 import { prisma } from '@/lib/database';
+import { Prisma } from '@/generated/prisma';
+
+/** Texto exibido nos cards quando o profissional não tem cidade/UF cadastrados. */
+const LOCATION_FALLBACK = 'Localização não informada';
 
 /**
- * Busca profissionais no banco com base em termo de pesquisa (nome ou especialidade)
- * ou por slug de categoria. Retorna em formato compatível com listagem.
+ * Formata a localidade de um profissional priorizando os campos estruturados
+ * do cadastro (addressCity / addressState) sobre o campo legado `location`.
+ *
+ * Ordem de prioridade:
+ *  1. addressCity + addressState  → "Sumaré - SP"
+ *  2. apenas addressCity          → "Sumaré"
+ *  3. apenas addressState         → "SP"
+ *  4. prof.location (legado)      → valor bruto preservado
+ *  5. LOCATION_FALLBACK           → "Localização não informada"
  */
-export async function searchProfessionals(query?: string, categorySlug?: string) {
+function formatProfessionalLocation(prof: {
+  addressCity?: string | null;
+  addressState?: string | null;
+  location?: string | null;
+}): string {
+  const city  = prof.addressCity?.trim()  || '';
+  const state = prof.addressState?.trim().toUpperCase() || '';
+
+  if (city || state) {
+    return [city, state].filter(Boolean).join(' - ');
+  }
+
+  return prof.location?.trim() || LOCATION_FALLBACK;
+}
+
+const UFS_VALIDAS = new Set([
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
+]);
+
+/**
+ * Remove acentos, caracteres diacríticos e normaliza caixa para comparação segura.
+ */
+function normalizeLocationText(text?: string | null): string {
+  if (!text) return '';
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * Busca profissionais no banco com base em termo de pesquisa (nome ou especialidade),
+ * por slug de categoria, e opcionalmente por localidade (UF e Cidade derivados do CEP).
+ * Retorna em formato compatível com listagem pública.
+ */
+export async function searchProfessionals(
+  query?: string,
+  categorySlug?: string,
+  uf?: string,
+  cidade?: string
+) {
   try {
-    const where: any = {
+    const where: Prisma.ProfessionalWhereInput = {
       isAvailable: true,
       user: {
         isActive: true,
       },
     };
+
+    // Validação estrita da UF no servidor (apenas as 27 siglas válidas do Brasil)
+    const cleanUf = (uf || '').trim().toUpperCase();
+    const isUfValid = cleanUf.length === 2 && UFS_VALIDAS.has(cleanUf);
+
+    if (isUfValid) {
+      where.addressState = cleanUf;
+    }
 
     if (categorySlug) {
       where.categories = {
@@ -73,17 +135,30 @@ export async function searchProfessionals(query?: string, categorySlug?: string)
       },
     });
 
-    return professionals.map((prof) => ({
-      id: prof.id,
-      userId: prof.userId,
-      name: prof.user.name,
-      role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
-      rating: Number(prof.rating) || 0,
-      distance: 1.5, // Fallback visual
-      location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
-      avatarUrl: prof.user.avatarUrl || null,
-      bio: prof.bio || '',
-    }));
+    // Filtro refinado de município sem diferença de caixa ou acentuação
+    const cleanCidade = (cidade || '').trim().slice(0, 100);
+    const normalizedCidade = cleanCidade ? normalizeLocationText(cleanCidade) : '';
+
+    const filtered = normalizedCidade
+      ? professionals.filter((prof) => {
+          const profCity = normalizeLocationText(prof.addressCity);
+          return profCity === normalizedCidade;
+        })
+      : professionals;
+
+    return filtered.map((prof) => {
+      return {
+        id: prof.id,
+        userId: prof.userId,
+        name: prof.user.name,
+        role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
+        rating: Number(prof.rating) || 0,
+        distance: 1.5, // Fallback visual (placeholder mantido)
+        location: formatProfessionalLocation(prof),
+        avatarUrl: prof.user.avatarUrl || '',
+        bio: prof.bio || '',
+      };
+    });
   } catch (error) {
     console.error('[searchProfessionals] Erro ao buscar profissionais:', error);
     return [];
@@ -132,7 +207,7 @@ export async function getProfessionalDetails(id: string) {
       reviewCount: prof.reviewCount || 0,
       phone: '', // Segurança: telefone não é exposto no perfil público
       email: prof.user.email,
-      location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
+      location: formatProfessionalLocation(prof),
       certifications: prof.certifications.map((c) => c.name) || [],
       portfolio: prof.portfolio.map((item) => ({
         id: item.id,
@@ -194,7 +269,7 @@ export async function getTopProfessionals(limit: number = 4) {
       role: prof.specialty || prof.categories.map((c) => c.category.name).join(' / ') || 'Profissional',
       rating: prof.rating !== null ? Number(prof.rating) : 0,
       distance: 1.5,
-      location: prof.location || `${prof.addressCity || "Santa Bárbara D'Oeste"} - ${prof.addressState || "SP"}`,
+      location: formatProfessionalLocation(prof),
       avatarUrl: prof.user.avatarUrl || null,
       bio: prof.bio || '',
     }));
