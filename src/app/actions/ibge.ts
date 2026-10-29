@@ -1,15 +1,6 @@
 'use server';
 
-export interface IbgeEstado {
-  id: number;
-  sigla: string;
-  nome: string;
-}
-
-export interface IbgeMunicipio {
-  id: number;
-  nome: string;
-}
+import { ESTADOS_BRASIL, UFS_VALIDAS, type IbgeEstado, type IbgeMunicipio } from '@/lib/ibge';
 
 interface RawIbgeEstado {
   id: number | string;
@@ -22,16 +13,10 @@ interface RawIbgeMunicipio {
   nome: string;
 }
 
-const UFS_VALIDAS = new Set([
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
-]);
-
 /**
- * Obtém a lista de todos os 27 estados do Brasil via API do IBGE.
- * Os dados são cacheados no servidor por 24 horas (revalidate: 86400).
- * Se a API falhar, retorna uma lista vazia sem quebrar a aplicação.
+ * Obtém a lista de todos os 27 estados do Brasil.
+ * Tenta buscar da API do IBGE com cache de 24 horas e timeout de 4 segundos.
+ * Em caso de falha de rede/timeout na Vercel, retorna imediatamente o fallback estático.
  */
 export async function getIbgeEstados(): Promise<IbgeEstado[]> {
   try {
@@ -39,17 +24,23 @@ export async function getIbgeEstados(): Promise<IbgeEstado[]> {
       'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome',
       {
         next: { revalidate: 86400 },
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        signal: AbortSignal.timeout(4000),
       }
     );
 
     if (!res.ok) {
-      console.warn(`[getIbgeEstados] Resposta da API do IBGE com status ${res.status}`);
-      return [];
+      console.warn(`[getIbgeEstados] Resposta da API do IBGE com status ${res.status}. Usando fallback estático.`);
+      return ESTADOS_BRASIL;
     }
 
     const data: unknown = await res.json();
-    if (!Array.isArray(data)) return [];
+    if (!Array.isArray(data) || data.length === 0) {
+      return ESTADOS_BRASIL;
+    }
 
     return (data as RawIbgeEstado[]).map((item) => ({
       id: Number(item.id),
@@ -57,8 +48,8 @@ export async function getIbgeEstados(): Promise<IbgeEstado[]> {
       nome: String(item.nome),
     }));
   } catch (error) {
-    console.error('[getIbgeEstados] Erro ao consultar API do IBGE:', error);
-    return [];
+    console.warn('[getIbgeEstados] Falha ao consultar API externa do IBGE. Usando fallback estático dos 27 estados:', error);
+    return ESTADOS_BRASIL;
   }
 }
 
@@ -79,7 +70,11 @@ export async function getIbgeMunicipios(uf: string): Promise<IbgeMunicipio[]> {
       `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${encodeURIComponent(cleanUf)}/municipios?orderBy=nome`,
       {
         next: { revalidate: 86400 },
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        signal: AbortSignal.timeout(6000),
       }
     );
 
