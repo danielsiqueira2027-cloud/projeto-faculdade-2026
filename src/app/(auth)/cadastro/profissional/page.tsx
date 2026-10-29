@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useActionState, useEffect, Suspense } from 'react';
+import React, { useState, useActionState, Suspense } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,12 +21,17 @@ function ProfissionalForm() {
   const [hasWhatsapp, setHasWhatsapp] = useState(false);
   const [termos, setTermos] = useState(false);
 
-  // Sincroniza o telefone com o estado retornado pelo servidor em caso de erro
-  useEffect(() => {
+  // Sincroniza campos controlados com o estado do servidor sem disparar efeito cascata
+  const [prevServerState, setPrevServerState] = useState(state);
+  if (state !== prevServerState) {
+    setPrevServerState(state);
     if (state?.fields?.phone !== undefined) {
       setPhone(mascararTelefone(state.fields.phone));
     }
-  }, [state]);
+    if (state?.fields?.termos !== undefined) {
+      setTermos(state.fields.termos === 'on');
+    }
+  }
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(mascararTelefone(e.target.value));
@@ -242,9 +247,25 @@ function ProfissionalForm() {
                     className="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#f7941d] focus:ring-[#f7941d] accent-[#f7941d]"
                   />
                   <span className="text-xs text-gray-600 leading-tight">
-                    Li e concordo com os{' '}
-                    <span className="text-[#103569] font-bold underline">Termos de Uso</span> e a{' '}
-                    <span className="text-[#103569] font-bold underline">Política de Privacidade</span> do ClickServiço.
+                    Declaro ter 18 anos ou mais e aceito os{' '}
+                    <Link
+                      href="/termos-de-uso"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#103569] font-bold underline hover:text-[#f7941d] transition-colors"
+                    >
+                      Termos de Uso
+                    </Link>{' '}
+                    e a{' '}
+                    <Link
+                      href="/politica-de-privacidade"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#103569] font-bold underline hover:text-[#f7941d] transition-colors"
+                    >
+                      Política de Privacidade
+                    </Link>
+                    .
                   </span>
                 </label>
                 {state?.fieldErrors?.termos && (
