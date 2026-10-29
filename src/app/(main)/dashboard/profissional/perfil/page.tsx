@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   User,
   Camera,
   Save,
-  ExternalLink,
   MapPin,
   Briefcase,
   AlertCircle,
@@ -296,14 +294,7 @@ export default function EditProfilePage() {
           <h2 className="text-3xl font-black text-[#103569] tracking-tighter">Meu Perfil Profissional</h2>
           <p className="text-slate-500 font-bold">Gerencie como seu perfil aparece para os clientes.</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <Button asChild variant="outline" className="rounded-2xl border-slate-200 font-bold text-[#103569] h-12">
-            <Link href="/perfil-profissional" target="_blank" className="flex items-center gap-2">
-              <ExternalLink size={18} />
-              Ver Perfil Público
-            </Link>
-          </Button>
-        </div>
+
       </div>
 
       {/* ── Visual Assets ─────────────────────────────────────────────────── */}

@@ -4,7 +4,9 @@ import { redirect } from 'next/navigation';
 import { ProfileCard } from '@/components/ProfileCard';
 import { PortfolioGrid } from '@/components/PortfolioGrid';
 import { ReviewsSection } from '@/components/ReviewsSection';
+import { ProfessionalServices } from '@/components/ProfessionalServices';
 import { getProfessionalDetails } from '@/app/actions/professionals';
+import { getProfessionalServices } from '@/app/actions/services';
 import {
   checkReviewEligibility,
   getProfessionalReviews,
@@ -31,11 +33,12 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
     }
   }
 
-  const [professional, currentUser, eligibility, reviews] = await Promise.all([
+  const [professional, currentUser, eligibility, reviews, services] = await Promise.all([
     profId ? getProfessionalDetails(profId) : Promise.resolve(null),
     getCurrentUser(),
     profId ? checkReviewEligibility(profId) : Promise.resolve<ReviewEligibilityResult>({ eligible: false }),
     profId ? getProfessionalReviews(profId) : Promise.resolve([]),
+    profId ? getProfessionalServices(profId) : Promise.resolve([]),
   ]);
 
   const isOwnProfile = Boolean(currentUser && professional && currentUser.id === professional.userId);
@@ -88,6 +91,15 @@ export default async function PerfilProfissionalPage({ searchParams }: PageProps
             hasExistingReview={Boolean(eligibility.existingReview)}
             isUnauthenticated={eligibility.reason === 'unauthenticated'}
             existingReview={eligibility.existingReview}
+          />
+        </div>
+
+        {/* Seção de Serviços Oferecidos */}
+        <div className="lg:col-span-3">
+          <ProfessionalServices
+            services={services}
+            professionalId={professional.id}
+            isOwnProfile={isOwnProfile}
           />
         </div>
 

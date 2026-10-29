@@ -3,20 +3,23 @@ import { Carousel } from '@/components/home/Carousel';
 import { CategoriasGrid } from '@/components/home/CategoriasGrid';
 import { ComoFunciona } from '@/components/home/ComoFunciona';
 import { ProfissionaisDestaque } from '@/components/home/ProfissionaisDestaque';
+import { FeaturedServicesCarousel } from '@/components/FeaturedServicesCarousel';
 import { ProntoSection } from '@/components/home/ProntoSection';
 import { AvaliacaoClientes } from '@/components/home/AvaliacaoClientes';
 import { SecaoProfissional } from '@/components/home/SecaoProfissional';
+import { getFeaturedServices } from '@/app/actions/services';
 
 import { prisma } from '@/lib/database';
 
 export default async function Home() {
-  const [user, dbCategories] = await Promise.all([
+  const [user, dbCategories, featuredServices] = await Promise.all([
     getCurrentUser(),
     prisma.category.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' },
       select: { name: true, slug: true },
     }),
+    getFeaturedServices(12),
   ]);
   const proStatus = user?.professionalStatus ?? 'none';
   const homeCategories = dbCategories.map((c) => ({
@@ -41,13 +44,16 @@ export default async function Home() {
       {/* 4. Profissionais em destaque */}
       <ProfissionaisDestaque />
 
-      {/* 5. CTA — encontre um profissional */}
+      {/* 5. Serviços em destaque */}
+      <FeaturedServicesCarousel services={featuredServices} />
+
+      {/* 6. CTA — encontre um profissional */}
       <ProntoSection />
 
-      {/* 6. Depoimentos de clientes */}
+      {/* 7. Depoimentos de clientes */}
       <AvaliacaoClientes />
 
-      {/* 7. Seção para profissionais se cadastrarem */}
+      {/* 8. Seção para profissionais se cadastrarem */}
       <SecaoProfissional professionalStatus={proStatus} />
     </>
   );

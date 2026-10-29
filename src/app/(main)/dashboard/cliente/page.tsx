@@ -1,4 +1,4 @@
-import React from 'react';
+﻿﻿import React from 'react';
 import Link from 'next/link';
 import { ClipboardList, FileText, UserCircle, Search, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -95,16 +95,16 @@ export default async function ClientDashboardPage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {[
-            { label: 'Elétrica', icon: '⚡' },
-            { label: 'Hidráulica', icon: '🔧' },
-            { label: 'Pintura', icon: '🎨' },
-            { label: 'Construção', icon: '🏗️' },
-            { label: 'Limpeza', icon: '🧹' },
-            { label: 'Jardinagem', icon: '🌿' },
+            { label: 'Elétrica',   icon: '⚡',    slug: 'eletricista' },
+            { label: 'Hidráulica', icon: '🔧', slug: 'encanador'   },
+            { label: 'Pintura',    icon: '🎨', slug: 'pintor'      },
+            { label: 'Construção', icon: '🏗️', slug: 'pedreiro'   },
+            { label: 'Limpeza',    icon: '🧹', slug: 'limpeza'     },
+            { label: 'Jardinagem', icon: '🌿', slug: 'jardinagem'  },
           ].map((cat) => (
             <Link
               key={cat.label}
-              href={`/buscas?categoria=${cat.label.toLowerCase()}`}
+              href={`/buscas?categoria=${cat.slug}`}
               className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all flex flex-col items-center gap-3 text-center no-underline group"
             >
               <span className="text-3xl">{cat.icon}</span>

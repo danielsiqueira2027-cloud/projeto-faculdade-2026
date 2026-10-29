@@ -1,18 +1,20 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ChevronDown,
   MapPin,
   Calendar,
-  Upload,
   CheckCircle2,
   Clock,
   ArrowRight,
   AlertTriangle,
   Loader2,
+  MessageSquareQuote,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { getProfessionalDetails } from '@/app/actions/professionals';
 import { createOrderAction, uploadOrderImagesAction } from '@/app/actions/orders';
 import { getCurrentUserAction } from '@/app/actions/auth';
@@ -37,7 +39,7 @@ function OrcamentoForm() {
   const [userLoading, setUserLoading] = useState(true);
   const [isLogged, setIsLogged] = useState(false);
   const [isSelfProfile, setIsSelfProfile] = useState(false);
-  const [redirectTimer, setRedirectTimer] = useState<number | null>(null);
+
 
   // Form states
   const [description, setDescription] = useState('');
@@ -69,17 +71,6 @@ function OrcamentoForm() {
       if (!user) {
         setIsLogged(false);
         setIsSelfProfile(false);
-        // Start countdown to redirect
-        let count = 4;
-        setRedirectTimer(count);
-        const interval = setInterval(() => {
-          count -= 1;
-          setRedirectTimer(count);
-          if (count <= 0) {
-            clearInterval(interval);
-            router.push('/login?callbackUrl=/orcamento?profId=' + profId);
-          }
-        }, 1000);
         setUserLoading(false);
         return;
       }
@@ -237,7 +228,7 @@ function OrcamentoForm() {
       setTimeout(() => {
         router.push('/cliente/pedidos');
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[OrcamentoForm] Erro inesperado:', err);
       setToast({ message: 'Ocorreu um erro interno ao processar a solicitação. Tente novamente mais tarde.', type: 'error' });
     } finally {
@@ -260,27 +251,65 @@ function OrcamentoForm() {
 
   // Se não estiver logado
   if (!isLogged) {
+    const returnUrl = profId ? `/orcamento?profId=${encodeURIComponent(profId)}` : '/orcamento';
+    const registerHref = `/cadastro/cliente?next=${encodeURIComponent(returnUrl)}`;
+    const loginHref = `/login?next=${encodeURIComponent(returnUrl)}`;
+
     return (
-      <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6">
-        <div className="bg-white rounded-[40px] p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-red-100 animate-in fade-in zoom-in duration-300">
-          <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto text-red-500">
-            <AlertTriangle size={32} />
+      <div className="min-h-screen bg-[#fefccf]/20 flex items-center justify-center font-sans px-6 py-12">
+        <div className="bg-white rounded-[40px] p-8 sm:p-10 md:p-14 shadow-2xl max-w-lg w-full text-center space-y-6 border border-slate-100 animate-in fade-in zoom-in duration-300">
+          {/* Ícone amigável em círculo com fundo suave */}
+          <div className="w-16 h-16 bg-[#103569]/10 rounded-full flex items-center justify-center mx-auto text-[#103569]">
+            <MessageSquareQuote size={32} />
           </div>
-          <h2 className="text-3xl font-black text-[#103569] leading-tight">Acesso Restrito</h2>
-          <p className="text-slate-600 font-semibold leading-relaxed">
-            Você precisa estar logado com uma conta de <strong>Cliente</strong> para solicitar um orçamento.
-          </p>
-          <div className="bg-red-50/50 p-4 rounded-2xl border border-red-100">
-            <p className="text-red-600 font-bold text-sm">
-              Redirecionando para a tela de login em {redirectTimer} segundos...
+
+          {/* Título e Subtítulo */}
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#103569] leading-tight">
+              Quase lá! Entre para pedir seu orçamento
+            </h1>
+            <p className="text-slate-600 text-sm sm:text-base font-medium leading-relaxed">
+              Crie sua conta gratuita ou faça login para solicitar um orçamento e acompanhar suas solicitações com segurança.
             </p>
           </div>
-          <button
-            onClick={() => router.push('/login?callbackUrl=/orcamento?profId=' + profId)}
-            className="w-full bg-[#103569] hover:bg-[#103569]/90 text-white py-4 rounded-2xl font-black transition-all shadow-md"
-          >
-            Ir para Login Agora
-          </button>
+
+          {/* Botões de Ação */}
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              asChild
+              className="w-full bg-[#f7941d] hover:bg-[#e0851a] text-white font-black text-base h-12 rounded-2xl shadow-lg shadow-[#f7941d]/20 transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <Link href={registerHref}>
+                Criar conta grátis
+              </Link>
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              className="w-full border-2 border-[#103569] text-[#103569] hover:bg-[#103569]/5 font-bold text-base h-12 rounded-2xl transition-all active:scale-[0.98] cursor-pointer"
+            >
+              <Link href={loginHref}>
+                Já tenho conta, entrar
+              </Link>
+            </Button>
+          </div>
+
+          {/* Itens de benefício */}
+          <div className="pt-4 border-t border-slate-100 text-left space-y-2.5">
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+              <span>Receba propostas de profissionais verificados</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+              <span>Acompanhe tudo em um só lugar</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-slate-600 font-semibold">
+              <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+              <span>Cadastro rápido e gratuito</span>
+            </div>
+          </div>
         </div>
       </div>
     );
