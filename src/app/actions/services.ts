@@ -553,3 +553,213 @@ export async function deleteServiceAction(serviceId: string) {
     return { error: 'Erro ao remover o serviço.' };
   }
 }
+
+/**
+ * Resolve as URLs das fotos de um serviço, suportando Supabase Storage e fallback para URLs legadas.
+ */
+async function resolveServiceImages(
+  images: Array<{ storagePath: string }>,
+  imageUrls: unknown
+): Promise<{ coverUrl: string | null; allImages: string[] }> {
+  const resolvedImages = await Promise.all(
+    images.map(async (img) => {
+      try {
+        if (img.storagePath.startsWith('http://') || img.storagePath.startsWith('https://')) {
+          return img.storagePath;
+        }
+        return await getServiceImagePublicUrl(img.storagePath);
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const validImages = resolvedImages.filter((url): url is string => Boolean(url));
+
+  const fallbackImages = (
+    Array.isArray(imageUrls) ? (imageUrls as string[]) : []
+  ).filter((url): url is string => typeof url === 'string' && url.trim().length > 0);
+
+  const allImages = validImages.length > 0 ? validImages : fallbackImages;
+  return {
+    coverUrl: allImages[0] || null,
+    allImages,
+  };
+}
+
+/**
+ * Normaliza cidade e estado de um serviço a partir dos campos diretos ou da string composta `location`.
+ */
+function resolveServiceCityState(
+  sCity?: string | null,
+  sState?: string | null,
+  sLocation?: string | null
+): { city: string | null; state: string | null } {
+  let city = sCity || null;
+  let state = sState || null;
+  if (!city && !state && sLocation) {
+    const parts = sLocation.split(' - ');
+    if (parts.length === 2) {
+      city = parts[0].trim();
+      state = parts[1].trim();
+    } else {
+      city = sLocation.trim();
+    }
+  }
+  return { city, state };
+}
+
+export interface PublicServiceDto {
+  id: string;
+  title: string;
+  description: string | null;
+  priceText: string | null;
+  priceValue: number | null;
+  duration: string | null;
+  city: string | null;
+  state: string | null;
+  categoryName: string;
+  imageUrl: string | null;
+  images: string[];
+}
+
+/**
+ * Busca os serviços publicados/ativos de um profissional para exibição em seu perfil público.
+ */
+export async function getProfessionalServices(
+  professionalId: string
+): Promise<PublicServiceDto[]> {
+  try {
+    if (!professionalId) return [];
+
+    const services = await prisma.service.findMany({
+      where: {
+        professionalId,
+        status: 'ativo',
+      },
+      include: {
+        category: {
+          select: { name: true },
+        },
+        images: {
+          orderBy: { position: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return await Promise.all(
+      services.map(async (s) => {
+        const { coverUrl, allImages } = await resolveServiceImages(s.images, s.imageUrls);
+        const imageUrl = coverUrl;
+        const otherImages = allImages.slice(1);
+        const { city, state } = resolveServiceCityState(s.city, s.state, s.location);
+
+        return {
+          id: s.id,
+          title: s.title,
+          description: s.description || null,
+          priceText: s.priceText || null,
+          priceValue: s.priceValue ? Number(s.priceValue) : null,
+          duration: s.duration || null,
+          city,
+          state,
+          categoryName: s.category?.name || 'Geral',
+          imageUrl,
+          images: otherImages,
+        };
+      })
+    );
+  } catch (error) {
+    console.error('[getProfessionalServices] Erro ao buscar serviços:', error);
+    return [];
+  }
+}
+
+export interface FeaturedServiceDto {
+  id: string;
+  title: string;
+  description: string | null;
+  priceText: string | null;
+  priceValue: number | null;
+  city: string | null;
+  state: string | null;
+  categoryName: string;
+  imageUrl: string | null;
+  professional: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+}
+
+/**
+ * Busca os serviços em destaque para exibição na landing page.
+ * Retorna os serviços mais recentes de profissionais ativos, sem expor dados privados.
+ */
+export async function getFeaturedServices(limit = 12): Promise<FeaturedServiceDto[]> {
+  try {
+    const safeLimit = Math.max(1, Math.min(limit, 50));
+
+    const services = await prisma.service.findMany({
+      where: {
+        status: 'ativo',
+        professional: {
+          isAvailable: true,
+          user: {
+            isActive: true,
+          },
+        },
+      },
+      include: {
+        category: {
+          select: { name: true },
+        },
+        images: {
+          orderBy: { position: 'asc' },
+        },
+        professional: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                name: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: safeLimit,
+    });
+
+    return await Promise.all(
+      services.map(async (s) => {
+        const { coverUrl } = await resolveServiceImages(s.images, s.imageUrls);
+        const { city, state } = resolveServiceCityState(s.city, s.state, s.location);
+
+        return {
+          id: s.id,
+          title: s.title,
+          description: s.description || null,
+          priceText: s.priceText || null,
+          priceValue: s.priceValue ? Number(s.priceValue) : null,
+          city,
+          state,
+          categoryName: s.category?.name || 'Geral',
+          imageUrl: coverUrl,
+          professional: {
+            id: s.professional.id,
+            name: s.professional.user.name,
+            avatarUrl: s.professional.user.avatarUrl || null,
+          },
+        };
+      })
+    );
+  } catch (error) {
+    console.error('[getFeaturedServices] Erro ao buscar serviços em destaque:', error);
+    return [];
+  }
+}
+

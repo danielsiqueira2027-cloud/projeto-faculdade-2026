@@ -41,14 +41,17 @@ interface DestaqueProfessional {
 }
 
 function ProfissionalCard({ pro, isSelf = false }: { pro: DestaqueProfessional; isSelf?: boolean }) {
+  const cityText = pro.location.split(' - ')[0];
+
   return (
     <Link
       href={`/perfil-profissional?id=${pro.id}`}
+      className="h-full flex flex-col no-underline"
       style={{ textDecoration: 'none' }}
       aria-label={`Ver perfil de ${pro.name}, ${pro.role}`}
     >
       <div
-        className="transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:border-[#103569]"
+        className="h-full w-full flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(0,0,0,0.12)] hover:border-[#103569]"
         style={{
           background: '#fff',
           borderRadius: 14,
@@ -56,13 +59,11 @@ function ProfissionalCard({ pro, isSelf = false }: { pro: DestaqueProfessional; 
           boxShadow: '0 3px 12px rgba(0,0,0,0.07)',
           border: '1px solid transparent',
           cursor: 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
           gap: 12,
         }}
       >
         {/* Topo: avatar + info principal */}
-        <div className="flex items-center" style={{ gap: 14 }}>
+        <div className="flex items-center min-w-0" style={{ gap: 14 }}>
           {/* Avatar com inicial */}
           <div
             style={{
@@ -82,16 +83,15 @@ function ProfissionalCard({ pro, isSelf = false }: { pro: DestaqueProfessional; 
             {pro.name.charAt(0)}
           </div>
 
-          <div style={{ overflow: 'hidden', flex: 1 }}>
-            <div className="flex items-center justify-between gap-1">
+          <div className="min-w-0" style={{ overflow: 'hidden', flex: 1 }}>
+            <div className="flex items-center justify-between gap-1 min-w-0">
               <div
+                title={pro.name}
+                className="truncate min-w-0"
                 style={{
                   fontWeight: 700,
                   fontSize: '0.95rem',
                   color: '#0A1A2F',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
                 }}
               >
                 {pro.name}
@@ -103,6 +103,8 @@ function ProfissionalCard({ pro, isSelf = false }: { pro: DestaqueProfessional; 
               )}
             </div>
             <div
+              title={pro.role}
+              className="truncate min-w-0"
               style={{
                 fontSize: '0.78rem',
                 fontWeight: 600,
@@ -123,11 +125,16 @@ function ProfissionalCard({ pro, isSelf = false }: { pro: DestaqueProfessional; 
         <hr style={{ border: 0, borderTop: '1px solid #f0f0f0', margin: 0 }} />
 
         {/* Rodapé: distância + localização */}
-        <div className="flex items-center justify-between">
-          <span style={{ fontSize: '0.82rem', color: '#666' }}>
-            📍 {pro.location.split(' - ')[0]}
+        <div className="mt-auto flex items-center justify-between gap-2 min-w-0">
+          <span
+            className="truncate min-w-0"
+            title={pro.location}
+            style={{ fontSize: '0.82rem', color: '#666' }}
+          >
+            📍 {cityText}
           </span>
           <span
+            className="shrink-0 whitespace-nowrap ml-auto"
             style={{
               fontSize: '0.78rem',
               fontWeight: 600,
@@ -201,8 +208,8 @@ export async function ProfissionaisDestaque() {
 
         {/* Grid de cards */}
         <div
+          className="grid items-stretch"
           style={{
-            display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
             gap: 20,
           }}
@@ -219,4 +226,3 @@ export async function ProfissionaisDestaque() {
     </section>
   );
 }
-
