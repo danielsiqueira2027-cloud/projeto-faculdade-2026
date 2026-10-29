@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { X, Search, Loader2 } from 'lucide-react';
-import { IbgeMunicipio } from '@/app/actions/ibge';
+import { IbgeMunicipio } from '@/lib/ibge';
 
 export interface MunicipioComboboxProps {
   municipios: IbgeMunicipio[];
