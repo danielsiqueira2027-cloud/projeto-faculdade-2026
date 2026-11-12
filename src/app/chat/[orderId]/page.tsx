@@ -92,6 +92,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
   // Preço
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [priceInput, setPriceInput] = useState('');
+  const [priceSubmitting, setPriceSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -770,24 +771,35 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
               </Button>
               <Button 
                 onClick={async () => {
+                  if (priceSubmitting) return;
                   const numericValue = getNumericPrice(priceInput);
                   if (isNaN(numericValue) || numericValue <= 0) {
                     alert('Por favor, digite um valor válido maior que R$ 0,00');
                     return;
                   }
                   
-                  const res = await updateOrderPriceAction(orderId, numericValue);
-                  if (res.error) {
-                    alert(res.error);
-                  } else {
-                    setPriceModalOpen(false);
-                    // Atualizar detalhes locais
-                    loadDetails();
+                  setPriceSubmitting(true);
+                  try {
+                    const res = await updateOrderPriceAction(orderId, numericValue);
+                    if (res.error) {
+                      alert(res.error);
+                    } else {
+                      setPriceModalOpen(false);
+                      // Atualizar detalhes locais
+                      loadDetails();
+                    }
+                  } finally {
+                    setPriceSubmitting(false);
                   }
                 }}
+                disabled={priceSubmitting}
                 className="flex-1 h-12 rounded-xl font-black bg-green-600 hover:bg-green-700 text-white shadow-md border-none cursor-pointer"
               >
-                Confirmar Preço
+                {priceSubmitting ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  'Confirmar Preço'
+                )}
               </Button>
             </div>
           </div>

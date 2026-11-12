@@ -468,71 +468,87 @@ export async function updateOrderPriceAction(
     const currentUser = await getCurrentUser();
     if (!currentUser) return { error: 'Não autorizado.' };
 
-    const prof = await prisma.professional.findUnique({
-      where: { userId: currentUser.id },
-    });
-    if (!prof) return { error: 'Perfil de profissional não encontrado.' };
+    // Validação do preço no backend
+    if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) {
+      return { error: 'Valor inválido. Informe um número maior que zero.' };
+    }
+    if (price > 99999999.99) {
+      return { error: 'Valor excede o limite permitido (R$ 99.999.999,99).' };
+    }
 
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        chatRoom: true,
-        client: { select: { userId: true } },
-        professional: { select: { userId: true } },
-      },
-    });
+    const [prof, order] = await Promise.all([
+      prisma.professional.findUnique({
+        where: { userId: currentUser.id },
+      }),
+      prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          chatRoom: true,
+          client: { select: { userId: true } },
+          professional: { select: { userId: true } },
+        },
+      }),
+    ]);
+
+    if (!prof) return { error: 'Perfil de profissional não encontrado.' };
     if (!order) return { error: 'Pedido não encontrado.' };
     if (order.professionalId !== prof.id) return { error: 'Não autorizado para este pedido.' };
 
     const isFirstTime = order.agreedPrice === null;
     const formattedPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price);
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { agreedPrice: price },
-    });
+    let systemMessage: Awaited<ReturnType<typeof prisma.chatMessage.create>> | null = null;
+    const clientUserId = order.client.userId;
+    const professionalUserId = order.professional.userId;
 
-    if (order.chatRoom) {
-      const systemContent = isFirstTime
-        ? `Valor definido para este serviço: ${formattedPrice}.`
-        : `Valor atualizado para este serviço: ${formattedPrice}.`;
-
-      const systemMessage = await prisma.chatMessage.create({
-        data: {
-          roomId: order.chatRoom.id,
-          senderId: currentUser.id,
-          type: 'sistema',
-          content: systemContent,
-        },
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: orderId },
+        data: { agreedPrice: price },
       });
 
-      const clientUserId = order.client.userId;
-      const professionalUserId = order.professional.userId;
+      if (order.chatRoom) {
+        const systemContent = isFirstTime
+          ? `Valor definido para este serviço: ${formattedPrice}.`
+          : `Valor atualizado para este serviço: ${formattedPrice}.`;
 
+        systemMessage = await tx.chatMessage.create({
+          data: {
+            roomId: order.chatRoom.id,
+            senderId: currentUser.id,
+            type: 'sistema',
+            content: systemContent,
+          },
+        });
+
+        await tx.notification.create({
+          data: {
+            userId: clientUserId,
+            title: `O profissional definiu o valor do serviço "${order.serviceType || 'Serviço'}" como ${formattedPrice}.`,
+          },
+        });
+      }
+    });
+
+    // Emitir eventos SSE somente após a transação concluir com sucesso
+    if (order.chatRoom && systemMessage) {
+      const msg = systemMessage as Awaited<ReturnType<typeof prisma.chatMessage.create>>;
       const formattedMsg = {
-        id: systemMessage.id,
-        senderId: systemMessage.senderId,
+        id: msg.id,
+        senderId: msg.senderId,
         senderName: 'Sistema',
         type: 'sistema',
-        content: systemMessage.content,
-        createdAt: systemMessage.createdAt,
+        content: msg.content,
+        createdAt: msg.createdAt,
         isMe: false,
       };
 
-      // Emitir eventos via SSE
       appEvents.emit(`message:${clientUserId}`, { orderId, message: formattedMsg });
       appEvents.emit(`message:${professionalUserId}`, { orderId, message: { ...formattedMsg, isMe: true } });
 
       appEvents.emit(`order:${clientUserId}`, { type: 'price_update', orderId });
       appEvents.emit(`order:${professionalUserId}`, { type: 'price_update', orderId });
 
-      // Atualizar notificações
-      await prisma.notification.create({
-        data: {
-          userId: clientUserId,
-          title: `O profissional definiu o valor do serviço "${order.serviceType || 'Serviço'}" como ${formattedPrice}.`,
-        },
-      });
       appEvents.emit(`notification:${clientUserId}`, { type: 'notification_update' });
     }
 

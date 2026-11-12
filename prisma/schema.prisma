@@ -228,6 +228,9 @@ model Order {
   chatRoom     ChatRoom?
   images       OrderImage[]
 
+  @@index([clientId])
+  @@index([professionalId])
+  @@index([status])
   @@map("orders")
 }
 
@@ -302,6 +305,8 @@ model Appointment {
   order        Order?       @relation(fields: [orderId], references: [id])
   professional Professional @relation(fields: [professionalId], references: [id])
 
+  @@index([professionalId, scheduledAt, status])
+  @@index([orderId])
   @@map("appointments")
 }
 
@@ -348,6 +353,7 @@ model ChatMessage {
   room      ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
+  @@index([roomId, createdAt])
   @@map("chat_messages")
 }
 
@@ -360,6 +366,7 @@ model Notification {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("notifications")
 }
 

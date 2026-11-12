@@ -219,6 +219,20 @@ export async function sendMessageAction(
     throw new Error('Não é possível enviar mensagens para um pedido concluído, pendente ou cancelado.');
   }
 
+  // Validação de conteúdo
+  if (type === 'texto') {
+    if (!content?.trim()) {
+      throw new Error('A mensagem não pode ser vazia.');
+    }
+    if (content.trim().length > 2000) {
+      throw new Error('A mensagem não pode exceder 2000 caracteres.');
+    }
+  } else if (type === 'imagem') {
+    if (!content) {
+      throw new Error('URL da imagem inválida.');
+    }
+  }
+
   const message = await prisma.chatMessage.create({
     data: {
       roomId: order.chatRoom.id,
