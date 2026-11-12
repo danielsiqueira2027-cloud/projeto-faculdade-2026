@@ -2,7 +2,6 @@
 
 import { prisma } from '@/lib/database';
 import { getCurrentUser } from '@/lib/auth';
-import { revalidatePath } from 'next/cache';
 import { appEvents } from '@/lib/events';
 
 export type AppointmentResult = {
@@ -189,8 +188,6 @@ export async function createOrUpdateAppointment(data: {
 
     appEvents.emit(`message:${clientUserId}`, { orderId: data.orderId, message: { ...formattedMsg, isMe: clientUserId === currentUser.id } });
     appEvents.emit(`message:${professionalUserId}`, { orderId: data.orderId, message: { ...formattedMsg, isMe: professionalUserId === currentUser.id } });
-
-    revalidatePath('/', 'layout');
 
     return { success: true, appointmentId: appointmentId! };
   } catch (error) {
