@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "src/generated/**",
     "scratch/**",
+    // Pasta de auditoria/diagnóstico (scripts CJS de uso único, fora do projeto)
+    "auditoria_click_servicos/**",
   ]),
 ]);
 
