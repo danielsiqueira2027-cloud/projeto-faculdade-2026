@@ -4,7 +4,7 @@ import { adminAuth } from "@/lib/auth-admin";
 import { updateSupabaseSession } from "@/lib/supabase/middleware";
 
 // Rotas que requerem qualquer sessão autenticada (Supabase Auth)
-const PRIVATE_ROUTES = ['/dashboard', '/cliente'];
+const PRIVATE_ROUTES = ['/dashboard', '/cliente', '/chat'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -37,6 +37,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dashboard/:path*", "/cliente/:path*"],
+  matcher: ["/admin/:path*", "/dashboard/:path*", "/cliente/:path*", "/chat/:path*"],
 };
 
