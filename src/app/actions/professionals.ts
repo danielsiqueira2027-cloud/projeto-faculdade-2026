@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/database';
 import { Prisma } from '@/generated/prisma';
+import { PRINCIPAIS_MUNICIPIOS_POR_UF } from '@/lib/ibge';
 
 /** Texto exibido nos cards quando o profissional não tem cidade/UF cadastrados. */
 const LOCATION_FALLBACK = 'Localização não informada';
@@ -48,6 +49,31 @@ function normalizeLocationText(text?: string | null): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+}
+
+/**
+ * Tenta resolver o nome digitado da cidade para o nome oficial com acentuação
+ * (ex: "sumare" -> "Sumaré", "santa barbara d'oeste" -> "Santa Bárbara d'Oeste").
+ */
+function resolveOfficialCity(cidade?: string | null, uf?: string | null): string | null {
+  if (!cidade) return null;
+  const norm = normalizeLocationText(cidade);
+  if (!norm) return null;
+
+  const cleanUf = (uf || '').trim().toUpperCase();
+  if (cleanUf && PRINCIPAIS_MUNICIPIOS_POR_UF[cleanUf]) {
+    const found = PRINCIPAIS_MUNICIPIOS_POR_UF[cleanUf].find(
+      (m) => normalizeLocationText(m) === norm
+    );
+    if (found) return found;
+  }
+
+  for (const list of Object.values(PRINCIPAIS_MUNICIPIOS_POR_UF)) {
+    const found = list.find((m) => normalizeLocationText(m) === norm);
+    if (found) return found;
+  }
+
+  return null;
 }
 
 /**
@@ -116,6 +142,21 @@ export async function searchProfessionals(
       ];
     }
 
+    // Filtro refinado de município sem diferença de caixa ou acentuação
+    const cleanCidade = (cidade || '').trim().slice(0, 100);
+    const normalizedCidade = cleanCidade ? normalizeLocationText(cleanCidade) : '';
+
+    // Otimização: se a cidade for resolvida para o nome oficial, filtra no banco
+    if (normalizedCidade) {
+      const resolvedCity = resolveOfficialCity(cleanCidade, cleanUf);
+      if (resolvedCity) {
+        where.addressCity = {
+          equals: resolvedCity,
+          mode: 'insensitive',
+        };
+      }
+    }
+
     const professionals = await prisma.professional.findMany({
       where,
       include: {
@@ -134,10 +175,6 @@ export async function searchProfessionals(
         },
       },
     });
-
-    // Filtro refinado de município sem diferença de caixa ou acentuação
-    const cleanCidade = (cidade || '').trim().slice(0, 100);
-    const normalizedCidade = cleanCidade ? normalizeLocationText(cleanCidade) : '';
 
     const filtered = normalizedCidade
       ? professionals.filter((prof) => {

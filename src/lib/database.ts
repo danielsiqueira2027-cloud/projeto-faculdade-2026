@@ -21,7 +21,7 @@ const globalForPrisma = globalThis as unknown as {
 if (!globalForPrisma.adapter) {
   const pool = new Pool({
     connectionString: urlString,
-    max: process.env.VERCEL ? 1 : 5,
+    max: Number(process.env.DB_POOL_MAX) || (process.env.VERCEL ? 1 : 5),
   });
   globalForPrisma.pool = pool;
   globalForPrisma.adapter = new PrismaPg(pool);

@@ -164,6 +164,8 @@ model Service {
   orders       Order[]
   images       ServiceImage[]
 
+  @@index([professionalId])
+  @@index([categoryId])
   @@map("services")
 }
 
@@ -231,6 +233,8 @@ model Order {
   @@index([clientId])
   @@index([professionalId])
   @@index([status])
+  @@index([serviceId])
+  @@index([categoryId])
   @@map("orders")
 }
 
@@ -268,6 +272,8 @@ model PortfolioItem {
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   category     Category?    @relation(fields: [categoryId], references: [id])
 
+  @@index([professionalId])
+  @@index([categoryId])
   @@map("portfolio_items")
 }
 
@@ -285,6 +291,8 @@ model Testimonial {
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   author       User?        @relation(fields: [authorId], references: [id])
 
+  @@index([professionalId])
+  @@index([authorId])
   @@map("testimonials")
 }
 
@@ -328,6 +336,7 @@ model Certification {
 
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
+  @@index([professionalId])
   @@map("certifications")
 }
 
@@ -354,6 +363,7 @@ model ChatMessage {
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([roomId, createdAt])
+  @@index([senderId])
   @@map("chat_messages")
 }
 
@@ -384,5 +394,6 @@ model Review {
   professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@unique([clientId, professionalId])
+  @@index([professionalId])
   @@map("reviews")
 }
