@@ -3,10 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
   MessageSquare, 
   Phone, 
-  Mail, 
+  Mail,
   Calendar,
   ClipboardList,
   TrendingUp,
@@ -14,10 +13,10 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
-  ArrowRight,
   MapPin,
   CircleDollarSign,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -106,10 +105,18 @@ export default function ProfessionalOrdersPage() {
 
   // Filtragem
   const filteredOrders = orders.filter(order => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return order.status === activeTab;
+
+    const cleanTerm = term.replace(/^#+/, '').trim();
     const matchesSearch = 
-      order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.serviceType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchTerm.toLowerCase());
+      order.clientName.toLowerCase().includes(term) ||
+      order.serviceType.toLowerCase().includes(term) ||
+      order.id.toLowerCase().includes(term) ||
+      (cleanTerm.length > 0 && (
+        order.id.toLowerCase().includes(cleanTerm) ||
+        order.id.slice(0, 8).toLowerCase().includes(cleanTerm)
+      ));
     
     return matchesSearch && order.status === activeTab;
   });
@@ -160,133 +167,115 @@ export default function ProfessionalOrdersPage() {
       )}
 
       {/* Header Section */}
-      <div>
-        <h2 className="text-3xl font-black text-[#103569] tracking-tighter uppercase">Meus Pedidos</h2>
-        <p className="text-slate-500 font-bold">Acompanhe orçamentos, mude status e organize o fluxo de trabalho.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-[#103569] tracking-tighter uppercase">Meus Pedidos</h2>
+          <p className="text-slate-500 font-bold">Acompanhe orçamentos, mude status e organize o fluxo de trabalho.</p>
+        </div>
+        <Button 
+          onClick={loadOrders} 
+          disabled={loading}
+          variant="outline" 
+          className="h-11 rounded-2xl font-bold border-slate-200 text-[#103569] flex items-center gap-2 hover:bg-slate-50 shrink-0 cursor-pointer"
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Sincronizar Pedidos
+        </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-yellow-50 flex items-center justify-center text-yellow-600">
-            <Clock size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Pendentes</p>
-            <p className="text-2xl font-black text-[#103569]">{getCount('PENDENTE')}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-            <TrendingUp size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Em Andamento</p>
-            <p className="text-2xl font-black text-[#103569]">{getCount('EM_ANDAMENTO')}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center text-green-600">
-            <CheckCircle size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Concluídos</p>
-            <p className="text-2xl font-black text-[#103569]">{getCount('CONCLUIDO')}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center text-red-500">
-            <XCircle size={28} />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Cancelados</p>
-            <p className="text-2xl font-black text-[#103569]">{getCount('CANCELADO')}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Tabs Navigation */}
-      <div className="bg-slate-100/80 p-2 rounded-2xl flex flex-wrap gap-1 md:flex-nowrap">
+      {/* Stats & Status Integrados em um só local */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <button
+          type="button"
           onClick={() => setActiveTab('PENDENTE')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer border-none outline-none ${
+          className={`p-5 md:p-6 rounded-3xl border text-left transition-all cursor-pointer flex items-center gap-4 ${
             activeTab === 'PENDENTE'
-              ? 'bg-[#103569] text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+              ? 'bg-white border-[#103569] ring-2 ring-[#103569]/15 shadow-md scale-[1.02]'
+              : 'bg-white/80 border-slate-100 hover:border-slate-200 hover:bg-white shadow-sm'
           }`}
         >
-          <Clock size={16} />
-          <span>Pendentes</span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-            activeTab === 'PENDENTE' ? 'bg-[#f7941d] text-white' : 'bg-slate-200 text-slate-600'
-          }`}>{getCount('PENDENTE')}</span>
+          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-colors ${
+            activeTab === 'PENDENTE' ? 'bg-yellow-500 text-white shadow-sm' : 'bg-yellow-50 text-yellow-600'
+          }`}>
+            <Clock size={26} />
+          </div>
+          <div>
+            <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Pendentes</p>
+            <p className="text-xl md:text-2xl font-black text-[#103569]">{getCount('PENDENTE')}</p>
+          </div>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('EM_ANDAMENTO')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer border-none outline-none ${
+          className={`p-5 md:p-6 rounded-3xl border text-left transition-all cursor-pointer flex items-center gap-4 ${
             activeTab === 'EM_ANDAMENTO'
-              ? 'bg-[#103569] text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+              ? 'bg-white border-[#103569] ring-2 ring-[#103569]/15 shadow-md scale-[1.02]'
+              : 'bg-white/80 border-slate-100 hover:border-slate-200 hover:bg-white shadow-sm'
           }`}
         >
-          <TrendingUp size={16} />
-          <span>Em Andamento</span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-            activeTab === 'EM_ANDAMENTO' ? 'bg-[#f7941d] text-white' : 'bg-slate-200 text-slate-600'
-          }`}>{getCount('EM_ANDAMENTO')}</span>
+          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-colors ${
+            activeTab === 'EM_ANDAMENTO' ? 'bg-blue-600 text-white shadow-sm' : 'bg-blue-50 text-blue-600'
+          }`}>
+            <TrendingUp size={26} />
+          </div>
+          <div>
+            <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Em Andamento</p>
+            <p className="text-xl md:text-2xl font-black text-[#103569]">{getCount('EM_ANDAMENTO')}</p>
+          </div>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('CONCLUIDO')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer border-none outline-none ${
+          className={`p-5 md:p-6 rounded-3xl border text-left transition-all cursor-pointer flex items-center gap-4 ${
             activeTab === 'CONCLUIDO'
-              ? 'bg-[#103569] text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+              ? 'bg-white border-[#103569] ring-2 ring-[#103569]/15 shadow-md scale-[1.02]'
+              : 'bg-white/80 border-slate-100 hover:border-slate-200 hover:bg-white shadow-sm'
           }`}
         >
-          <CheckCircle size={16} />
-          <span>Concluídos</span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-            activeTab === 'CONCLUIDO' ? 'bg-[#f7941d] text-white' : 'bg-slate-200 text-slate-600'
-          }`}>{getCount('CONCLUIDO')}</span>
+          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-colors ${
+            activeTab === 'CONCLUIDO' ? 'bg-green-600 text-white shadow-sm' : 'bg-green-50 text-green-600'
+          }`}>
+            <CheckCircle size={26} />
+          </div>
+          <div>
+            <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Concluídos</p>
+            <p className="text-xl md:text-2xl font-black text-[#103569]">{getCount('CONCLUIDO')}</p>
+          </div>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('CANCELADO')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer border-none outline-none ${
+          className={`p-5 md:p-6 rounded-3xl border text-left transition-all cursor-pointer flex items-center gap-4 ${
             activeTab === 'CANCELADO'
-              ? 'bg-[#103569] text-white shadow-md'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+              ? 'bg-white border-[#103569] ring-2 ring-[#103569]/15 shadow-md scale-[1.02]'
+              : 'bg-white/80 border-slate-100 hover:border-slate-200 hover:bg-white shadow-sm'
           }`}
         >
-          <XCircle size={16} />
-          <span>Cancelados</span>
-          <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-            activeTab === 'CANCELADO' ? 'bg-[#f7941d] text-white' : 'bg-slate-200 text-slate-600'
-          }`}>{getCount('CANCELADO')}</span>
+          <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-colors ${
+            activeTab === 'CANCELADO' ? 'bg-red-500 text-white shadow-sm' : 'bg-red-50 text-red-500'
+          }`}>
+            <XCircle size={26} />
+          </div>
+          <div>
+            <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">Cancelados</p>
+            <p className="text-xl md:text-2xl font-black text-[#103569]">{getCount('CANCELADO')}</p>
+          </div>
         </button>
       </div>
 
-      {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
+      {/* Busca */}
+      <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="relative w-full">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
           <Input 
-            placeholder="Buscar por código do pedido ou nome do cliente..." 
+            placeholder="Buscar por código ou nome do cliente..." 
             className="pl-12 h-12 rounded-2xl border-slate-100 focus:ring-[#f7941d] bg-slate-50/50"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" className="h-12 px-6 rounded-2xl font-bold border-slate-100 flex items-center gap-2 hover:bg-slate-50">
-            <Filter size={18} />
-            Filtros
-          </Button>
         </div>
       </div>
 
@@ -312,21 +301,25 @@ export default function ProfessionalOrdersPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-black text-[#103569] text-lg leading-tight">{order.clientName}</h4>
-                      <span className="text-[10px] font-black text-slate-400">{order.id}</span>
+                      <span className="text-[10px] font-black text-slate-400">#{order.id.slice(0, 8)}</span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-400 font-bold">
-                      <span className="flex items-center gap-1"><Mail size={12} /> {order.clientEmail}</span>
-                      {order.clientPhone && (
-                        <span className="flex items-center gap-1"><Phone size={12} /> {order.clientPhone}</span>
-                      )}
-                    </div>
+                    {(order.clientEmail || order.clientPhone) && (
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-400 font-bold">
+                        {order.clientEmail && <span className="flex items-center gap-1"><Mail size={12} /> {order.clientEmail}</span>}
+                        {order.clientPhone && (
+                          <span className="flex items-center gap-1"><Phone size={12} /> {order.clientPhone}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
-                    order.urgency === 'Urgente' || order.urgency === 'Imediato'
+                    order.urgency === 'Alta' || order.urgency === 'Urgente' || order.urgency === 'Imediato'
                       ? 'bg-red-50 text-red-500 border border-red-100'
+                      : order.urgency === 'Média' || order.urgency === 'Dentro de 15 dias'
+                      ? 'bg-amber-50 text-amber-600 border border-amber-100'
                       : 'bg-slate-50 text-slate-500 border border-slate-100'
                   }`}>
                     {order.urgency}
@@ -374,14 +367,16 @@ export default function ProfessionalOrdersPage() {
                   </div>
 
                   <div className="flex justify-between items-end pt-2">
-                    <div>
-                      <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1"><Calendar size={12} /> Agendamento</span>
-                      <p className="text-slate-700 text-xs font-black mt-0.5">{order.scheduledAt}</p>
-                      {order.period && (
-                        <p className="text-[10px] text-[#f7941d] font-bold mt-0.5">Turno: {order.period}</p>
-                      )}
-                    </div>
-                    <div className="text-right">
+                    {order.scheduledAt !== 'Sem agendamento' && (
+                      <div>
+                        <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1"><Calendar size={12} /> Agendamento</span>
+                        <p className="text-slate-700 text-xs font-black mt-0.5">{order.scheduledAt}</p>
+                        {order.period && (
+                          <p className="text-[10px] text-[#f7941d] font-bold mt-0.5">Turno: {order.period}</p>
+                        )}
+                      </div>
+                    )}
+                    <div className="text-right ml-auto">
                       <span className="text-[10px] font-black text-[#103569]/40 uppercase tracking-widest flex items-center gap-1 justify-end"><CircleDollarSign size={12} /> Valor</span>
                       <p className="text-lg font-black text-[#f7941d] leading-none mt-0.5">{order.agreedPrice}</p>
                     </div>

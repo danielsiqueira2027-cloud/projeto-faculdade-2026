@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, use } from 'react';
+import React, { useState, useEffect, useRef, useCallback, use, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
@@ -18,6 +18,8 @@ import {
   X,
   MessageSquare,
   Plus,
+  Check,
+  Bell,
 } from 'lucide-react';
 import { getChatRoomDetails, sendMessageAction } from '@/app/actions/chat';
 import { getCurrentUserAction } from '@/app/actions/auth';
@@ -33,6 +35,7 @@ interface MessageItem {
   content: string;
   createdAt: Date | string;
   isMe: boolean;
+  status?: 'sending' | 'sent' | 'read';
 }
 
 interface InterlocutorDetails {
@@ -61,6 +64,25 @@ interface AppointmentData {
   id: string;
   scheduledAt: string;
   status: string;
+}
+
+// ─── Store externa para permissão de notificações (SSR-safe, sem hydration mismatch) ──
+const notifyListeners = new Set<() => void>();
+function notifyPermissionChanged() {
+  notifyListeners.forEach((cb) => cb());
+}
+function subscribeNotification(callback: () => void) {
+  notifyListeners.add(callback);
+  return () => {
+    notifyListeners.delete(callback);
+  };
+}
+function getNotificationSnapshot(): NotificationPermission | 'unsupported' {
+  if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'unsupported';
+  return Notification.permission;
+}
+function getServerNotificationSnapshot(): NotificationPermission | 'unsupported' {
+  return 'default';
 }
 
 export default function ChatRoomPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -98,6 +120,93 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Controle de concorrência e sobreposição do polling
+  const pollingInFlightRef = useRef<boolean>(false);
+  const pollingRequestIdRef = useRef<number>(0);
+  const pollingAbortRef = useRef<AbortController | null>(null);
+
+  // Controle de envios em andamento (para evitar duplicar mensagens com polling)
+  const sendingCountRef = useRef<number>(0);
+  // Timestamp do término do último envio (para descartar consultas iniciadas antes)
+  const lastSendCompletedAtRef = useRef<number>(0);
+
+  // Fila de envios otimistas locais ativos para reconciliação com SSE sem duplicar bolhas
+  const pendingSendsRef = useRef<{ tempId: string; type: 'texto' | 'imagem' }[]>([]);
+
+  // Controle de notificações de mensagens recebidas (por ID, evitando duplicatas e histórico)
+  const notifiedMsgIdsRef = useRef<Set<string>>(new Set());
+  const initialHistoryLoadedRef = useRef<boolean>(false);
+
+  // Reinicia o controle de envios e notificações ao trocar de pedido
+  useEffect(() => {
+    notifiedMsgIdsRef.current = new Set();
+    initialHistoryLoadedRef.current = false;
+    pendingSendsRef.current = [];
+  }, [orderId]);
+
+  // Função segura para disparar notificação única
+  const notifyIncomingMessage = useCallback((msg: { id: string; senderName?: string; type?: string; content?: string; isMe?: boolean }) => {
+    if (!msg || msg.isMe) return;
+    if (notifiedMsgIdsRef.current.has(msg.id)) return;
+    notifiedMsgIdsRef.current.add(msg.id);
+
+    if (typeof window === 'undefined' || typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+      return;
+    }
+
+    try {
+      const body = msg.type === 'imagem'
+        ? '📷 Imagem enviada'
+        : (msg.content || '').substring(0, 80);
+      new Notification(`Nova mensagem — ${msg.senderName || 'ClickServiço'}`, {
+        body,
+        icon: '/imgs/misc/logo.png',
+      });
+    } catch (err) {
+      console.error('Falha ao exibir notificação:', err);
+    }
+  }, []);
+
+  // Permissão de notificação do browser sincronizada via external store (elimina hydration mismatch)
+  const notificationPermission = useSyncExternalStore(
+    subscribeNotification,
+    getNotificationSnapshot,
+    getServerNotificationSnapshot
+  );
+
+  useEffect(() => {
+    return () => {
+      pollingAbortRef.current?.abort();
+    };
+  }, []);
+
+  const handleRequestNotification = async () => {
+    if (typeof window === 'undefined' || typeof Notification === 'undefined') {
+      alert('Seu navegador não possui suporte a notificações de desktop.');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      alert('As notificações estão bloqueadas nas configurações do seu navegador. Clique no ícone de cadeado/permissões na barra de endereço para permitir.');
+      return;
+    }
+    if (Notification.permission === 'granted') {
+      alert('As notificações já estão ativadas para este chat.');
+      return;
+    }
+    try {
+      const perm = await Notification.requestPermission();
+      notifyPermissionChanged();
+      if (perm === 'granted') {
+        new Notification('Notificações ativadas!', {
+          body: 'Você será avisado quando receber novas mensagens neste chat.',
+          icon: '/imgs/misc/logo.png',
+        });
+      }
+    } catch (err) {
+      console.error('Erro ao solicitar permissão de notificação:', err);
+    }
+  };
+
   const formatBRLMask = (value: string) => {
     const cleanValue = value.replace(/\D/g, '');
     if (!cleanValue) return 'R$ 0,00';
@@ -127,6 +236,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
 
   // Verifica a sessão do usuário
   useEffect(() => {
@@ -158,18 +268,69 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
   }, [orderId, router]);
 
   // Carrega as mensagens e dados de agendamento
-  const loadMessages = useCallback(async (isInitial = false) => {
+  const loadMessages = useCallback(async (isInitial = false, isPriority = false) => {
+    // Evita requisições sobrepostas durante o polling contínuo (requisições prioritárias podem prosseguir)
+    if (pollingInFlightRef.current && !isInitial && !isPriority) return;
+    pollingInFlightRef.current = true;
+
+    // Aborta requisição de polling anterior se ainda estiver aberta
+    if (pollingAbortRef.current) {
+      pollingAbortRef.current.abort();
+    }
+    const abortController = new AbortController();
+    pollingAbortRef.current = abortController;
+    const currentRequestId = ++pollingRequestIdRef.current;
+    const requestStartedAt = Date.now();
+
+    // Timeout de 8s no fetch para evitar travamentos de rede
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+    }, 8000);
+
     try {
-      const res = await fetch(`/api/chat/${orderId}/messages`);
+      const res = await fetch(`/api/chat/${orderId}/messages`, {
+        signal: abortController.signal,
+      });
       if (!res.ok) throw new Error('Falha ao consultar mensagens');
       const data = await res.json();
-      
-      setMessages(data.messages);
-      
-      // Atualiza o status do pedido se mudou na polling
+
+      // 1. Descarta se uma consulta mais nova foi disparada
+      if (currentRequestId < pollingRequestIdRef.current) return;
+
+      // 2. Descarta consultas iniciadas antes do fim de algum envio (para não sumir mensagem recém-enviada)
+      if (requestStartedAt < lastSendCompletedAtRef.current) return;
+
+      const serverMsgs: MessageItem[] = data.messages || [];
+
+      // 3. Se houver envio em andamento (qualquer envio simultâneo), NÃO aplica a lista de mensagens do polling
+      // para não duplicar com mensagens otimistas locais
+      if (sendingCountRef.current === 0) {
+        setMessages(serverMsgs);
+      }
+
+      // 4. Controle de notificação fora do updater do React (evita duplo disparo e histórico inicial)
+      if (!initialHistoryLoadedRef.current) {
+        // Primeira carga com sucesso: marca histórico inteiro como visto para não notificar mensagens antigas
+        serverMsgs.forEach((m) => {
+          notifiedMsgIdsRef.current.add(m.id);
+        });
+        initialHistoryLoadedRef.current = true;
+      } else {
+        // Polling subsequente: notifica novas mensagens do outro participante que ainda não foram notificadas
+        serverMsgs.forEach((m) => {
+          if (!m.isMe && !notifiedMsgIdsRef.current.has(m.id)) {
+            notifyIncomingMessage(m);
+          }
+        });
+      }
+
+      // Atualiza o status e preço do pedido se mudou na polling
       setDetails(prev => {
-        if (!prev || prev.status === data.orderStatus) return prev;
-        return { ...prev, status: data.orderStatus };
+        if (!prev) return prev;
+        const nextStatus = data.orderStatus ?? prev.status;
+        const nextPrice = data.agreedPrice ?? prev.agreedPrice;
+        if (prev.status === nextStatus && prev.agreedPrice === nextPrice) return prev;
+        return { ...prev, status: nextStatus, agreedPrice: nextPrice };
       });
 
       // Atualiza dados de agendamento vindos da API
@@ -179,19 +340,42 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       if (isInitial) {
         setTimeout(() => scrollToBottom('instant'), 100);
       }
-    } catch (err) {
-      console.error('Erro no short-polling do chat:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        // Se a requisição foi cancelada por ter sido substituída por outra mais nova, ignora
+        if (currentRequestId < pollingRequestIdRef.current) {
+          return;
+        }
+        // Timeout ou abort da própria requisição mais nova: registra aviso e prossegue para liberar o loading
+        console.warn('Timeout na requisição de mensagens do chat');
+      } else {
+        console.error('Erro no polling do chat:', err);
+      }
     } finally {
-      if (isInitial) setLoading(false);
+      clearTimeout(timeoutId);
+      // A requisição mais nova sempre encerra o loading (seja inicial ou não) e libera o controle
+      if (currentRequestId === pollingRequestIdRef.current) {
+        pollingInFlightRef.current = false;
+        setLoading(false);
+      }
     }
-  }, [orderId, scrollToBottom]);
+  }, [orderId, scrollToBottom, notifyIncomingMessage]);
+
+  // Polling automático periódico (fallback robusto para garantir sincronização entre usuários)
+  useEffect(() => {
+    if (!isLogged) return;
+    const interval = setInterval(() => {
+      loadMessages();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isLogged, loadMessages]);
 
   useEffect(() => {
     if (!isLogged) return;
 
     const init = async () => {
       await loadDetails();
-      await loadMessages(true);
+      await loadMessages(true, true);
     };
 
     void init();
@@ -206,12 +390,31 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     eventSource.addEventListener('message', (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data);
-        if (data.orderId === orderId) {
+        if (data.orderId === orderId && data.message && data.message.id) {
+          const msg = data.message as MessageItem;
+
+          // Notificação imediata para mensagens de outro participante (se histórico inicial já foi carregado)
+          if (!msg.isMe && initialHistoryLoadedRef.current) {
+            notifyIncomingMessage(msg);
+          }
+
+          let replaceTempId: string | null = null;
+          if (msg.isMe) {
+            const pendingIdx = pendingSendsRef.current.findIndex(p => p.type === msg.type);
+            if (pendingIdx !== -1) {
+              replaceTempId = pendingSendsRef.current[pendingIdx].tempId;
+              pendingSendsRef.current.splice(pendingIdx, 1);
+            }
+          }
+
           setMessages(prev => {
-            if (!data.message || !data.message.id) return prev;
-            if (prev.some(m => m.id === data.message.id)) return prev;
-            return [...prev, data.message];
+            if (prev.some(m => m.id === msg.id)) return prev;
+            if (replaceTempId) {
+              return prev.map(m => m.id === replaceTempId ? { ...msg, status: 'sent' as const } : m);
+            }
+            return [...prev, msg];
           });
+
           setTimeout(() => scrollToBottom('smooth'), 50);
         }
       } catch (err) {
@@ -224,7 +427,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
         const data = JSON.parse(e.data);
         if (data.orderId === orderId) {
           loadDetails();
-          loadMessages();
+          loadMessages(false, true);
         }
       } catch (err) {
         console.error('Erro ao processar atualização de pedido via SSE:', err);
@@ -235,7 +438,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       try {
         const data = JSON.parse(e.data);
         if (data.orderId === orderId) {
-          loadMessages();
+          loadMessages(false, true);
         }
       } catch (err) {
         console.error('Erro ao processar agendamento via SSE:', err);
@@ -245,7 +448,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     return () => {
       eventSource.close();
     };
-  }, [isLogged, orderId, loadDetails, loadMessages, scrollToBottom]);
+  }, [isLogged, orderId, loadDetails, loadMessages, scrollToBottom, notifyIncomingMessage]);
 
   // Auto-scroll sempre que novas mensagens chegarem
   useEffect(() => {
@@ -254,7 +457,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     }
   }, [messages.length, scrollToBottom]);
 
-  // Trata envio de texto
+  // Trata envio de texto com atualização otimista instantânea
   const handleSendText = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!textInput.trim() || sending) return;
@@ -262,22 +465,64 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     const content = textInput.trim();
     setTextInput('');
     setSending(true);
+    sendingCountRef.current += 1;
+
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    pendingSendsRef.current.push({ tempId, type: 'texto' });
+
+    const optimisticMsg: MessageItem = {
+      id: tempId,
+      senderId: 'me',
+      senderName: 'Você',
+      type: 'texto',
+      content,
+      createdAt: new Date(),
+      isMe: true,
+      status: 'sending',
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
+    setTimeout(() => scrollToBottom('smooth'), 50);
 
     try {
       const newMsg = await sendMessageAction(orderId, 'texto', content);
+      lastSendCompletedAtRef.current = Date.now();
+      pendingSendsRef.current = pendingSendsRef.current.filter(p => p.tempId !== tempId);
       setMessages(prev => {
-        if (prev.some(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg as MessageItem];
+        // Se a mensagem temporária ainda existir (SSE ainda não a substituiu), substitui agora
+        const hasTemp = prev.some(m => m.id === tempId);
+        let next: MessageItem[];
+        if (hasTemp) {
+          next = prev.map(m => m.id === tempId ? { ...(newMsg as MessageItem), status: 'sent' as const } : m);
+        } else {
+          // Se o SSE já substituiu, garante que a mensagem real está na lista
+          next = prev.some(m => m.id === newMsg.id)
+            ? prev
+            : [...prev, { ...(newMsg as MessageItem), status: 'sent' as const }];
+        }
+        // Deduplica estritamente por ID sem perder mensagens
+        const seen = new Set<string>();
+        return next.filter(m => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
       });
       setTimeout(() => scrollToBottom('smooth'), 50);
     } catch (err: unknown) {
+      pendingSendsRef.current = pendingSendsRef.current.filter(p => p.tempId !== tempId);
       alert(err instanceof Error ? err.message : 'Erro ao enviar mensagem');
+      setMessages(prev => prev.filter(m => m.id !== tempId));
       setTextInput(content);
     } finally {
+      sendingCountRef.current = Math.max(0, sendingCountRef.current - 1);
       setSending(false);
       setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
+      if (sendingCountRef.current === 0) {
+        loadMessages(false, true);
+      }
     }
   };
 
@@ -287,7 +532,12 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     if (!file || uploading) return;
 
     setUploading(true);
+    sendingCountRef.current += 1;
     setActionMenuOpen(false);
+
+    const tempId = `temp-img-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    pendingSendsRef.current.push({ tempId, type: 'imagem' });
+
     const formData = new FormData();
     formData.append('file', file);
     formData.append('orderId', orderId);
@@ -305,16 +555,37 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
 
       const uploadData = await uploadRes.json();
       const newMsg = await sendMessageAction(orderId, 'imagem', uploadData.url);
+      lastSendCompletedAtRef.current = Date.now();
+      pendingSendsRef.current = pendingSendsRef.current.filter(p => p.tempId !== tempId);
       setMessages(prev => {
-        if (prev.some(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg as MessageItem];
+        const hasTemp = prev.some(m => m.id === tempId);
+        let next: MessageItem[];
+        if (hasTemp) {
+          next = prev.map(m => m.id === tempId ? { ...(newMsg as MessageItem), status: 'sent' as const } : m);
+        } else {
+          next = prev.some(m => m.id === newMsg.id)
+            ? prev
+            : [...prev, { ...(newMsg as MessageItem), status: 'sent' as const }];
+        }
+        const seen = new Set<string>();
+        return next.filter(m => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
       });
       setTimeout(() => scrollToBottom('smooth'), 50);
     } catch (err: unknown) {
+      pendingSendsRef.current = pendingSendsRef.current.filter(p => p.tempId !== tempId);
+      setMessages(prev => prev.filter(m => m.id !== tempId));
       alert(err instanceof Error ? err.message : 'Falha ao processar imagem');
     } finally {
+      sendingCountRef.current = Math.max(0, sendingCountRef.current - 1);
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+      if (sendingCountRef.current === 0) {
+        loadMessages(false, true);
+      }
     }
   };
 
@@ -348,7 +619,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
   const isProfessional = details.myRole === 'professional';
 
   return (
-    <div className="min-h-screen bg-[#fefccf]/10 flex flex-col font-sans relative">
+    <div className="h-screen bg-[#fefccf]/10 flex flex-col font-sans relative overflow-hidden">
       
       {/* Appointment Modal */}
       {appointmentModalOpen && (
@@ -359,7 +630,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
           suggestedAt={suggestedAt}
           existingAppointment={existingAppointment}
           onClose={() => setAppointmentModalOpen(false)}
-          onSuccess={() => loadMessages(true)}
+          onSuccess={() => loadMessages(false, true)}
         />
       )}
 
@@ -433,6 +704,33 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
               </span>
             )}
 
+            {/* Controle manual de notificações */}
+            {notificationPermission !== 'granted' ? (
+              <button
+                type="button"
+                onClick={handleRequestNotification}
+                className="flex items-center gap-1.5 text-[10px] font-bold text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-xl border border-white/10 transition-colors cursor-pointer shrink-0"
+                title={
+                  notificationPermission === 'denied'
+                    ? 'Notificações bloqueadas no navegador. Clique para instruções.'
+                    : notificationPermission === 'unsupported'
+                    ? 'Navegador sem suporte a notificações.'
+                    : 'Ativar notificações de mensagens'
+                }
+              >
+                <Bell size={11} className={notificationPermission === 'denied' ? 'text-red-300' : 'text-[#f7941d]'} />
+                <span>Ativar notificações</span>
+              </button>
+            ) : (
+              <span
+                className="flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-950/40 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 shrink-0"
+                title="Notificações ativadas"
+              >
+                <Bell size={11} className="text-emerald-400" />
+                <span className="hidden sm:inline">Notificações ativas</span>
+              </span>
+            )}
+
             {/* Agendamento badge — se existir appointment confirmado */}
             {existingAppointment && (
               <button
@@ -442,6 +740,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
               >
                 <Calendar size={11} />
                 {new Date(existingAppointment.scheduledAt).toLocaleString('pt-BR', {
+                  timeZone: 'America/Sao_Paulo',
                   day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                 })}
               </button>
@@ -520,7 +819,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       </div>
 
       {/* Message Body Container */}
-      <div className="grow max-w-250 w-full mx-auto p-4 md:p-6 space-y-4 flex flex-col">
+      <div className="flex-1 overflow-y-auto max-w-250 w-full mx-auto p-4 md:p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 max-w-md mx-auto text-center border border-slate-100 shadow-sm space-y-4 my-auto">
             <div className="w-16 h-16 bg-[#103569]/5 rounded-full flex items-center justify-center text-[#103569] mx-auto border border-[#103569]/10">
@@ -585,8 +884,19 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
                     </p>
                   )}
                 </div>
-                <span className={`text-[9px] font-bold text-slate-400 ${msg.isMe ? 'mr-2' : 'ml-2'}`}>
+                <span className={`text-[9px] font-bold text-slate-400 ${msg.isMe ? 'mr-2' : 'ml-2'} flex items-center gap-1`}>
                   {formatMsgTime(msg.createdAt)}
+                  {msg.isMe && (
+                    <>
+                      {msg.status === 'sending' ? (
+                        <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse inline-block" title="Enviando..." />
+                      ) : (
+                        // "sent" (confirmado servidor) = Check simples.
+                        // Não mostramos CheckCheck sem confirmação real de leitura.
+                        <span title="Enviada"><Check size={12} className="text-slate-400 inline" /></span>
+                      )}
+                    </>
+                  )}
                 </span>
               </div>
             );
@@ -785,8 +1095,9 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
                       alert(res.error);
                     } else {
                       setPriceModalOpen(false);
-                      // Atualizar detalhes locais
-                      loadDetails();
+                      // Atualizar detalhes e mensagens locais de forma prioritária
+                      await loadDetails();
+                      await loadMessages(false, true);
                     }
                   } finally {
                     setPriceSubmitting(false);

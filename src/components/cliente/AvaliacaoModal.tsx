@@ -123,7 +123,7 @@ export function AvaliacaoModal({
                       <button
                         key={star}
                         type="button"
-                        onClick={() => setRating(star)}
+                        onClick={() => { setRating(star); setHoverRating(null); }}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(null)}
                         className="p-1 hover:scale-110 active:scale-95 transition-transform border-none bg-transparent cursor-pointer"
@@ -165,7 +165,7 @@ export function AvaliacaoModal({
                   maxLength={500}
                 />
                 <div className="flex justify-between items-center text-[11px] text-slate-400 font-semibold px-1">
-                  <span>Mínimo de detalhes para ajudar outros clientes</span>
+                  <span>Sua avaliação e seu nome serão exibidos no perfil público do profissional</span>
                   <span>{comment.length}/500</span>
                 </div>
               </div>

@@ -17,6 +17,7 @@ export type AppointmentResult = {
 
 function formatDateTimePtBr(date: Date): string {
   return date.toLocaleString('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -209,7 +210,7 @@ export async function getProfessionalAppointments() {
     if (!prof) return [];
 
     const appointments = await prisma.appointment.findMany({
-      where: { professionalId: prof.id },
+      where: { professionalId: prof.id, status: { not: 'CANCELADO' } },
       orderBy: { scheduledAt: 'asc' },
       include: {
         order: {
