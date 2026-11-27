@@ -625,8 +625,8 @@ export async function updateOrderPriceAction(
 /**
  * Exclui permanentemente um orçamento/pedido do cliente e todos os seus recursos vinculados.
  * Apenas pedidos em status PENDENTE ou CANCELADO podem ser excluídos.
- * Remove fotos do Storage e, em transação no banco: mensagens do chat, sala de chat,
- * agendamentos, imagens do pedido e o próprio pedido.
+ * O banco vem primeiro (em transação: mensagens do chat, sala de chat, agendamentos, imagens
+ * do pedido e o próprio pedido) e o Storage depois do commit, com falha do Storage apenas registrada em log.
  */
 export async function deleteOrderAction(orderId: string): Promise<ActionResponse> {
   try {
@@ -665,23 +665,9 @@ export async function deleteOrderAction(orderId: string): Promise<ActionResponse
       return { error: 'Este pedido não pode ser excluído neste status.' };
     }
 
-    // 1. Remover arquivos de fotos do Supabase Storage
-    const storagePaths = order.images
-      .map((img) => img.storagePath)
-      .filter((p): p is string => Boolean(p));
+    const storagePaths = order.images.map((img) => img.storagePath).filter((p): p is string => Boolean(p));
 
-    if (storagePaths.length > 0) {
-      try {
-        await deleteFromStorage(storagePaths, ORDER_IMAGE_BUCKET);
-      } catch (storageErr) {
-        console.error('[deleteOrderAction] Falha ao remover fotos do Storage:', storageErr);
-        return {
-          error: 'Falha ao remover fotos do pedido. O pedido não foi excluído para evitar arquivos órfãos.',
-        };
-      }
-    }
-
-    // 2. Transação atômica no banco de dados para limpar dependências
+    // 1. Transação atômica no banco de dados para limpar dependências
     await prisma.$transaction(async (tx) => {
       // (a) Chat: se houver chatRoom vinculado ao pedido, remover mensagens e a sala
       const chatRoom = await tx.chatRoom.findUnique({
@@ -713,6 +699,19 @@ export async function deleteOrderAction(orderId: string): Promise<ActionResponse
         where: { id: orderId },
       });
     });
+
+    // 2. Limpeza de arquivos de fotos no Supabase Storage após o commit
+    if (storagePaths.length > 0) {
+      try {
+        await deleteFromStorage(storagePaths, ORDER_IMAGE_BUCKET);
+      } catch (storageErr) {
+        console.error(
+          '[deleteOrderAction] Pedido excluído, mas falhou a remoção de fotos órfãs no Storage:',
+          storagePaths,
+          storageErr
+        );
+      }
+    }
 
     // 3. Notifica o profissional em tempo real via SSE
     if (order.professional?.userId) {
