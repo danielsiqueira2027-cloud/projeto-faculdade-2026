@@ -16,8 +16,7 @@ import {
   MapPin,
   CircleDollarSign,
   Loader2,
-  RefreshCw,
-  Flag
+  RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,7 +54,6 @@ export default function ProfessionalOrdersPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
   const [chatLoadingId, setChatLoadingId] = useState<string | null>(null);
-  const [reportToast, setReportToast] = useState(false);
 
   const handleStartChat = async (orderId: string) => {
     try {
@@ -107,10 +105,18 @@ export default function ProfessionalOrdersPage() {
 
   // Filtragem
   const filteredOrders = orders.filter(order => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return order.status === activeTab;
+
+    const cleanTerm = term.replace(/^#+/, '').trim();
     const matchesSearch = 
-      order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.serviceType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchTerm.toLowerCase());
+      order.clientName.toLowerCase().includes(term) ||
+      order.serviceType.toLowerCase().includes(term) ||
+      order.id.toLowerCase().includes(term) ||
+      (cleanTerm.length > 0 && (
+        order.id.toLowerCase().includes(cleanTerm) ||
+        order.id.slice(0, 8).toLowerCase().includes(cleanTerm)
+      ));
     
     return matchesSearch && order.status === activeTab;
   });
@@ -176,16 +182,6 @@ export default function ProfessionalOrdersPage() {
           Sincronizar Pedidos
         </Button>
       </div>
-
-      {/* Denúncia / Reclamação Toast */}
-      {reportToast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 font-bold border bg-amber-50 text-amber-800 border-amber-200">
-            <Flag size={18} className="text-amber-500 shrink-0" />
-            <span>Reclamação/denúncia registrada. Nossa equipe de suporte entrará em contato.</span>
-          </div>
-        </div>
-      )}
 
       {/* Stats & Status Integrados em um só local */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -319,16 +315,6 @@ export default function ProfessionalOrdersPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {(order.status === 'EM_ANDAMENTO' || order.status === 'CONCLUIDO') && (
-                    <button
-                      type="button"
-                      onClick={() => { setReportToast(true); setTimeout(() => setReportToast(false), 4000); }}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors border-none bg-transparent cursor-pointer"
-                      title="Denunciar/Reclamar"
-                    >
-                      <Flag size={15} />
-                    </button>
-                  )}
                   <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
                     order.urgency === 'Alta' || order.urgency === 'Urgente' || order.urgency === 'Imediato'
                       ? 'bg-red-50 text-red-500 border border-red-100'

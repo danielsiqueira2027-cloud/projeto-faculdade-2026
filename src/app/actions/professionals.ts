@@ -113,55 +113,11 @@ export async function searchProfessionals(
       };
     }
 
-    if (query) {
-      const q = query.trim();
-      const words = q.split(/\s+/).filter(Boolean);
-      const orConditions: Prisma.ProfessionalWhereInput[] = [
-        {
-          user: {
-            name: {
-              contains: q,
-              mode: 'insensitive',
-            },
-          },
-        },
-        {
-          specialty: {
-            contains: q,
-            mode: 'insensitive',
-          },
-        },
-        {
-          categories: {
-            some: {
-              category: {
-                name: {
-                  contains: q,
-                  mode: 'insensitive',
-                },
-              },
-            },
-          },
-        },
-        {
-          bio: {
-            contains: q,
-            mode: 'insensitive',
-          },
-        },
-      ];
-
-      // Se pesquisou mais de uma palavra (ex: nome e sobrenome), busca todos os termos no nome
-      if (words.length > 1) {
-        orConditions.push({
-          AND: words.map((w) => ({
-            user: { name: { contains: w, mode: 'insensitive' } },
-          })),
-        });
-      }
-
-      where.OR = orConditions;
-    }
+    // Nota: O filtro textual com contains do Prisma usa ILIKE no Postgres, que não ignora
+    // acentos (ex: "Joao" não encontra "João"). Para não excluir candidatos válidos no banco
+    // sem alterar o schema/extensões, os filtros de visibilidade, UF, categoria e cidade continuam
+    // no banco, e a filtragem textual sem acento (nome, bio, especialidade, categorias) é aplicada
+    // em memória após a consulta estrutural.
 
     // Filtro refinado de município sem diferença de caixa ou acentuação
     const cleanCidade = (cidade || '').trim().slice(0, 100);
@@ -197,12 +153,58 @@ export async function searchProfessionals(
       },
     });
 
-    const filtered = normalizedCidade
+    // Filtro em memória por cidade sem acento
+    let filtered = normalizedCidade
       ? professionals.filter((prof) => {
           const profCity = normalizeLocationText(prof.addressCity);
           return profCity === normalizedCidade;
         })
       : professionals;
+
+    // Filtro em memória por query sem acento (cobre "Joao" ↔ "João", bio, especialidade e categorias)
+    if (query) {
+      const q = query.trim();
+      const qNorm = normalizeLocationText(q);
+      const words = qNorm.split(/\s+/).filter(Boolean);
+
+      if (qNorm) {
+        filtered = filtered.filter((prof) => {
+          const nameNorm = normalizeLocationText(prof.user.name);
+          const specialtyNorm = normalizeLocationText(prof.specialty);
+          const bioNorm = normalizeLocationText(prof.bio);
+          const catNorms = prof.categories.map((c) => normalizeLocationText(c.category.name));
+
+          // 1. Busca termo/frase completa em qualquer campo relevante
+          const matchPhrase =
+            nameNorm.includes(qNorm) ||
+            specialtyNorm.includes(qNorm) ||
+            bioNorm.includes(qNorm) ||
+            catNorms.some((c) => c.includes(qNorm));
+
+          if (matchPhrase) return true;
+
+          // 2. Múltiplos termos no nome (ex: nome e sobrenome)
+          if (words.length > 1 && words.every((w) => nameNorm.includes(w))) {
+            return true;
+          }
+
+          // 3. Múltiplos termos distribuídos nos campos
+          if (
+            words.length > 1 &&
+            words.every((w) =>
+              nameNorm.includes(w) ||
+              bioNorm.includes(w) ||
+              specialtyNorm.includes(w) ||
+              catNorms.some((c) => c.includes(w))
+            )
+          ) {
+            return true;
+          }
+
+          return false;
+        });
+      }
+    }
 
     return filtered.map((prof) => {
       return {

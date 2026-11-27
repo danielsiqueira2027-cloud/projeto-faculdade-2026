@@ -12,13 +12,32 @@ const MAX_ORDER_IMAGES = 2;
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-function formatScheduledAt(d: Date | null): string {
+function formatScheduledAt(d: Date | null, hasAppointment: boolean = false): string {
   if (!d) return 'Sem agendamento';
-  const hasTime = d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
-  if (hasTime) {
-    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  if (hasAppointment) {
+    return d.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
-  return d.toLocaleDateString('pt-BR');
+  // Sem agendamento confirmado (data sem hora sugerida pelo cliente no orçamento)
+  // Caso legado: new Date('YYYY-MM-DD') gravava 00:00:00.000Z (UTC meia-noite).
+  // Em America/Sao_Paulo (UTC-3), isso viraria o dia anterior às 21:00.
+  // Formatando em UTC, recuperamos exatamente o dia selecionado pelo cliente.
+  if (
+    d.getUTCHours() === 0 &&
+    d.getUTCMinutes() === 0 &&
+    d.getUTCSeconds() === 0 &&
+    d.getUTCMilliseconds() === 0
+  ) {
+    return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+  }
+  // Caso novo: gravado com offset local (ex: 03:00:00.000Z = 00:00 em America/Sao_Paulo).
+  return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 }
 
 export type ActionResponse = {
@@ -85,13 +104,34 @@ export async function createOrderAction(data: {
     // Validar data agendada
     let parsedDate: Date | null = null;
     if (data.scheduledAt && data.scheduledAt.trim() !== '') {
-      const dateObj = new Date(data.scheduledAt);
+      const raw = data.scheduledAt.trim();
+      const dateObj = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+        ? new Date(`${raw}T00:00:00-03:00`)
+        : new Date(raw);
+
       if (isNaN(dateObj.getTime())) {
         return { error: 'A data agendada fornecida é inválida.' };
       }
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (dateObj < today) {
+
+      // Calcula "hoje" em America/Sao_Paulo no formato YYYY-MM-DD
+      const todayBrt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date());
+
+      // Extrai YYYY-MM-DD da data informada em America/Sao_Paulo
+      const inputDayBrt = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+        ? raw
+        : new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'America/Sao_Paulo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).format(dateObj);
+
+      if (inputDayBrt < todayBrt) {
         return { error: 'A data agendada não pode ser no passado.' };
       }
       parsedDate = dateObj;
@@ -106,7 +146,7 @@ export async function createOrderAction(data: {
         description: data.description,
         locationCep: data.cep,
         address: data.address,
-        urgency: data.urgency || 'Normal',
+        urgency: data.urgency || 'Baixa',
         scheduledAt: parsedDate,
         period: data.period || null,
       },
@@ -261,6 +301,12 @@ export async function getProfessionalOrders() {
           orderBy: { position: 'asc' },
           select: { id: true, storagePath: true, position: true },
         },
+        appointments: {
+          where: { status: { not: 'CANCELADO' } },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: { id: true, status: true },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -273,6 +319,7 @@ export async function getProfessionalOrders() {
 
     return orders.map((order) => {
       const contactReleased = order.status === 'EM_ANDAMENTO';
+      const hasAppointment = order.appointments.length > 0;
       return {
         id: order.id,
         clientName: order.client.user.name,
@@ -282,13 +329,13 @@ export async function getProfessionalOrders() {
       description: order.description || '',
       locationCep: order.locationCep || '',
       address: order.address || '',
-      urgency: order.urgency || 'Normal',
+      urgency: order.urgency || 'Baixa',
       agreedPrice: order.agreedPrice 
         ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
         : 'A combinar',
-      scheduledAt: formatScheduledAt(order.scheduledAt),
+      scheduledAt: formatScheduledAt(order.scheduledAt, hasAppointment),
       status: order.status,
-      createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
+      createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
       avatar: order.client.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
       images: order.images.map((img) => toPublicUrl(img.storagePath)),
@@ -334,6 +381,12 @@ export async function getClientOrders() {
             orderBy: { position: 'asc' },
             select: { id: true, storagePath: true, position: true },
           },
+          appointments: {
+            where: { status: { not: 'CANCELADO' } },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: { id: true, status: true },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -352,26 +405,22 @@ export async function getClientOrders() {
       `${supabaseUrl}/storage/v1/object/public/${ORDER_IMAGE_BUCKET}/${path}`;
 
     return orders.map((order) => {
-      const contactReleased = order.status === 'EM_ANDAMENTO';
+      const hasAppointment = order.appointments.length > 0;
       return {
         id: order.id,
         professionalId: order.professional.id,
         professionalName: order.professional.user.name,
-        professionalEmail: order.professional.user.email,
-        professionalPhone: contactReleased
-          ? (order.professional.phone || order.professional.user.phone || '')
-          : '',
-      serviceType: order.serviceType || 'Serviço',
+        serviceType: order.serviceType || 'Serviço',
       description: order.description || '',
       locationCep: order.locationCep || '',
       address: order.address || '',
-      urgency: order.urgency || 'Normal',
+      urgency: order.urgency || 'Baixa',
       agreedPrice: order.agreedPrice 
         ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
         : 'A combinar',
-      scheduledAt: formatScheduledAt(order.scheduledAt),
+      scheduledAt: formatScheduledAt(order.scheduledAt, hasAppointment),
       status: order.status,
-      createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
+      createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
       avatar: order.professional.user.name.charAt(0).toUpperCase(),
       period: order.period || '',
       hasTestimonial: Boolean(
@@ -416,9 +465,14 @@ export async function updateOrderStatusAction(
       updateData.agreedPrice = agreedPrice;
     }
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: updateData,
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({ where: { id: orderId }, data: updateData });
+      if (status === 'CANCELADO') {
+        await tx.appointment.updateMany({
+          where: { orderId, status: { not: 'CANCELADO' } },
+          data: { status: 'CANCELADO' },
+        });
+      }
     });
 
     // Notificar o cliente

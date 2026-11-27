@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   X,
   Calendar,
@@ -82,10 +82,25 @@ export default function AppointmentModal({
   // ── Inicializa a data ────────────────────────────────────────────────────
   const getInitialDate = (): Date => {
     // Prioridade: agendamento existente > data sugerida pelo cliente no orçamento > hoje
-    const source = existingAppointment?.scheduledAt ?? suggestedAt ?? null;
-    if (source) {
-      const d = new Date(source);
+    if (existingAppointment?.scheduledAt) {
+      const d = new Date(existingAppointment.scheduledAt);
       if (!isNaN(d.getTime())) return d;
+    }
+    if (suggestedAt) {
+      const d = new Date(suggestedAt);
+      if (!isNaN(d.getTime())) {
+        // Se for data antiga sem hora gravada em UTC (00:00:00.000Z),
+        // em UTC d representa exatamente o dia selecionado pelo cliente no formulário.
+        if (
+          d.getUTCHours() === 0 &&
+          d.getUTCMinutes() === 0 &&
+          d.getUTCSeconds() === 0 &&
+          d.getUTCMilliseconds() === 0
+        ) {
+          return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+        }
+        return d;
+      }
     }
     return new Date();
   };
@@ -97,14 +112,6 @@ export default function AppointmentModal({
   const [selectedTime, setSelectedTime] = useState<string>(() => {
     if (existingAppointment?.scheduledAt) {
       const d = new Date(existingAppointment.scheduledAt);
-      if (!isNaN(d.getTime())) {
-        const hh = String(d.getHours()).padStart(2, '0');
-        const mm = d.getMinutes() >= 30 ? '30' : '00';
-        return `${hh}:${mm}`;
-      }
-    }
-    if (suggestedAt) {
-      const d = new Date(suggestedAt);
       if (!isNaN(d.getTime())) {
         const hh = String(d.getHours()).padStart(2, '0');
         const mm = d.getMinutes() >= 30 ? '30' : '00';
@@ -156,13 +163,12 @@ export default function AppointmentModal({
     setError(null);
     setConflictAt(null);
 
-    // Use local date string to avoid UTC timezone offset (UTC-3 in Brazil would shift +3h)
     const pad = (n: number) => String(n).padStart(2, '0');
-    const localIso = `${calYear}-${pad(calMonth + 1)}-${pad(selectedDay)}T${pad(hh)}:${pad(mm)}:00.000`;
+    const scheduledIso = `${calYear}-${pad(calMonth + 1)}-${pad(selectedDay)}T${pad(hh)}:${pad(mm)}:00-03:00`;
 
     const result = await createOrUpdateAppointment({
       orderId,
-      scheduledAt: localIso,
+      scheduledAt: scheduledIso,
     });
 
     setSubmitting(false);

@@ -360,7 +360,7 @@ export async function getChatRoomDetails(orderId: string) {
     agreedPrice: order.agreedPrice 
       ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
       : 'A combinar',
-    scheduledAt: order.scheduledAt ? new Date(order.scheduledAt).toLocaleString('pt-BR') : 'Sem agendamento',
+    scheduledAt: order.scheduledAt ? new Date(order.scheduledAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) : 'Sem agendamento',
     interlocutor,
     myRole: isClient ? 'client' : 'professional',
     clientName: order.client.user.name,

@@ -42,26 +42,69 @@ function firstDayOfMonth(year: number, month: number) {
   return new Date(year, month, 1).getDay();
 }
 
+/**
+ * Extrai componentes de data/hora no fuso America/Sao_Paulo (UTC-3),
+ * garantindo consistência em qualquer ambiente (local ou nuvem).
+ */
+function getSaoPauloDateParts(d: Date | string): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  dateKey: string;
+} {
+  const date = typeof d === 'string' ? new Date(d) : d;
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(date);
+  const getVal = (type: string) => {
+    const v = parts.find((p) => p.type === type)?.value;
+    return v ? parseInt(v, 10) : 0;
+  };
+  const year = getVal('year');
+  const month = getVal('month') - 1; // 0-indexed (0=Jan..11=Dez)
+  const day = getVal('day');
+  const hour = getVal('hour') % 24;
+  const minute = getVal('minute');
+  const dateKey = `${year}-${month}-${day}`;
+  return { year, month, day, hour, minute, dateKey };
+}
+
 export default function AgendaProfissionalPage() {
   const router = useRouter();
-  const today = new Date();
+  const todayParts = getSaoPauloDateParts(new Date());
+  const todayKey = todayParts.dateKey;
 
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [calYear,  setCalYear]  = useState(today.getFullYear());
-  const [calMonth, setCalMonth] = useState(today.getMonth());
-  const [selectedDate, setSelectedDate] = useState<string>(
-    `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`
-  );
+  const [calYear,  setCalYear]  = useState(todayParts.year);
+  const [calMonth, setCalMonth] = useState(todayParts.month);
+  const [selectedDate, setSelectedDate] = useState<string>(todayKey);
 
   useEffect(() => {
     async function load() {
       setLoading(true);
       const data = await getProfessionalAppointments();
-      setAppointments(data as any[]);
+      setAppointments(data as AppointmentItem[]);
       setLoading(false);
     }
     load();
+
+    const eventSource = new EventSource('/api/sse');
+    eventSource.addEventListener('order', () => {
+      load();
+    });
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   // Navega meses
@@ -74,14 +117,14 @@ export default function AgendaProfissionalPage() {
     else setCalMonth(m => m + 1);
   };
 
-  // Dias que têm agendamento neste mês/ano
+  // Dias que têm agendamento neste mês/ano em America/Sao_Paulo
   const appointmentDays = new Set(
     appointments
       .filter(a => {
-        const d = new Date(a.scheduledAt);
-        return d.getFullYear() === calYear && d.getMonth() === calMonth;
+        const p = getSaoPauloDateParts(a.scheduledAt);
+        return p.year === calYear && p.month === calMonth;
       })
-      .map(a => new Date(a.scheduledAt).getDate())
+      .map(a => getSaoPauloDateParts(a.scheduledAt).day)
   );
 
   // Agendamentos para o dia selecionado
@@ -91,29 +134,31 @@ export default function AgendaProfissionalPage() {
   })();
 
   const appointmentsForSelected = appointments.filter(a => {
-    const d = new Date(a.scheduledAt);
+    const p = getSaoPauloDateParts(a.scheduledAt);
     return (
-      d.getFullYear() === selectedDay.year &&
-      d.getMonth()    === selectedDay.month &&
-      d.getDate()     === selectedDay.day
+      p.year === selectedDay.year &&
+      p.month === selectedDay.month &&
+      p.day === selectedDay.day
     );
   }).sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
 
-  // Agendamentos de hoje
+  // Agendamentos de hoje em America/Sao_Paulo
   const todayAppointments = appointments.filter(a => {
-    const d = new Date(a.scheduledAt);
+    const p = getSaoPauloDateParts(a.scheduledAt);
     return (
-      d.getFullYear() === today.getFullYear() &&
-      d.getMonth()    === today.getMonth() &&
-      d.getDate()     === today.getDate()
+      p.year === todayParts.year &&
+      p.month === todayParts.month &&
+      p.day === todayParts.day
     );
   }).sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
 
-  // Próximos agendamentos (futuro, exceto hoje)
+  // Próximos agendamentos (futuro em America/Sao_Paulo, exceto hoje)
   const upcomingAppointments = appointments.filter(a => {
-    const d = new Date(a.scheduledAt);
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
-    return d >= todayStart;
+    const p = getSaoPauloDateParts(a.scheduledAt);
+    if (p.year > todayParts.year) return true;
+    if (p.year === todayParts.year && p.month > todayParts.month) return true;
+    if (p.year === todayParts.year && p.month === todayParts.month && p.day > todayParts.day) return true;
+    return false;
   }).slice(0, 5);
 
   // Calendar grid
@@ -124,21 +169,21 @@ export default function AgendaProfissionalPage() {
     ...Array.from({ length: totalDays }, (_, i) => i + 1),
   ];
 
-  const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-
   function AppointmentCard({ a }: { a: AppointmentItem }) {
-    const dt = new Date(a.scheduledAt);
-    const timeStr = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const p = getSaoPauloDateParts(a.scheduledAt);
+    const hh = String(p.hour).padStart(2, '0');
+    const mm = String(p.minute).padStart(2, '0');
+    const isAm = p.hour < 12;
 
     return (
       <div className="flex gap-6 relative z-10">
         {/* Time column */}
         <div className="w-16 pt-3 text-right shrink-0">
           <span className="text-lg font-black text-[#103569]">
-            {timeStr.split(':')[0]}:{timeStr.split(':')[1]}
+            {hh}:{mm}
           </span>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-            {dt.getHours() < 12 ? 'AM' : 'PM'}
+            {isAm ? 'AM' : 'PM'}
           </p>
         </div>
         {/* Dot */}
@@ -266,7 +311,10 @@ export default function AgendaProfissionalPage() {
                     const isToday = cellKey === todayKey;
                     const isSelected = cellKey === selectedDate;
                     const hasEvent = appointmentDays.has(day);
-                    const isPast = new Date(calYear, calMonth, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    const isPast =
+                      calYear < todayParts.year ||
+                      (calYear === todayParts.year && calMonth < todayParts.month) ||
+                      (calYear === todayParts.year && calMonth === todayParts.month && day < todayParts.day);
 
                     return (
                       <button
@@ -296,20 +344,22 @@ export default function AgendaProfissionalPage() {
                 <CardContent className="p-5 space-y-3">
                   <p className="text-[10px] font-black uppercase tracking-widest text-[#103569]/40">Próximos</p>
                   {upcomingAppointments.map(a => {
-                    const d = new Date(a.scheduledAt);
+                    const p = getSaoPauloDateParts(a.scheduledAt);
+                    const hh = String(p.hour).padStart(2, '0');
+                    const mm = String(p.minute).padStart(2, '0');
                     return (
                       <div
                         key={a.id}
-                        onClick={() => setSelectedDate(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`)}
+                        onClick={() => setSelectedDate(p.dateKey)}
                         className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors"
                       >
                         <div className="w-8 h-8 rounded-lg bg-[#f7941d]/10 text-[#f7941d] flex items-center justify-center text-xs font-black shrink-0">
-                          {d.getDate()}
+                          {p.day}
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-black text-[#103569] truncate">{a.clientName}</p>
                           <p className="text-[10px] text-slate-400 font-bold">
-                            {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · {a.serviceName}
+                            {hh}:{mm} · {a.serviceName}
                           </p>
                         </div>
                       </div>

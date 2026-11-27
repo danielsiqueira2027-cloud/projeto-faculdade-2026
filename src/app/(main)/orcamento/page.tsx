@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useSyncExternalStore, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -29,6 +29,22 @@ interface Endereco {
   estado: string;
 }
 
+function getTodaySaoPauloDateString(): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+  } catch {
+    const d = new Date();
+    return d.toISOString().split('T')[0];
+  }
+}
+
+const subscribeNoop = () => () => {};
+
 function OrcamentoForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -46,6 +62,7 @@ function OrcamentoForm() {
   const [serviceType, setServiceType] = useState('Residencial');
   const [urgency, setUrgency] = useState('Baixa');
   const [scheduledAt, setScheduledAt] = useState('');
+  const minDate = useSyncExternalStore(subscribeNoop, getTodaySaoPauloDateString, () => '');
   const [period, setPeriod] = useState('Manhã');
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [endereco, setEndereco] = useState<Endereco>({
@@ -156,10 +173,8 @@ function OrcamentoForm() {
     }
 
     if (scheduledAt) {
-      const dateObj = new Date(scheduledAt);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (dateObj < today) {
+      const todayBrt = getTodaySaoPauloDateString();
+      if (scheduledAt < todayBrt) {
         setToast({ message: 'A data agendada não pode ser no passado.', type: 'error' });
         return;
       }
@@ -586,6 +601,7 @@ function OrcamentoForm() {
                         <input
                           type="date"
                           value={scheduledAt}
+                          min={minDate || undefined}
                           onChange={(e) => setScheduledAt(e.target.value)}
                           className={`${fieldClass} pl-12`}
                         />

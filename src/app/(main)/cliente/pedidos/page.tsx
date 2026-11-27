@@ -3,10 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
   MessageSquare, 
-  Phone, 
-  Mail, 
   Calendar,
   ClipboardList,
   TrendingUp,
@@ -21,7 +18,6 @@ import {
   Star,
   Trash2,
   CheckCircle2,
-  Flag,
   UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -39,8 +35,6 @@ interface OrderItem {
   id: string;
   professionalId: string;
   professionalName: string;
-  professionalEmail: string;
-  professionalPhone: string;
   serviceType: string;
   description: string;
   locationCep: string;
@@ -69,7 +63,6 @@ export default function ClientOrdersPage() {
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [reportToast, setReportToast] = useState(false);
   const router = useRouter();
 
   const handleConfirmDelete = async () => {
@@ -166,12 +159,18 @@ export default function ClientOrdersPage() {
 
   // Filtragem
   const filteredOrders = orders.filter(order => {
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return order.status === activeTab;
+
+    const cleanTerm = term.replace(/^#+/, '').trim();
     const matchesSearch = 
       order.professionalName.toLowerCase().includes(term) ||
       order.serviceType.toLowerCase().includes(term) ||
       order.id.toLowerCase().includes(term) ||
-      order.id.slice(0, 8).toLowerCase().includes(term);
+      (cleanTerm.length > 0 && (
+        order.id.toLowerCase().includes(cleanTerm) ||
+        order.id.slice(0, 8).toLowerCase().includes(cleanTerm)
+      ));
     
     return matchesSearch && order.status === activeTab;
   });
@@ -355,16 +354,6 @@ export default function ClientOrdersPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {(order.status === 'EM_ANDAMENTO' || order.status === 'CONCLUIDO') && (
-                    <button
-                      type="button"
-                      onClick={() => { setReportToast(true); setTimeout(() => setReportToast(false), 4000); }}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-slate-300 hover:text-red-400 transition-colors border-none bg-transparent cursor-pointer"
-                      title="Denunciar/Reclamar"
-                    >
-                      <Flag size={15} />
-                    </button>
-                  )}
                   <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${
                     order.urgency === 'Alta' || order.urgency === 'Urgente' || order.urgency === 'Imediato'
                       ? 'bg-red-50 text-red-500 border border-red-100'
@@ -559,16 +548,6 @@ export default function ClientOrdersPage() {
         loading={isDeleteLoading}
         error={deleteError}
       />
-
-      {/* Denúncia / Reclamação Toast */}
-      {reportToast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[260] animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 font-bold border bg-amber-50 text-amber-800 border-amber-200">
-            <Flag size={18} className="text-amber-500 shrink-0" />
-            <span>Reclamação/denúncia registrada. Nossa equipe de suporte entrará em contato.</span>
-          </div>
-        </div>
-      )}
 
       {/* Toast de Feedback */}
       {toast && (
