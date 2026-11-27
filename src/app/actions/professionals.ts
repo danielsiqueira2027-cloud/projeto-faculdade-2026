@@ -114,18 +114,21 @@ export async function searchProfessionals(
     }
 
     if (query) {
-      const q = query.trim().toLowerCase();
-      where.OR = [
+      const q = query.trim();
+      const words = q.split(/\s+/).filter(Boolean);
+      const orConditions: Prisma.ProfessionalWhereInput[] = [
         {
           user: {
             name: {
               contains: q,
+              mode: 'insensitive',
             },
           },
         },
         {
           specialty: {
             contains: q,
+            mode: 'insensitive',
           },
         },
         {
@@ -134,12 +137,30 @@ export async function searchProfessionals(
               category: {
                 name: {
                   contains: q,
+                  mode: 'insensitive',
                 },
               },
             },
           },
         },
+        {
+          bio: {
+            contains: q,
+            mode: 'insensitive',
+          },
+        },
       ];
+
+      // Se pesquisou mais de uma palavra (ex: nome e sobrenome), busca todos os termos no nome
+      if (words.length > 1) {
+        orConditions.push({
+          AND: words.map((w) => ({
+            user: { name: { contains: w, mode: 'insensitive' } },
+          })),
+        });
+      }
+
+      where.OR = orConditions;
     }
 
     // Filtro refinado de município sem diferença de caixa ou acentuação

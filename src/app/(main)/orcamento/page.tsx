@@ -44,7 +44,7 @@ function OrcamentoForm() {
   // Form states
   const [description, setDescription] = useState('');
   const [serviceType, setServiceType] = useState('Residencial');
-  const [urgency, setUrgency] = useState('Sem pressa');
+  const [urgency, setUrgency] = useState('Baixa');
   const [scheduledAt, setScheduledAt] = useState('');
   const [period, setPeriod] = useState('Manhã');
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
@@ -616,9 +616,9 @@ function OrcamentoForm() {
                           onChange={(e) => setUrgency(e.target.value)}
                           className={`${fieldClass} appearance-none cursor-pointer`}
                         >
-                          <option value="Urgente">Urgente (O mais rápido possível)</option>
-                          <option value="Dentro de 15 dias">Dentro de 15 dias</option>
-                          <option value="Sem pressa">Sem pressa / Flexível</option>
+                          <option value="Alta">Alta — O mais rápido possível</option>
+                          <option value="Média">Média — Dentro de 15 dias</option>
+                          <option value="Baixa">Baixa — Sem pressa / Flexível</option>
                         </select>
                         <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[#103569]/30 pointer-events-none" size={18} />
                       </div>

@@ -12,6 +12,15 @@ const MAX_ORDER_IMAGES = 2;
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+function formatScheduledAt(d: Date | null): string {
+  if (!d) return 'Sem agendamento';
+  const hasTime = d.getHours() !== 0 || d.getMinutes() !== 0 || d.getSeconds() !== 0;
+  if (hasTime) {
+    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString('pt-BR');
+}
+
 export type ActionResponse = {
   success?: boolean;
   error?: string;
@@ -277,7 +286,7 @@ export async function getProfessionalOrders() {
       agreedPrice: order.agreedPrice 
         ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
         : 'A combinar',
-      scheduledAt: order.scheduledAt ? new Date(order.scheduledAt).toLocaleString('pt-BR') : 'Sem agendamento',
+      scheduledAt: formatScheduledAt(order.scheduledAt),
       status: order.status,
       createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
       avatar: order.client.user.name.charAt(0).toUpperCase(),
@@ -360,7 +369,7 @@ export async function getClientOrders() {
       agreedPrice: order.agreedPrice 
         ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
         : 'A combinar',
-      scheduledAt: order.scheduledAt ? new Date(order.scheduledAt).toLocaleString('pt-BR') : 'Sem agendamento',
+      scheduledAt: formatScheduledAt(order.scheduledAt),
       status: order.status,
       createdAt: new Date(order.createdAt).toLocaleDateString('pt-BR'),
       avatar: order.professional.user.name.charAt(0).toUpperCase(),

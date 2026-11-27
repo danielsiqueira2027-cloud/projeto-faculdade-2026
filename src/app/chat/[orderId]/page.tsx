@@ -18,6 +18,8 @@ import {
   X,
   MessageSquare,
   Plus,
+  Check,
+  CheckCheck,
 } from 'lucide-react';
 import { getChatRoomDetails, sendMessageAction } from '@/app/actions/chat';
 import { getCurrentUserAction } from '@/app/actions/auth';
@@ -33,6 +35,7 @@ interface MessageItem {
   content: string;
   createdAt: Date | string;
   isMe: boolean;
+  status?: 'sending' | 'sent' | 'read';
 }
 
 interface InterlocutorDetails {
@@ -128,6 +131,13 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Solicitar permissão de notificação do browser
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
   // Verifica a sessão do usuário
   useEffect(() => {
     async function checkAuth() {
@@ -164,12 +174,21 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       if (!res.ok) throw new Error('Falha ao consultar mensagens');
       const data = await res.json();
       
-      setMessages(data.messages);
+      setMessages(prev => {
+        // Preserva mensagens otimistas locais que ainda estão sendo enviadas
+        const sendingTemp = prev.filter(m => m.status === 'sending');
+        const serverMsgs = data.messages || [];
+        if (sendingTemp.length === 0) return serverMsgs;
+        return [...serverMsgs, ...sendingTemp];
+      });
       
-      // Atualiza o status do pedido se mudou na polling
+      // Atualiza o status e preço do pedido se mudou na polling
       setDetails(prev => {
-        if (!prev || prev.status === data.orderStatus) return prev;
-        return { ...prev, status: data.orderStatus };
+        if (!prev) return prev;
+        const nextStatus = data.orderStatus ?? prev.status;
+        const nextPrice = data.agreedPrice ?? prev.agreedPrice;
+        if (prev.status === nextStatus && prev.agreedPrice === nextPrice) return prev;
+        return { ...prev, status: nextStatus, agreedPrice: nextPrice };
       });
 
       // Atualiza dados de agendamento vindos da API
@@ -180,11 +199,20 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
         setTimeout(() => scrollToBottom('instant'), 100);
       }
     } catch (err) {
-      console.error('Erro no short-polling do chat:', err);
+      console.error('Erro no polling do chat:', err);
     } finally {
       if (isInitial) setLoading(false);
     }
   }, [orderId, scrollToBottom]);
+
+  // Polling automático periódico (fallback robusto para garantir sincronização entre usuários)
+  useEffect(() => {
+    if (!isLogged) return;
+    const interval = setInterval(() => {
+      loadMessages();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isLogged, loadMessages]);
 
   useEffect(() => {
     if (!isLogged) return;
@@ -213,6 +241,16 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
             return [...prev, data.message];
           });
           setTimeout(() => scrollToBottom('smooth'), 50);
+          // Notificação do browser para mensagens de outros usuários
+          if (!data.message?.isMe && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            const body = data.message?.type === 'imagem'
+              ? '📷 Imagem enviada'
+              : (data.message?.content || '').substring(0, 80);
+            new Notification(`Nova mensagem — ${data.message?.senderName || 'ClickServiço'}`, {
+              body,
+              icon: '/imgs/misc/logo.png',
+            });
+          }
         }
       } catch (err) {
         console.error('Erro ao processar mensagem via SSE:', err);
@@ -254,7 +292,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     }
   }, [messages.length, scrollToBottom]);
 
-  // Trata envio de texto
+  // Trata envio de texto com atualização otimista instantânea
   const handleSendText = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!textInput.trim() || sending) return;
@@ -263,15 +301,30 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
     setTextInput('');
     setSending(true);
 
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: MessageItem = {
+      id: tempId,
+      senderId: 'me',
+      senderName: 'Você',
+      type: 'texto',
+      content,
+      createdAt: new Date(),
+      isMe: true,
+      status: 'sending',
+    };
+
+    setMessages(prev => [...prev, optimisticMsg]);
+    setTimeout(() => scrollToBottom('smooth'), 50);
+
     try {
       const newMsg = await sendMessageAction(orderId, 'texto', content);
       setMessages(prev => {
-        if (prev.some(m => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg as MessageItem];
+        return prev.map(m => m.id === tempId ? { ...(newMsg as MessageItem), status: 'sent' } : m);
       });
       setTimeout(() => scrollToBottom('smooth'), 50);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Erro ao enviar mensagem');
+      setMessages(prev => prev.filter(m => m.id !== tempId));
       setTextInput(content);
     } finally {
       setSending(false);
@@ -348,7 +401,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
   const isProfessional = details.myRole === 'professional';
 
   return (
-    <div className="min-h-screen bg-[#fefccf]/10 flex flex-col font-sans relative">
+    <div className="h-screen bg-[#fefccf]/10 flex flex-col font-sans relative overflow-hidden">
       
       {/* Appointment Modal */}
       {appointmentModalOpen && (
@@ -520,7 +573,7 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
       </div>
 
       {/* Message Body Container */}
-      <div className="grow max-w-250 w-full mx-auto p-4 md:p-6 space-y-4 flex flex-col">
+      <div className="flex-1 overflow-y-auto max-w-250 w-full mx-auto p-4 md:p-6 space-y-4">
         {messages.length === 0 ? (
           <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 max-w-md mx-auto text-center border border-slate-100 shadow-sm space-y-4 my-auto">
             <div className="w-16 h-16 bg-[#103569]/5 rounded-full flex items-center justify-center text-[#103569] mx-auto border border-[#103569]/10">
@@ -585,8 +638,19 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
                     </p>
                   )}
                 </div>
-                <span className={`text-[9px] font-bold text-slate-400 ${msg.isMe ? 'mr-2' : 'ml-2'}`}>
+                <span className={`text-[9px] font-bold text-slate-400 ${msg.isMe ? 'mr-2' : 'ml-2'} flex items-center gap-1`}>
                   {formatMsgTime(msg.createdAt)}
+                  {msg.isMe && (
+                    <>
+                      {msg.status === 'sending' ? (
+                        <span className="w-2 h-2 rounded-full bg-slate-300 animate-pulse inline-block" title="Enviando..." />
+                      ) : msg.status === 'sent' ? (
+                        <span title="Enviada"><Check size={12} className="text-slate-400 inline" /></span>
+                      ) : (
+                        <span title="Entregue"><CheckCheck size={12} className="text-[#f7941d] inline" /></span>
+                      )}
+                    </>
+                  )}
                 </span>
               </div>
             );
@@ -785,8 +849,9 @@ export default function ChatRoomPage({ params }: { params: Promise<{ orderId: st
                       alert(res.error);
                     } else {
                       setPriceModalOpen(false);
-                      // Atualizar detalhes locais
-                      loadDetails();
+                      // Atualizar detalhes e mensagens locais
+                      await loadDetails();
+                      await loadMessages();
                     }
                   } finally {
                     setPriceSubmitting(false);
