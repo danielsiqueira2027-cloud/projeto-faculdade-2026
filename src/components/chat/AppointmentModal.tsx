@@ -81,11 +81,11 @@ export default function AppointmentModal({
 
   // ── Inicializa a data ────────────────────────────────────────────────────
   const getInitialDate = (): Date => {
-    // Prioridade: agendamento existente > data sugerida pelo cliente > hoje
+    // Prioridade: agendamento existente > data sugerida pelo cliente no orçamento > hoje
     const source = existingAppointment?.scheduledAt ?? suggestedAt ?? null;
     if (source) {
       const d = new Date(source);
-      if (!isNaN(d.getTime()) && d > new Date()) return d;
+      if (!isNaN(d.getTime())) return d;
     }
     return new Date();
   };
@@ -94,17 +94,27 @@ export default function AppointmentModal({
   const [calYear,  setCalYear]  = useState(initialDate.getFullYear());
   const [calMonth, setCalMonth] = useState(initialDate.getMonth());
   const [selectedDay, setSelectedDay] = useState<number>(initialDate.getDate());
-  const [selectedTime, setSelectedTime] = useState<string>('06:00');
-
-  // Se agendamento existente, pré-preenche o horário
-  useEffect(() => {
+  const [selectedTime, setSelectedTime] = useState<string>(() => {
     if (existingAppointment?.scheduledAt) {
       const d = new Date(existingAppointment.scheduledAt);
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = d.getMinutes() >= 30 ? '30' : '00';
-      setSelectedTime(`${hh}:${mm}`);
+      if (!isNaN(d.getTime())) {
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = d.getMinutes() >= 30 ? '30' : '00';
+        return `${hh}:${mm}`;
+      }
     }
-  }, [existingAppointment]);
+    if (suggestedAt) {
+      const d = new Date(suggestedAt);
+      if (!isNaN(d.getTime())) {
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mm = d.getMinutes() >= 30 ? '30' : '00';
+        return `${hh}:${mm}`;
+      }
+    }
+    return '08:00';
+  });
+
+  // Time is initialized in useState above
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -146,9 +156,13 @@ export default function AppointmentModal({
     setError(null);
     setConflictAt(null);
 
+    // Use local date string to avoid UTC timezone offset (UTC-3 in Brazil would shift +3h)
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const localIso = `${calYear}-${pad(calMonth + 1)}-${pad(selectedDay)}T${pad(hh)}:${pad(mm)}:00.000`;
+
     const result = await createOrUpdateAppointment({
       orderId,
-      scheduledAt: scheduledAt.toISOString(),
+      scheduledAt: localIso,
     });
 
     setSubmitting(false);

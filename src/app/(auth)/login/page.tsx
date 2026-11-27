@@ -3,7 +3,7 @@
 import React, { useState, useActionState, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { loginAction } from '@/app/actions/auth';
 import { useSearchParams } from 'next/navigation';
 import { validarRedirectSeguro } from '@/lib/validators';
@@ -76,8 +76,19 @@ function LoginForm() {
       </div>
 
       <button id="loginBtn" type="submit" className="btn" disabled={pending}>
-        {pending ? 'ENTRANDO...' : 'ENTRAR'}
+        {pending ? (
+          <>
+            <Loader2 size={16} className="animate-spin inline mr-2" />
+            VALIDANDO...
+          </>
+        ) : 'ENTRAR'}
       </button>
+      {pending && (
+        <div style={{textAlign:'center',fontSize:'0.78rem',color:'#666',marginTop:'8px',display:'flex',alignItems:'center',justifyContent:'center',gap:'4px'}}>
+          <Loader2 size={12} className="animate-spin" style={{opacity:0.6}} />
+          Validando credenciais e efetuando login...
+        </div>
+      )}
 
       <Link href="/forgot-password" className="forgot">Esqueci minha senha</Link>
 

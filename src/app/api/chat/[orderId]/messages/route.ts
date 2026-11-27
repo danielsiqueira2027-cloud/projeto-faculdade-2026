@@ -74,6 +74,9 @@ export async function GET(
       {
         messages: formattedMessages,
         orderStatus: order.status,
+        agreedPrice: order.agreedPrice
+          ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(order.agreedPrice))
+          : 'A combinar',
         suggestedAt: order.scheduledAt,
         appointment: order.appointments[0] ?? null,
       },

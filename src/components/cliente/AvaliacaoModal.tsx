@@ -36,6 +36,8 @@ export function AvaliacaoModal({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
+  const [isAnonymous, setIsAnonymous] = useState<boolean>(false);
+  const [reviewPhoto, setReviewPhoto] = useState<File | null>(null);
 
   const activeRating = hoverRating !== null ? hoverRating : rating;
 
@@ -123,7 +125,7 @@ export function AvaliacaoModal({
                       <button
                         key={star}
                         type="button"
-                        onClick={() => setRating(star)}
+                        onClick={() => { setRating(star); setHoverRating(null); }}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(null)}
                         className="p-1 hover:scale-110 active:scale-95 transition-transform border-none bg-transparent cursor-pointer"
@@ -165,8 +167,40 @@ export function AvaliacaoModal({
                   maxLength={500}
                 />
                 <div className="flex justify-between items-center text-[11px] text-slate-400 font-semibold px-1">
-                  <span>Mínimo de detalhes para ajudar outros clientes</span>
+                  <span>Sua avaliação será exibida no perfil público do profissional</span>
                   <span>{comment.length}/500</span>
+                </div>
+
+                {/* Avaliação anônima */}
+                <div className="flex items-center gap-2 mt-2">
+                  <input
+                    type="checkbox"
+                    id="anon-review"
+                    checked={isAnonymous}
+                    onChange={e => setIsAnonymous(e.target.checked)}
+                    className="w-4 h-4 rounded accent-[#103569]"
+                  />
+                  <label htmlFor="anon-review" className="text-xs font-semibold text-slate-600 cursor-pointer select-none">
+                    Publicar avaliação anonimamente
+                  </label>
+                </div>
+
+                {/* Foto opcional */}
+                <div className="mt-3">
+                  <label className="text-xs font-black text-[#103569]/70 uppercase tracking-widest block mb-1">
+                    Foto (opcional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={e => setReviewPhoto(e.target.files?.[0] || null)}
+                    className="text-xs text-slate-600 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-[#103569]/10 file:text-[#103569] hover:file:bg-[#103569]/20 cursor-pointer w-full"
+                  />
+                  {reviewPhoto && (
+                    <p className="text-[11px] text-emerald-600 font-semibold mt-1">
+                      📎 {reviewPhoto.name}
+                    </p>
+                  )}
                 </div>
               </div>
 
